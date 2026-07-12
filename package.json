@@ -1,0 +1,12 @@
+{
+  "name": "genre-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local evidence-based music genre analysis workbench.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

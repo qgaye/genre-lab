@@ -1,0 +1,33 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python / Essentia runtime
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Generated runtime data
+downloads/
+results/
+.setup-logs/
+
+# Downloaded model artifacts
+models/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

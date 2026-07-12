@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Genre Lab</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="console" aria-label="曲风识别工作台">
+        <header class="mast">
+          <div>
+            <p class="kicker">Genre Lab</p>
+            <h1>Genre / Style 证据分析器</h1>
+          </div>
+          <div class="status-pill" id="statusPill">等待输入</div>
+        </header>
+
+        <form class="input-grid" id="trackForm">
+          <fieldset class="format-field" aria-label="输入格式">
+            <legend>输入格式</legend>
+            <div class="format-options">
+              <label>
+                <input type="radio" name="inputFormat" value="song-artist" checked>
+                <span>歌曲 - 艺人</span>
+              </label>
+              <label>
+                <input type="radio" name="inputFormat" value="artist-song">
+                <span>艺人 - 歌曲</span>
+              </label>
+              <label>
+                <input type="radio" name="inputFormat" value="netease-url">
+                <span>网易云音乐链接</span>
+              </label>
+            </div>
+          </fieldset>
+          <label class="query-field">
+            <span>歌曲信息</span>
+            <input id="trackInput" autocomplete="off" placeholder="例如：WALK IN PARADISE - DVRST">
+          </label>
+          <div class="parsed-line" id="parsedLine">默认按“歌曲 - 艺人”解析，并搜索对应公开音频</div>
+          <div class="progress-card" id="progressCard">
+            <div class="progress-top">
+              <span id="progressLabel">准备就绪</span>
+              <b id="progressPercent">0%</b>
+            </div>
+            <div class="progress-track"><span id="progressFill"></span></div>
+            <div class="progress-steps" id="progressSteps">
+              <span data-step="parse">解析</span>
+              <span data-step="metadata">标签</span>
+              <span data-step="search">音频</span>
+              <span data-step="download">下载</span>
+              <span data-step="decode">解码</span>
+              <span data-step="score">评分</span>
+            </div>
+            <ol class="progress-log" id="progressLog"></ol>
+          </div>
+          <details class="fallbacks">
+            <summary>备用输入</summary>
+            <label>
+              <span>专辑名（可选）</span>
+              <input id="albumInput" autocomplete="off" placeholder="用来辅助匹配标签">
+            </label>
+            <label>
+              <span>指定音频或公开视频链接（可选）</span>
+              <input id="urlInput" autocomplete="off" placeholder="mp3/wav/m4a 直链，或 yt-dlp 支持的公开链接">
+            </label>
+            <label class="file-drop">
+              <input id="fileInput" type="file" accept="audio/*">
+              <span>上传本地音频</span>
+              <strong id="fileName">没有选择文件</strong>
+            </label>
+          </details>
+          <div class="actions">
+            <button type="submit" class="primary" title="自动查询元信息、搜索音频并融合分析">分析这首歌</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="result-board" aria-live="polite">
+        <article class="verdict">
+          <div class="verdict-top">
+            <p>Genre / Style 构成</p>
+            <span id="confidenceLabel">证据覆盖 --</span>
+          </div>
+          <h2 id="genreTitle">尚未分析</h2>
+          <p id="genreReason">输入歌曲信息，并尽量提供音频。只有元信息时会给出“倾向判断”；加入音频后会提升证据质量。</p>
+          <div class="genre-mix" id="genreMix"></div>
+          <div class="meter" aria-hidden="true"><span id="confidenceMeter"></span></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>Genre / Style 比例</h3>
+            <span id="scoreCount">0 项</span>
+          </div>
+          <div class="score-list" id="scoreList"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <h3>音频指纹</h3>
+            <span id="audioState">未读取</span>
+          </div>
+          <div class="feature-grid" id="featureGrid"></div>
+        </article>
+
+        <article class="panel evidence">
+          <div class="panel-head">
+            <h3>证据链</h3>
+            <span id="evidenceCount">0 条</span>
+          </div>
+          <ol id="evidenceList"></ol>
+        </article>
+      </section>
+    </main>
+
+    <template id="scoreTemplate">
+      <div class="score-row">
+        <div>
+          <strong></strong>
+          <small></small>
+        </div>
+        <div class="bar"><span></span></div>
+        <b></b>
+      </div>
+    </template>
+
+    <script src="/discogs-taxonomy.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
