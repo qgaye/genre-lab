@@ -20,6 +20,8 @@ pnpm-debug.log*
 downloads/
 results/
 .setup-logs/
+.runtime/
+bin/
 
 # Downloaded model artifacts
 models/

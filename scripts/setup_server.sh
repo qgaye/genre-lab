@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -u
+set +u
 set -o pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -7,8 +7,11 @@ cd "$ROOT" || exit 1
 
 LOG_DIR="$ROOT/.setup-logs"
 VENV_DIR="$ROOT/.venv-essentia"
+RUNTIME_DIR="$ROOT/.runtime"
+NODE_BIN_DIR="$ROOT/bin"
 MIN_NODE_MAJOR=18
 PYTHON_BIN="${PYTHON_BIN:-}"
+NODE_FALLBACK_VERSION="${NODE_FALLBACK_VERSION:-v20.11.1}"
 
 mkdir -p "$LOG_DIR"
 
@@ -61,12 +64,38 @@ sudo_cmd() {
 }
 
 node_major() {
-  node --version 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/'
+  local version
+  version="$(node --version 2>/dev/null)" || return 0
+  echo "$version" | sed -E 's/^v([0-9]+).*/\1/'
+}
+
+version_lt() {
+  awk -v a="${1:-0}" -v b="$2" '
+    BEGIN {
+      split(a, av, "."); split(b, bv, ".");
+      for (i = 1; i <= 3; i++) {
+        ai = av[i] + 0; bi = bv[i] + 0;
+        if (ai < bi) exit 0;
+        if (ai > bi) exit 1;
+      }
+      exit 1;
+    }'
+}
+
+system_glibc_version() {
+  getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}'
+}
+
+node_is_usable() {
+  local major
+  major="$(node_major)"
+  [ -n "$major" ] && [ "$major" -ge "$MIN_NODE_MAJOR" ]
 }
 
 load_nvm() {
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   if [ -s "$NVM_DIR/nvm.sh" ]; then
+    set +u
     # shellcheck disable=SC1091
     . "$NVM_DIR/nvm.sh"
     return 0
@@ -74,35 +103,100 @@ load_nvm() {
   return 1
 }
 
-ensure_node() {
-  if command_exists node; then
-    local major
-    major="$(node_major)"
-    if [ "${major:-0}" -ge "$MIN_NODE_MAJOR" ]; then
-      node --version
-      return 0
-    fi
+run_nvm() {
+  set +u
+  nvm "$@"
+}
+
+install_project_node() {
+  if ! command_exists curl; then
+    echo "curl is required to install project-local Node.js."
+    return 1
+  fi
+  if ! command_exists tar; then
+    echo "tar is required to install project-local Node.js."
+    return 1
   fi
 
-  if load_nvm; then
-    nvm install --lts
-    nvm use --lts
-  else
-    if ! command_exists curl; then
-      echo "curl is required to install Node.js through nvm."
+  local os arch platform flavor base_url archive url install_dir tmp_archive
+  os="$(uname -s)"
+  arch="$(uname -m)"
+
+  case "$os:$arch" in
+    Linux:x86_64|Linux:amd64) platform="linux-x64" ;;
+    Linux:aarch64|Linux:arm64) platform="linux-arm64" ;;
+    Darwin:x86_64) platform="darwin-x64" ;;
+    Darwin:arm64) platform="darwin-arm64" ;;
+    *)
+      echo "Unsupported platform for project-local Node.js: $os $arch"
       return 1
+      ;;
+  esac
+
+  flavor="$platform"
+  base_url="https://nodejs.org/dist/$NODE_FALLBACK_VERSION"
+
+  if [ "$os" = "Linux" ]; then
+    local glibc
+    glibc="$(system_glibc_version)"
+    if [ -n "$glibc" ] && version_lt "$glibc" "2.28"; then
+      flavor="$platform-glibc-217"
+      base_url="https://unofficial-builds.nodejs.org/download/release/$NODE_FALLBACK_VERSION"
+      echo "Detected glibc $glibc; using Node.js $NODE_FALLBACK_VERSION $flavor."
     fi
-    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-    load_nvm
-    nvm install --lts
-    nvm alias default 'lts/*'
-    nvm use --lts
   fi
 
-  local major
-  major="$(node_major)"
-  if [ "${major:-0}" -lt "$MIN_NODE_MAJOR" ]; then
+  archive="node-$NODE_FALLBACK_VERSION-$flavor.tar.xz"
+  url="$base_url/$archive"
+  install_dir="$RUNTIME_DIR/node-$NODE_FALLBACK_VERSION-$flavor"
+  tmp_archive="$LOG_DIR/$archive"
+
+  if [ ! -x "$install_dir/bin/node" ]; then
+    mkdir -p "$RUNTIME_DIR" "$NODE_BIN_DIR"
+    curl --fail --location --output "$tmp_archive" "$url"
+    tar -xJf "$tmp_archive" -C "$RUNTIME_DIR"
+  fi
+
+  mkdir -p "$NODE_BIN_DIR"
+  ln -sfn "$install_dir/bin/node" "$NODE_BIN_DIR/node"
+  ln -sfn "$install_dir/bin/npm" "$NODE_BIN_DIR/npm"
+  if [ -x "$install_dir/bin/npx" ]; then
+    ln -sfn "$install_dir/bin/npx" "$NODE_BIN_DIR/npx"
+  fi
+
+  export PATH="$NODE_BIN_DIR:$PATH"
+  node --version
+}
+
+ensure_node() {
+  export PATH="$NODE_BIN_DIR:$PATH"
+
+  if node_is_usable; then
+    node --version
+    return 0
+  fi
+
+  local glibc
+  glibc="$(system_glibc_version)"
+  if [ -n "$glibc" ] && version_lt "$glibc" "2.28"; then
+    install_project_node
+  elif load_nvm; then
+    run_nvm install --lts
+    run_nvm use --lts
+  else
+    if command_exists curl; then
+      export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+      curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+      load_nvm && run_nvm install --lts && run_nvm alias default 'lts/*' && run_nvm use --lts
+    fi
+  fi
+
+  if ! node_is_usable; then
+    echo "nvm Node.js is not usable on this host; installing project-local Node.js fallback."
+    install_project_node || return 1
+  fi
+
+  if ! node_is_usable; then
     echo "Node.js >= $MIN_NODE_MAJOR is required; found $(node --version 2>/dev/null || echo missing)."
     return 1
   fi
@@ -136,6 +230,46 @@ detect_python310() {
   return 1
 }
 
+install_miniforge_python310() {
+  if ! command_exists curl; then
+    echo "curl is required to install Miniforge Python fallback."
+    return 1
+  fi
+
+  local os arch installer_name installer conda_root url
+  os="$(uname -s)"
+  arch="$(uname -m)"
+  case "$os:$arch" in
+    Linux:x86_64|Linux:amd64) installer_name="Miniforge3-Linux-x86_64.sh" ;;
+    Linux:aarch64|Linux:arm64) installer_name="Miniforge3-Linux-aarch64.sh" ;;
+    Darwin:x86_64) installer_name="Miniforge3-MacOSX-x86_64.sh" ;;
+    Darwin:arm64) installer_name="Miniforge3-MacOSX-arm64.sh" ;;
+    *)
+      echo "Unsupported platform for Miniforge fallback: $os $arch"
+      return 1
+      ;;
+  esac
+
+  conda_root="$RUNTIME_DIR/miniforge"
+  installer="$LOG_DIR/$installer_name"
+  url="https://github.com/conda-forge/miniforge/releases/latest/download/$installer_name"
+
+  if [ ! -x "$conda_root/bin/conda" ]; then
+    mkdir -p "$RUNTIME_DIR"
+    curl --fail --location --output "$installer" "$url"
+    bash "$installer" -b -p "$conda_root"
+  fi
+
+  if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/python" ]; then
+    echo "Removing incomplete Python environment at $VENV_DIR"
+    rm -rf "$VENV_DIR"
+  fi
+
+  "$conda_root/bin/conda" create -y -p "$VENV_DIR" python=3.10 pip
+  PYTHON_BIN="$VENV_DIR/bin/python"
+  "$PYTHON_BIN" --version
+}
+
 install_python310() {
   if detect_python310; then
     "$PYTHON_BIN" --version
@@ -143,25 +277,37 @@ install_python310() {
   fi
 
   if command_exists brew; then
-    brew install python@3.10
+    brew install python@3.10 || true
   elif command_exists apt-get; then
-    sudo_cmd apt-get update
-    sudo_cmd apt-get install -y python3.10 python3.10-venv python3.10-dev
-  else
-    echo "Could not find Python 3.10 and no supported package manager was found."
-    echo "Install Python 3.10, then rerun this script."
-    return 1
+    sudo_cmd apt-get update || true
+    sudo_cmd apt-get install -y python3.10 python3.10-venv python3.10-dev || true
+  elif command_exists dnf; then
+    sudo_cmd dnf install -y python3.10 python3.10-devel python3.10-pip || true
+  elif command_exists yum; then
+    sudo_cmd yum install -y python3.10 python3.10-devel python3.10-pip || true
   fi
 
-  detect_python310
-  "$PYTHON_BIN" --version
+  if detect_python310; then
+    "$PYTHON_BIN" --version
+    return 0
+  fi
+
+  echo "Python 3.10 was not available through the system package manager; using Miniforge fallback."
+  install_miniforge_python310
 }
 
 create_python_env() {
+  if [ -x "$VENV_DIR/bin/python" ]; then
+    "$VENV_DIR/bin/python" --version
+    return 0
+  fi
   if [ -z "$PYTHON_BIN" ]; then
     detect_python310 || return 1
   fi
-  "$PYTHON_BIN" -m venv "$VENV_DIR"
+  if ! "$PYTHON_BIN" -m venv "$VENV_DIR"; then
+    echo "System Python 3.10 cannot create venv; using Miniforge fallback."
+    install_miniforge_python310 || return 1
+  fi
   "$VENV_DIR/bin/python" --version
 }
 
@@ -271,7 +417,7 @@ print_summary() {
     printf "%-34s %-6s %s\n" "${SUMMARY_NAMES[$i]}" "$status" "${SUMMARY_DETAILS[$i]}"
   done
 
-  printf "------------------------------------------------------\n"
+  printf '%s\n' '------------------------------------------------------'
   printf "OK: %s  FAIL: %s\n" "$ok_count" "$fail_count"
 
   if [ "$fail_count" -eq 0 ]; then
