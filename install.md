@@ -273,6 +273,8 @@ bash scripts/setup_server.sh
 FFMPEG_LOCATION=/path/to/ffmpeg-directory npm start
 ```
 
+在 CentOS/RHEL 等 `yum install ffmpeg` 找不到包的服务器上，脚本会自动下载 Linux 静态 ffmpeg 到 `.runtime/` 作为兜底，不需要额外配置 EPEL/RPM Fusion。
+
 相关服务端函数：
 
 ```text

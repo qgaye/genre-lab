@@ -12,6 +12,7 @@ NODE_BIN_DIR="$ROOT/bin"
 MIN_NODE_MAJOR=18
 PYTHON_BIN="${PYTHON_BIN:-}"
 NODE_FALLBACK_VERSION="${NODE_FALLBACK_VERSION:-v20.11.1}"
+FFMPEG_STATIC_VERSION="${FFMPEG_STATIC_VERSION:-release}"
 
 mkdir -p "$LOG_DIR"
 
@@ -344,7 +345,64 @@ install_python_packages() {
     "$VENV_DIR/bin/python" -m pip install --upgrade essentia-tensorflow yt-dlp
 }
 
+static_ffmpeg_arch() {
+  local os arch
+  os="$(uname -s)"
+  arch="$(uname -m)"
+  [ "$os" = "Linux" ] || return 1
+
+  case "$arch" in
+    x86_64|amd64) echo "amd64" ;;
+    aarch64|arm64) echo "arm64" ;;
+    i386|i686) echo "i686" ;;
+    armv7l|armv7*) echo "armhf" ;;
+    armv6l|armv6*) echo "armel" ;;
+    *) return 1 ;;
+  esac
+}
+
+install_static_ffmpeg() {
+  local arch archive url install_dir tmp_archive extracted_dir
+  arch="$(static_ffmpeg_arch)" || {
+    echo "No supported static ffmpeg build for $(uname -s) $(uname -m)."
+    return 1
+  }
+  command_exists curl || {
+    echo "curl is required to download static ffmpeg."
+    return 1
+  }
+  command_exists tar || {
+    echo "tar is required to unpack static ffmpeg."
+    return 1
+  }
+
+  archive="ffmpeg-${FFMPEG_STATIC_VERSION}-${arch}-static.tar.xz"
+  url="https://johnvansickle.com/ffmpeg/releases/$archive"
+  install_dir="$RUNTIME_DIR/ffmpeg-${FFMPEG_STATIC_VERSION}-${arch}"
+  tmp_archive="$LOG_DIR/$archive"
+
+  if [ ! -x "$install_dir/ffmpeg" ] || [ ! -x "$install_dir/ffprobe" ]; then
+    rm -rf "$install_dir" "$LOG_DIR"/ffmpeg-*-static
+    curl --fail --location --output "$tmp_archive" "$url"
+    tar -xJf "$tmp_archive" -C "$LOG_DIR"
+    extracted_dir="$(find "$LOG_DIR" -maxdepth 1 -type d -name "ffmpeg-*-static" | head -n 1)"
+    if [ -z "$extracted_dir" ]; then
+      echo "Could not find unpacked ffmpeg static directory."
+      return 1
+    fi
+    mkdir -p "$RUNTIME_DIR"
+    mv "$extracted_dir" "$install_dir"
+  fi
+
+  mkdir -p "$NODE_BIN_DIR"
+  ln -sfn "$install_dir/ffmpeg" "$NODE_BIN_DIR/ffmpeg"
+  ln -sfn "$install_dir/ffprobe" "$NODE_BIN_DIR/ffprobe"
+  export PATH="$NODE_BIN_DIR:$PATH"
+}
+
 install_ffmpeg() {
+  export PATH="$NODE_BIN_DIR:$PATH"
+
   if ! command_exists ffmpeg || ! command_exists ffprobe; then
     if command_exists brew; then
       brew install ffmpeg || true
@@ -360,6 +418,11 @@ install_ffmpeg() {
     else
       echo "No supported package manager found. Install ffmpeg manually, or set FFMPEG_LOCATION."
     fi
+  fi
+
+  if ! command_exists ffmpeg || ! command_exists ffprobe; then
+    echo "System package manager did not provide ffmpeg; installing project-local static ffmpeg."
+    install_static_ffmpeg || true
   fi
 
   if ! command_exists ffmpeg || ! command_exists ffprobe; then
