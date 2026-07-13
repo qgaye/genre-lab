@@ -313,7 +313,7 @@ function collectMetadataTags(data) {
       const titleMatch = wantedTitle && (track === wantedTitle || track.includes(wantedTitle) || wantedTitle.includes(track));
       const artistMatch = wantedArtists.length === 0 || wantedArtists.some(name => artist.includes(name) || name.includes(artist));
       if (!titleMatch || !artistMatch) continue;
-w      if (item.primaryGenreName && firstDiscogsCandidate(item.primaryGenreName)) {
+      if (item.primaryGenreName && firstDiscogsCandidate(item.primaryGenreName)) {
         tags.push({ tag: normalize(item.primaryGenreName), source: `iTunes：${item.trackName}`, weight: 16 });
         evidence.push(`iTunes Search API 匹配到 <strong>${item.trackName}</strong>${item.artistName ? ` / <strong>${item.artistName}</strong>` : ""}${item.matchScore != null ? `，匹配分 <strong>${item.matchScore}</strong>` : ""}；Apple 标签 <strong>${item.primaryGenreName}</strong> 可映射到本地 Discogs 范围。`);
       }

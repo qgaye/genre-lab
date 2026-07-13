@@ -31,6 +31,8 @@ JavaScript / Python 分析脚本可用性
 
 脚本最后会打印逐项摘要，包含每一项的 `OK` 或 `FAIL`。如果有失败项，按摘要中的日志文件排查后重新运行脚本即可。
 
+脚本按可重复执行设计：已可用的 Node、Python 3.10、`.venv-essentia`、Python 包和模型文件会直接复用；缺失或不完整的部分才会继续安装。
+
 如果新服务器缺少 Node.js，脚本会优先通过 `nvm` 安装 LTS 版本；如果服务器 glibc 太旧导致官方 Node 二进制无法启动，脚本会回退安装项目本地 Node 到 `.runtime/`，并在 `bin/` 下创建 `node/npm/npx` 链接。
 
 如果缺少 Python 3.10，脚本会尝试通过 Homebrew、`apt-get`、`dnf` 或 `yum` 安装；如果系统源没有 Python 3.10，会回退到项目本地 Miniforge，并在 `.venv-essentia` 中创建 Python 3.10 环境。

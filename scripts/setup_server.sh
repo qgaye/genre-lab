@@ -208,6 +208,11 @@ detect_python310() {
     return 0
   fi
 
+  if [ -x "$VENV_DIR/bin/python" ] && "$VENV_DIR/bin/python" --version 2>/dev/null | grep -q "Python 3.10"; then
+    PYTHON_BIN="$VENV_DIR/bin/python"
+    return 0
+  fi
+
   if command_exists python3.10; then
     PYTHON_BIN="$(command -v python3.10)"
     return 0
@@ -260,7 +265,14 @@ install_miniforge_python310() {
     bash "$installer" -b -p "$conda_root"
   fi
 
-  if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/python" ]; then
+  if [ -x "$VENV_DIR/bin/python" ] && "$VENV_DIR/bin/python" --version 2>/dev/null | grep -q "Python 3.10"; then
+    PYTHON_BIN="$VENV_DIR/bin/python"
+    echo "Using existing Python environment: $VENV_DIR"
+    "$PYTHON_BIN" --version
+    return 0
+  fi
+
+  if [ -d "$VENV_DIR" ]; then
     echo "Removing incomplete Python environment at $VENV_DIR"
     rm -rf "$VENV_DIR"
   fi
@@ -311,7 +323,23 @@ create_python_env() {
   "$VENV_DIR/bin/python" --version
 }
 
+python_packages_present() {
+  [ -x "$VENV_DIR/bin/yt-dlp" ] || return 1
+  "$VENV_DIR/bin/python" - <<'PY' >/dev/null 2>&1
+import essentia
+import essentia.standard as es
+raise SystemExit(0 if hasattr(es, "TensorflowPredictEffnetDiscogs") and hasattr(es, "TensorflowPredict2D") else 1)
+PY
+}
+
 install_python_packages() {
+  if python_packages_present; then
+    echo "Python packages already installed in $VENV_DIR"
+    "$VENV_DIR/bin/python" -m pip --version
+    "$VENV_DIR/bin/yt-dlp" --version
+    return 0
+  fi
+
   "$VENV_DIR/bin/python" -m pip install --upgrade pip setuptools wheel &&
     "$VENV_DIR/bin/python" -m pip install --upgrade essentia-tensorflow yt-dlp
 }
