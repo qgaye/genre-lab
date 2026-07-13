@@ -539,14 +539,68 @@ function buildVerdictTitle(composition) {
   return first.name;
 }
 
+function compactValue(text, maxLength = 34) {
+  const value = String(text || "").replace(/\s+/g, " ").trim();
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+}
+
+function quotedTags(reason) {
+  return [...String(reason || "").matchAll(/“([^”]+)”/g)]
+    .map(match => match[1])
+    .filter(Boolean);
+}
+
+function classifyReason(reason) {
+  const text = String(reason || "");
+  if (text.startsWith("Essentia 音频模型")) {
+    const label = text.match(/Essentia 音频模型：([^，]+)/)?.[1];
+    return { source: "Essentia", value: compactValue(label || "音频模型") };
+  }
+  if (text.startsWith("Last.fm")) {
+    return { source: "Last.fm", value: compactValue(quotedTags(text)[0] || "歌曲标签") };
+  }
+  if (text.startsWith("Discogs")) {
+    return { source: "Discogs", value: compactValue(quotedTags(text)[0] || "发行标签") };
+  }
+  if (text.startsWith("iTunes")) {
+    return { source: "iTunes", value: compactValue(quotedTags(text)[0] || "Apple 标签") };
+  }
+  return { source: "证据", value: compactValue(text, 40) };
+}
+
+function compactReasonSummary(reasons, options = {}) {
+  const { maxSources = 4, maxValuesPerSource = 2 } = options;
+  const sourceOrder = ["Essentia", "Last.fm", "Discogs", "iTunes", "证据"];
+  const groups = new Map();
+
+  for (const reason of reasons.filter(Boolean)) {
+    const item = classifyReason(reason);
+    if (!item.value) continue;
+    const values = groups.get(item.source) || [];
+    if (!values.some(value => normalize(value) === normalize(item.value))) {
+      values.push(item.value);
+      groups.set(item.source, values);
+    }
+  }
+
+  return sourceOrder
+    .filter(source => groups.has(source))
+    .slice(0, maxSources)
+    .map(source => `${source}：${groups.get(source).slice(0, maxValuesPerSource).join("、")}`)
+    .join("；");
+}
+
 function buildVerdictReason(composition) {
   const reasons = composition
-    .slice(0, 2)
+    .slice(0, 4)
     .flatMap(item => item.reasons || [])
     .filter(Boolean);
-  const uniqueReasons = uniqueBy(reasons, reason => reason).slice(0, 2);
-  return uniqueReasons.length
-    ? `主要依据：${uniqueReasons.join("；")}。`
+  const summary = compactReasonSummary(uniqueBy(reasons, reason => reason), {
+    maxSources: 4,
+    maxValuesPerSource: 2
+  });
+  return summary
+    ? `主要依据：${summary}。`
     : "主要依据：Essentia 音频模型与现有元信息综合得分最高。";
 }
 
@@ -594,7 +648,10 @@ function renderScores(items) {
   for (const item of items) {
     const node = scoreTemplate.content.firstElementChild.cloneNode(true);
     node.querySelector("strong").textContent = item.name;
-    node.querySelector("small").textContent = item.reasons[0] || "未命中强证据";
+    node.querySelector("small").textContent = compactReasonSummary(item.reasons || [], {
+      maxSources: 3,
+      maxValuesPerSource: 1
+    }) || "未命中强证据";
     const percent = item.percent ?? item.score;
     node.querySelector(".bar span").style.width = `${percent}%`;
     node.querySelector("b").textContent = item.percent != null ? `${item.percent}%` : item.score;
