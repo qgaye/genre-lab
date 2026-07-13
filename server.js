@@ -20,6 +20,7 @@ const RUNTIME_PATH = [
 ].join(path.delimiter);
 const MAX_AUDIO_BYTES = 90 * 1024 * 1024;
 const NETEASE_LINK_HOSTS = new Set(["163cn.tv", "music.163.com"]);
+const QQ_MUSIC_LINK_HOSTS = new Set(["y.qq.com", "i.y.qq.com"]);
 const SEARCH_RESULT_LIMIT = 5;
 const YTDLP_SEARCH_SOURCES = {
   youtube: { name: "youtube", label: "YouTube", prefix: "ytsearch", priority: 0 },
@@ -659,6 +660,46 @@ function isAllowedNetEaseLink(url) {
   }
 }
 
+function extractQQMusicSongMid(value) {
+  const text = cleanTerm(value);
+  const midMatch = text.match(/[?&#](?:songmid|song_mid)=([A-Za-z0-9]+)/i)
+    || text.match(/\/songDetail\/([A-Za-z0-9]+)/i)
+    || text.match(/\/n\/ryqq\/songDetail\/([A-Za-z0-9]+)/i);
+  return midMatch ? midMatch[1] : "";
+}
+
+function isAllowedQQMusicLink(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return QQ_MUSIC_LINK_HOSTS.has(host) || host.endsWith(".y.qq.com");
+  } catch {
+    return false;
+  }
+}
+
+async function resolveQQMusicSongMid(value) {
+  const directMid = extractQQMusicSongMid(value);
+  if (directMid) return directMid;
+
+  let url = extractHttpUrl(value);
+  if (!url || !isAllowedQQMusicLink(url)) return "";
+
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const songMid = extractQQMusicSongMid(url);
+    if (songMid) return songMid;
+
+    const result = await fetchRedirectLocation(url);
+    if (result.statusCode < 300 || result.statusCode >= 400 || !result.location) {
+      return "";
+    }
+    if (!isAllowedQQMusicLink(result.location)) {
+      return "";
+    }
+    url = result.location;
+  }
+  return "";
+}
+
 async function resolveNetEaseSongId(value) {
   const directId = extractNetEaseSongId(value);
   if (directId) return directId;
@@ -680,6 +721,28 @@ async function resolveNetEaseSongId(value) {
     url = result.location;
   }
   return "";
+}
+
+async function fetchQQMusicSong(songMid) {
+  const params = new URLSearchParams({
+    songmid: songMid,
+    tpl: "yqq_song_detail",
+    format: "json"
+  });
+  const data = await fetchJson(`https://c.y.qq.com/v8/fcg-bin/fcg_play_single_song.fcg?${params.toString()}`, {
+    referer: "https://y.qq.com/",
+    "user-agent": "Mozilla/5.0 GenreLab/1.0"
+  });
+  const song = data && Array.isArray(data.data) ? data.data[0] : null;
+  if (!song || !song.name) return null;
+  return {
+    id: String(song.id || ""),
+    songMid: String(song.mid || songMid),
+    title: song.name,
+    artists: (song.singer || []).map(artist => artist.name).filter(Boolean),
+    album: song.album && song.album.name ? song.album.name : "",
+    sourceUrl: `https://y.qq.com/n/ryqq/songDetail/${song.mid || songMid}`
+  };
 }
 
 async function handleNetEaseSong(req, res) {
@@ -705,6 +768,26 @@ async function handleNetEaseSong(req, res) {
       album: song.album && song.album.name ? song.album.name : "",
       sourceUrl: `https://music.163.com/song?id=${id}`
     });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
+async function handleQQMusicSong(req, res) {
+  try {
+    const body = await readBody(req);
+    const songMid = await resolveQQMusicSongMid(body.url || body.id || body.songMid || "");
+    if (!songMid) {
+      sendJson(res, 400, { error: "没有在 QQ 音乐链接中找到 songmid。" });
+      return;
+    }
+
+    const song = await fetchQQMusicSong(songMid);
+    if (!song) {
+      sendJson(res, 404, { error: `QQ 音乐没有返回 songmid ${songMid} 的歌曲信息。` });
+      return;
+    }
+    sendJson(res, 200, song);
   } catch (error) {
     sendJson(res, 500, { error: error.message });
   }
@@ -1197,6 +1280,10 @@ const server = http.createServer((req, res) => {
     handleNetEaseSong(req, res);
     return;
   }
+  if (req.method === "POST" && req.url === "/api/qq-song") {
+    handleQQMusicSong(req, res);
+    return;
+  }
   if (req.method === "POST" && req.url === "/api/download") {
     handleDownload(req, res);
     return;
@@ -1227,8 +1314,10 @@ module.exports = {
   containsChineseText,
   extractHttpUrl,
   extractNetEaseSongId,
+  extractQQMusicSongMid,
   rankSearchCandidates,
   resolveNetEaseSongId,
+  resolveQQMusicSongMid,
   selectSearchSources,
   sourceSearchQuery,
   server

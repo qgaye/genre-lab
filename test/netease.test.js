@@ -6,6 +6,7 @@ const {
   containsChineseText,
   extractHttpUrl,
   extractNetEaseSongId,
+  extractQQMusicSongMid,
   rankSearchCandidates,
   selectSearchSources,
   sourceSearchQuery
@@ -20,6 +21,16 @@ test("extracts song ids from common NetEase URL shapes", () => {
   assert.equal(extractNetEaseSongId("https://music.163.com/#/song?id=38689021&uct2=abc"), "38689021");
   assert.equal(extractNetEaseSongId("https://music.163.com/song/38689021"), "38689021");
   assert.equal(extractNetEaseSongId("38689021"), "38689021");
+});
+
+test("extracts QQ Music share links and song mids", () => {
+  const input = "周杰伦《搁浅》 https://c6.y.qq.com/base/fcgi-bin/u?__=CawAX8bL58oP @QQ音乐";
+  assert.equal(extractHttpUrl(input), "https://c6.y.qq.com/base/fcgi-bin/u?__=CawAX8bL58oP");
+  assert.equal(
+    extractQQMusicSongMid("https://i.y.qq.com/v8/playsong.html?songmid=001Bbywq2gicae&source=qq"),
+    "001Bbywq2gicae"
+  );
+  assert.equal(extractQQMusicSongMid("https://y.qq.com/n/ryqq/songDetail/001Bbywq2gicae"), "001Bbywq2gicae");
 });
 
 test("selects YouTube and Bilibili for Chinese track searches", () => {

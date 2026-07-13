@@ -224,15 +224,24 @@ function formatLabel() {
   const labels = {
     "song-artist": "歌曲 - 艺人",
     "artist-song": "艺人 - 歌曲",
-    "netease-url": "网易云音乐链接"
+    "netease-url": "网易云音乐链接",
+    "qq-music-url": "QQ音乐链接"
   };
   return labels[selectedFormat()] || labels["netease-url"];
 }
 
+function isMusicLinkFormat(format = selectedFormat()) {
+  return format === "netease-url" || format === "qq-music-url";
+}
+
+function currentPlatformName(format = selectedFormat()) {
+  return format === "qq-music-url" ? "QQ音乐" : "网易云";
+}
+
 function parseTrackInput(value) {
   const raw = String(value || "").trim();
-  if (selectedFormat() === "netease-url") {
-    return { title: "", artists: "", raw, url: raw, orientation: "netease-url" };
+  if (isMusicLinkFormat()) {
+    return { title: "", artists: "", raw, url: raw, orientation: selectedFormat() };
   }
 
   const parts = raw
@@ -276,11 +285,11 @@ function inputTrack() {
 function updateParsedLine() {
   const track = currentTrack();
   if (!track.raw) {
-    parsedLine.textContent = selectedFormat() === "netease-url"
-      ? "将解析网易云歌曲链接，再搜索对应公开音频"
+    parsedLine.textContent = isMusicLinkFormat()
+      ? `将解析${currentPlatformName()}歌曲链接，再搜索对应公开音频`
       : `将按“${formatLabel()}”解析并搜索对应公开音频`;
-  } else if (track.orientation === "netease-url" && !track.title) {
-    parsedLine.innerHTML = `待解析网易云链接：<strong>${escapeHtml(track.raw)}</strong>`;
+  } else if (isMusicLinkFormat(track.orientation) && !track.title) {
+    parsedLine.innerHTML = `待解析${currentPlatformName(track.orientation)}链接：<strong>${escapeHtml(track.raw)}</strong>`;
   } else if (track.artists) {
     parsedLine.innerHTML = `当前解析：<strong>${escapeHtml(track.title)}</strong> / <strong>${escapeHtml(track.artists)}</strong>`;
   } else {
@@ -291,6 +300,8 @@ function updateParsedLine() {
 function updateInputPlaceholder() {
   if (selectedFormat() === "netease-url") {
     trackInput.placeholder = "例如：https://music.163.com/song?id=38689021&uct2=...";
+  } else if (selectedFormat() === "qq-music-url") {
+    trackInput.placeholder = "例如：周杰伦《搁浅》 https://c6.y.qq.com/base/fcgi-bin/u?__=CawAX8bL58oP @QQ音乐";
   } else if (selectedFormat() === "artist-song") {
     trackInput.placeholder = "例如：TAKF - We All Desire";
   } else {
@@ -554,23 +565,24 @@ function classifyReason(reason) {
   const text = String(reason || "");
   if (text.startsWith("Essentia 音频模型")) {
     const label = text.match(/Essentia 音频模型：([^，]+)/)?.[1];
-    return { source: "Essentia", value: compactValue(label || "音频模型") };
+    return { source: "essentia", label: "音频分析 Essentia", value: compactValue(label || "音频模型") };
   }
   if (text.startsWith("Last.fm")) {
-    return { source: "Last.fm", value: compactValue(quotedTags(text)[0] || "歌曲标签") };
+    return { source: "lastfm", label: "歌曲标签 Last.fm", value: compactValue(quotedTags(text)[0] || "歌曲标签") };
   }
   if (text.startsWith("Discogs")) {
-    return { source: "Discogs", value: compactValue(quotedTags(text)[0] || "发行标签") };
+    return { source: "discogs", label: "专辑风格 Discogs", value: compactValue(quotedTags(text)[0] || "发行标签") };
   }
   if (text.startsWith("iTunes")) {
-    return { source: "iTunes", value: compactValue(quotedTags(text)[0] || "Apple 标签") };
+    return { source: "itunes", label: "曲库元信息 iTunes", value: compactValue(quotedTags(text)[0] || "Apple 标签") };
   }
-  return { source: "证据", value: compactValue(text, 40) };
+  return { source: "other", label: "其他证据", value: compactValue(text, 40) };
 }
 
 function compactReasonSummary(reasons, options = {}) {
   const { maxSources = 4, maxValuesPerSource = 2 } = options;
-  const sourceOrder = ["Essentia", "Last.fm", "Discogs", "iTunes", "证据"];
+  const sourceOrder = ["essentia", "lastfm", "discogs", "itunes", "other"];
+  const sourceLabels = new Map();
   const groups = new Map();
 
   for (const reason of reasons.filter(Boolean)) {
@@ -580,13 +592,14 @@ function compactReasonSummary(reasons, options = {}) {
     if (!values.some(value => normalize(value) === normalize(item.value))) {
       values.push(item.value);
       groups.set(item.source, values);
+      sourceLabels.set(item.source, item.label);
     }
   }
 
   return sourceOrder
     .filter(source => groups.has(source))
     .slice(0, maxSources)
-    .map(source => `${source}：${groups.get(source).slice(0, maxValuesPerSource).join("、")}`)
+    .map(source => `${sourceLabels.get(source) || source}：${groups.get(source).slice(0, maxValuesPerSource).join("、")}`)
     .join("；");
 }
 
@@ -881,8 +894,8 @@ async function fetchMetadata() {
   });
   activeTrack = track;
   const fitScore = metadataFitScore(metadata, track);
-  if (track.orientation === "netease-url") {
-    parseEvidence = `网易云链接解析得到：<strong>${escapeHtml(track.title)}</strong> / <strong>${escapeHtml(track.artists || "未知艺人")}</strong>${track.album ? `，专辑 <strong>${escapeHtml(track.album)}</strong>` : ""}。`;
+  if (isMusicLinkFormat(track.orientation)) {
+    parseEvidence = `${currentPlatformName(track.orientation)}链接解析得到：<strong>${escapeHtml(track.title)}</strong> / <strong>${escapeHtml(track.artists || "未知艺人")}</strong>${track.album ? `，专辑 <strong>${escapeHtml(track.album)}</strong>` : ""}。`;
   } else {
     parseEvidence = fitScore > 0
       ? `联网元信息支持当前格式解析：<strong>${escapeHtml(track.title)}</strong> / <strong>${escapeHtml(track.artists || "未知艺人")}</strong>。`
@@ -896,23 +909,47 @@ async function fetchMetadata() {
 async function resolveNetEaseSong() {
   const raw = trackInput.value.trim();
   if (!raw) throw new Error("请输入网易云音乐歌曲链接。");
-  setStatus("解析网易云", true);
-  setProgress("parse", "解析网易云链接", 12, "读取网易云 song id 和歌曲信息");
-  const data = await postJson("/api/netease-song", { url: raw });
+  await resolvePlatformSong({
+    raw,
+    endpoint: "/api/netease-song",
+    orientation: "netease-url",
+    platform: "网易云",
+    idKey: "id",
+    idLabel: "song id"
+  });
+}
+
+async function resolveQQMusicSong() {
+  const raw = trackInput.value.trim();
+  if (!raw) throw new Error("请输入 QQ 音乐歌曲链接。");
+  await resolvePlatformSong({
+    raw,
+    endpoint: "/api/qq-song",
+    orientation: "qq-music-url",
+    platform: "QQ音乐",
+    idKey: "songMid",
+    idLabel: "songmid"
+  });
+}
+
+async function resolvePlatformSong({ raw, endpoint, orientation, platform, idKey, idLabel }) {
+  setStatus(`解析${platform}`, true);
+  setProgress("parse", `解析${platform}链接`, 12, `读取${platform} ${idLabel} 和歌曲信息`);
+  const data = await postJson(endpoint, { url: raw });
   activeTrack = {
     title: data.title,
     artists: data.artists.join(" / "),
     album: data.album || "",
     raw,
     url: raw,
-    orientation: "netease-url",
-    sourceId: data.id
+    orientation,
+    sourceId: data[idKey] || data.id
   };
   if (!albumInput.value && data.album) albumInput.value = data.album;
-  parseEvidence = `网易云链接解析为 <strong>${escapeHtml(data.title)}</strong> / <strong>${escapeHtml(data.artists.join(" / "))}</strong>${data.album ? `，专辑 <strong>${escapeHtml(data.album)}</strong>` : ""}。`;
+  parseEvidence = `${platform}链接解析为 <strong>${escapeHtml(data.title)}</strong> / <strong>${escapeHtml(data.artists.join(" / "))}</strong>${data.album ? `，专辑 <strong>${escapeHtml(data.album)}</strong>` : ""}。`;
   updateParsedLine();
-  setProgress("parse", "网易云解析完成", 18, `${data.title} / ${data.artists.join(" / ")}`);
-  setStatus("网易云完成");
+  setProgress("parse", `${platform}解析完成`, 18, `${data.title} / ${data.artists.join(" / ")}`);
+  setStatus(`${platform}完成`);
 }
 
 async function downloadTrackAudio(track) {
@@ -994,8 +1031,8 @@ form.addEventListener("submit", async event => {
   if (document.activeElement?.matches("input")) document.activeElement.blur();
   try {
     const track = currentTrack();
-    if (selectedFormat() === "netease-url") {
-      if (!track.raw) throw new Error("请输入网易云音乐歌曲链接。");
+    if (isMusicLinkFormat()) {
+      if (!track.raw) throw new Error(`请输入${currentPlatformName()}歌曲链接。`);
     } else if (!track.title) {
       throw new Error("请输入类似 “WALK IN PARADISE - DVRST” 的歌曲和艺人。");
     }
@@ -1010,6 +1047,8 @@ form.addEventListener("submit", async event => {
     setProgress("parse", "解析输入", 10, `使用选择格式：${formatLabel()}`);
     if (selectedFormat() === "netease-url") {
       await resolveNetEaseSong();
+    } else if (selectedFormat() === "qq-music-url") {
+      await resolveQQMusicSong();
     }
     await fetchMetadata();
     try {
