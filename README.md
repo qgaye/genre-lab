@@ -1,6 +1,6 @@
 # Genre Lab
 
-本项目是一个本地运行的音乐曲风分析工作台。它会结合音频模型、发行物元数据、用户标签和轻量音频指纹，输出统一的 `Genre / Style` 判断。
+本项目是一个本地运行的音乐曲风分析工作台。它会结合 Essentia 音频模型、发行物元数据和用户标签，输出统一的 `Genre / Style` 判断。
 
 ## 核心原则
 
@@ -143,9 +143,9 @@ primaryGenreName
 
 它通常是较粗的大类，例如 `Pop`、`Hip-Hop/Rap`、`R&B/Soul`。项目会尝试把它映射到 Discogs400，但它不是 style 级别证据，因此权重较低。
 
-### 6. Browser Audio Fingerprint
+### 6. Browser Audio Diagnostics
 
-前端还会提取轻量音频特征：
+前端还会展示轻量音频诊断指标：
 
 ```text
 BPM
@@ -156,7 +156,7 @@ Cowbell 区间能量
 过零率
 ```
 
-这些是启发式辅助证据，用来补充 Trap、House、Drum n Bass、Ambient 等明显声学特征。它们不替代 Essentia。
+这些指标只用于页面展示和排查音频读取状态，不参与 `Genre / Style` 打分。曲风判断应优先相信 Essentia 的 Discogs400 输出。
 
 ## 打分 / 投票方式
 
@@ -174,7 +174,6 @@ styleScore(label) =
   + DiscogsVote(label)
   + LastFmVote(label)
   + ITunesVote(label)
-  + AudioHeuristicVote(label)
 
 genreScore(genre) =
   directGenreVotes(genre)
@@ -191,7 +190,6 @@ EssentiaVote = max(14, 18 + relativeStrength * 72 * rankDecay)
 DiscogsVote = 14 for genre, 20 for style
 LastFmVote = 24 + countBoost
 ITunesVote = 16
-AudioHeuristicVote = rule-based points from BPM / bass / brightness / onset density
 ```
 
 `relativeStrength` 是 Essentia 当前标签相对 Top1 的强度，`rankDecay` 是按 Essentia 排名递减的轻微衰减系数。最终百分比只表示融合评分后的构成，不表示 Essentia 原始概率。
@@ -255,24 +253,9 @@ weight = 16
 
 它是粗粒度辅助证据。
 
-### Browser Audio Fingerprint 投票
+### Browser Audio Diagnostics
 
-前端启发式音频特征会根据 BPM、低频、频谱亮度、起音密度等条件给特定 Discogs400 标签加分。
-
-例如：
-
-```text
-强低频 + Hip Hop 速度区间 -> Hip Hop / Trap
-120-135 BPM + 起音密集 -> Electronic / House 或 Techno
-高速 + 明亮 + 起音密集 -> Electronic / Drum n Bass
-起伏少 + 低频弱 -> Electronic / Ambient
-```
-
-这些规则位于：
-
-```text
-public/app.js -> scoreAudio()
-```
+浏览器端的 BPM、低频占比、频谱明亮度、起音密度等指标只作为诊断展示，不再给任何 Discogs400 标签加分。这样可以避免粗浅启发式规则覆盖 Essentia 的模型判断。
 
 ## Style 与 Genre 的关系
 

@@ -327,7 +327,6 @@ input:focus {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
-  margin-top: 8px;
 }
 
 button {
@@ -375,6 +374,13 @@ button:disabled {
   background:
     linear-gradient(105deg, rgba(200, 255, 95, 0.14), transparent 36%),
     var(--panel-strong);
+  scroll-margin-top: 16px;
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.verdict.is-revealed {
+  border-color: rgba(200, 255, 95, 0.82);
+  box-shadow: 0 0 0 3px rgba(200, 255, 95, 0.12), 0 24px 80px rgba(0, 0, 0, 0.24);
 }
 
 .verdict-top,
@@ -561,13 +567,17 @@ li strong {
   .shell {
     width: min(calc(100% - 20px), 1440px);
     padding: max(10px, env(safe-area-inset-top)) 0 calc(18px + env(safe-area-inset-bottom) + var(--keyboard-inset));
-    gap: 14px;
+    gap: 12px;
   }
 
   .console,
   .panel,
   .verdict {
-    padding: 14px;
+    padding: 12px;
+  }
+
+  .input-grid {
+    gap: 10px;
   }
 
   .actions,
@@ -582,22 +592,66 @@ li strong {
   }
 
   .mast {
-    gap: 12px;
-    margin-bottom: 18px;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .kicker {
+    margin-bottom: 6px;
+    font-size: 11px;
   }
 
   h1 {
-    font-size: clamp(36px, 11vw, 52px);
+    font-size: clamp(32px, 9.8vw, 44px);
+    line-height: 0.95;
   }
 
   .status-pill {
     min-width: auto;
+    padding: 8px 10px;
+    font-size: 11px;
     white-space: nowrap;
   }
 
   .query-field input {
-    min-height: 58px;
+    min-height: 52px;
     font-size: 18px;
+  }
+
+  .parsed-line {
+    min-height: 0;
+    max-height: 74px;
+    padding: 8px 10px;
+    font-size: 14px;
+    line-height: 1.45;
+    overflow: auto;
+  }
+
+  .actions {
+    position: sticky;
+    bottom: calc(10px + env(safe-area-inset-bottom) + var(--keyboard-inset));
+    z-index: 5;
+  }
+
+  .primary {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+  }
+
+  .progress-card,
+  .fallbacks {
+    padding: 10px;
+  }
+
+  .progress-track {
+    margin: 9px 0;
+  }
+
+  .progress-log {
+    max-height: 72px;
+  }
+
+  .format-options {
+    grid-template-columns: minmax(0, 180px);
   }
 
   .format-options span,
@@ -616,6 +670,6 @@ li strong {
   }
 
   html.is-keyboard-open h1 {
-    font-size: clamp(32px, 10vw, 46px);
+    font-size: clamp(30px, 9vw, 40px);
   }
 }

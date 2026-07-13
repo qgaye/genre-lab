@@ -19,6 +19,111 @@ const RUNTIME_PATH = [
 ].join(path.delimiter);
 const MAX_AUDIO_BYTES = 90 * 1024 * 1024;
 const NETEASE_LINK_HOSTS = new Set(["163cn.tv", "music.163.com"]);
+const SEARCH_RESULT_LIMIT = 5;
+const YTDLP_SEARCH_SOURCES = {
+  youtube: { name: "youtube", label: "YouTube", prefix: "ytsearch", priority: 0 },
+  bilibili: { name: "bilibili", label: "Bilibili", prefix: "bilisearch", priority: 1, flatPlaylist: false, limit: 20 },
+  soundcloud: { name: "soundcloud", label: "SoundCloud", prefix: "scsearch", priority: 1 }
+};
+const CJK_VARIANT_MAP = new Map(Object.entries({
+  佈: "布",
+  來: "来",
+  們: "们",
+  個: "个",
+  傘: "伞",
+  內: "内",
+  再: "再",
+  動: "动",
+  勁: "劲",
+  勞: "劳",
+  勢: "势",
+  區: "区",
+  卻: "却",
+  參: "参",
+  變: "变",
+  只: "只",
+  另: "另",
+  同: "同",
+  嗎: "吗",
+  團: "团",
+  場: "场",
+  墮: "堕",
+  夢: "梦",
+  奮: "奋",
+  妳: "你",
+  實: "实",
+  對: "对",
+  將: "将",
+  層: "层",
+  嵐: "岚",
+  帶: "带",
+  幫: "帮",
+  幾: "几",
+  從: "从",
+  復: "复",
+  戀: "恋",
+  戰: "战",
+  戲: "戏",
+  換: "换",
+  擁: "拥",
+  擇: "择",
+  數: "数",
+  斷: "断",
+  於: "于",
+  時: "时",
+  會: "会",
+  東: "东",
+  樂: "乐",
+  樣: "样",
+  樓: "楼",
+  歲: "岁",
+  歸: "归",
+  氣: "气",
+  沒: "没",
+  淚: "泪",
+  為: "为",
+  無: "无",
+  愛: "爱",
+  爾: "尔",
+  獨: "独",
+  現: "现",
+  畫: "画",
+  當: "当",
+  發: "发",
+  的: "的",
+  盡: "尽",
+  眼: "眼",
+  著: "着",
+  處: "处",
+  裡: "里",
+  見: "见",
+  覺: "觉",
+  詞: "词",
+  語: "语",
+  說: "说",
+  誰: "谁",
+  請: "请",
+  變: "变",
+  貓: "猫",
+  起: "起",
+  過: "过",
+  還: "还",
+  開: "开",
+  間: "间",
+  關: "关",
+  隊: "队",
+  離: "离",
+  難: "难",
+  電: "电",
+  靈: "灵",
+  音: "音",
+  頭: "头",
+  願: "愿",
+  類: "类",
+  風: "风",
+  飛: "飞",
+  體: "体"
+}));
 
 function executablePath(commandName) {
   for (const dir of RUNTIME_PATH.split(path.delimiter).filter(Boolean)) {
@@ -193,6 +298,7 @@ function cleanTerm(value) {
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
+    .replace(/[\u3400-\u9FFF\uF900-\uFAFF]/gu, char => CJK_VARIANT_MAP.get(char) || char)
     .replace(/[^\p{L}\p{N}$!]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -694,15 +800,58 @@ function downloadWithYtDlp(input) {
   });
 }
 
-function listSearchCandidates(query) {
+function containsChineseText(value) {
+  return /[\u3400-\u9FFF\uF900-\uFAFF]/u.test(String(value || ""));
+}
+
+function titleSearchVariants(title) {
+  const raw = cleanTerm(title);
+  const variants = [
+    raw,
+    raw.replace(/\s*[\(\[（【].*?[\)\]）】]\s*/g, " ").trim()
+  ];
+  return uniqueNormalized(variants).filter(Boolean);
+}
+
+function selectSearchSources(query, target = {}) {
+  const artists = Array.isArray(target.artists) ? target.artists : [];
+  const text = [target.title || "", ...artists, query || ""].join(" ");
+  const secondary = containsChineseText(text)
+    ? YTDLP_SEARCH_SOURCES.bilibili
+    : YTDLP_SEARCH_SOURCES.soundcloud;
+  return [YTDLP_SEARCH_SOURCES.youtube, secondary];
+}
+
+function candidateUrlFromEntry(entry, source) {
+  const url = entry.webpage_url || entry.url || "";
+  if (/^https?:\/\//i.test(url)) return url;
+  if (entry.id && source.name === "youtube") {
+    return `https://www.youtube.com/watch?v=${entry.id}`;
+  }
+  if (entry.id && source.name === "bilibili") {
+    return `https://www.bilibili.com/video/${entry.id}`;
+  }
+  return "";
+}
+
+function sourceSearchQuery(source, fallbackQuery, target = {}) {
+  if (source.name !== "bilibili") return fallbackQuery;
+  const artists = Array.isArray(target.artists) ? target.artists.join(" ") : "";
+  return [target.title || "", artists].map(cleanTerm).filter(Boolean).join(" ") || fallbackQuery;
+}
+
+function listSearchCandidates(source, query) {
   return new Promise((resolve, reject) => {
+    const limit = source.limit || SEARCH_RESULT_LIMIT;
     const args = [
       "--no-update",
       "--no-warnings",
-      "--flat-playlist",
       "--dump-single-json",
-      `ytsearch5:${query}`
+      `${source.prefix}${limit}:${query}`
     ];
+    if (source.flatPlaylist !== false) {
+      args.splice(2, 0, "--flat-playlist");
+    }
     const child = spawn("yt-dlp", args, {
       cwd: ROOT,
       env: { ...process.env, PATH: RUNTIME_PATH },
@@ -731,10 +880,17 @@ function listSearchCandidates(query) {
         const data = JSON.parse(stdout);
         const entries = Array.isArray(data.entries) ? data.entries : [];
         resolve(entries
-          .map(entry => ({
-            title: entry.title || "",
-            url: entry.webpage_url || entry.url || (entry.id ? `https://www.youtube.com/watch?v=${entry.id}` : "")
-          }))
+          .filter(Boolean)
+          .map(entry => {
+            const url = candidateUrlFromEntry(entry, source);
+            return {
+              title: entry.title || entry.fulltitle || "",
+              url,
+              source: source.name,
+              sourceLabel: source.label,
+              sourcePriority: source.priority
+            };
+          })
           .filter(entry => /^https?:\/\//i.test(entry.url)));
       } catch (error) {
         reject(new Error(`无法解析 yt-dlp 搜索结果：${error.message}`));
@@ -743,19 +899,28 @@ function listSearchCandidates(query) {
   });
 }
 
+function searchResultSummary(searchResults) {
+  return searchResults.map(result => result.error
+    ? `${result.source.label} 搜索失败`
+    : `${result.source.label} ${result.candidates.length} 个`)
+    .join("，");
+}
+
 function candidateMatchScore(candidate, title, artists) {
   const candidateText = normalizeText(candidate.title);
-  const titleText = normalizeText(title);
   const artistText = normalizeText(artists.join(" "));
-  const titleTokens = titleText.split(" ").filter(token => token.length > 1);
   const artistTokens = artistText.split(" ").filter(token => token.length > 1);
   let score = 0;
 
-  if (titleText && candidateText.includes(titleText)) score += 70;
-  else if (titleTokens.length) {
+  const titleScores = titleSearchVariants(title).map(variant => {
+    const titleText = normalizeText(variant);
+    const titleTokens = titleText.split(" ").filter(token => token.length > 1);
+    if (titleText && candidateText.includes(titleText)) return 70;
+    if (!titleTokens.length) return 0;
     const hits = titleTokens.filter(token => candidateText.includes(token)).length;
-    score += Math.round((hits / titleTokens.length) * 46);
-  }
+    return Math.round((hits / titleTokens.length) * 46);
+  });
+  score += titleScores.length ? Math.max(...titleScores) : 0;
 
   if (artistText && candidateText.includes(artistText)) score += 42;
   else if (artistTokens.length) {
@@ -764,16 +929,34 @@ function candidateMatchScore(candidate, title, artists) {
   }
 
   if (/\b(official|audio|topic|provided to youtube)\b/i.test(candidate.title)) score += 8;
-  if (/\b(cover|karaoke|reaction|instrumental|remix|lyrics?)\b/i.test(candidate.title)) score -= 14;
+  if (/\b(cover|karaoke|reaction|instrumental|remix|lyrics?)\b/i.test(candidate.title) || /歌詞|歌词|動態歌詞|动态歌词/.test(candidate.title)) score -= 14;
   return score;
 }
 
-async function downloadSearchAudio(query, target = {}) {
-  const candidates = await listSearchCandidates(query);
+function rankSearchCandidates(candidates, target = {}) {
   const artists = Array.isArray(target.artists) ? target.artists : [];
-  const ranked = candidates
+  return uniqueBy(candidates, candidate => candidate.url)
     .map(candidate => ({ ...candidate, matchScore: candidateMatchScore(candidate, target.title || "", artists) }))
-    .sort((a, b) => b.matchScore - a.matchScore);
+    .sort((a, b) => {
+      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      return (a.sourcePriority || 0) - (b.sourcePriority || 0);
+    });
+}
+
+async function downloadSearchAudio(query, target = {}) {
+  const searchSources = selectSearchSources(query, target);
+  const results = await Promise.allSettled(searchSources.map(source => listSearchCandidates(source, sourceSearchQuery(source, query, target))));
+  const searchResults = results.map((result, index) => ({
+    source: searchSources[index],
+    candidates: result.status === "fulfilled" ? result.value : [],
+    error: result.status === "rejected" ? result.reason.message : ""
+  }));
+  const candidates = searchResults.flatMap(result => result.candidates);
+  const searchErrors = searchResults
+    .map(result => result.error ? `${result.source.label}: ${result.error}` : "")
+    .filter(Boolean);
+  const summary = searchResultSummary(searchResults);
+  const ranked = rankSearchCandidates(candidates, target);
   const viable = ranked.filter(candidate => candidate.matchScore >= 45);
   const errors = [];
   for (const candidate of viable) {
@@ -785,10 +968,11 @@ async function downloadSearchAudio(query, target = {}) {
     }
   }
   if (!candidates.length) {
-    throw new Error("没有找到可下载的公开视频候选。");
+    const detail = searchErrors.length ? ` 搜索错误：${searchErrors.join("；")}` : "";
+    throw new Error(`没有找到可下载的公开视频候选。搜索范围：${summary}。${detail}`);
   }
   if (!viable.length) {
-    throw new Error(`找到 ${candidates.length} 个候选，但没有标题足够匹配的音频。最佳候选：${ranked[0] ? ranked[0].title : "无"}`);
+    throw new Error(`找到 ${candidates.length} 个候选（${summary}），但没有标题足够匹配的音频。最佳候选：${ranked[0] ? `${ranked[0].sourceLabel} - ${ranked[0].title}` : "无"}`);
   }
   throw new Error(`找到 ${viable.length} 个匹配候选，但都无法下载：${errors.slice(0, 3).join("；")}`);
 }
@@ -821,13 +1005,16 @@ async function handleDownload(req, res) {
       downloadResult = await downloadSearchAudio(query, { title, artists });
       filePath = downloadResult.filePath;
       method = "yt-dlp-search";
-      selectedSource = downloadResult.candidate.title || query;
+      selectedSource = downloadResult.candidate.title
+        ? `${downloadResult.candidate.sourceLabel}: ${downloadResult.candidate.title}`
+        : query;
     }
 
     sendJson(res, 200, {
       method,
       source: selectedSource,
       matchScore: downloadResult && downloadResult.candidate ? downloadResult.candidate.matchScore : null,
+      sourcePlatform: downloadResult && downloadResult.candidate ? downloadResult.candidate.source : null,
       audioUrl: `/downloads/${path.basename(filePath)}`,
       fileName: path.basename(filePath)
     });
@@ -997,8 +1184,13 @@ if (require.main === module) {
 }
 
 module.exports = {
+  candidateMatchScore,
+  containsChineseText,
   extractHttpUrl,
   extractNetEaseSongId,
+  rankSearchCandidates,
   resolveNetEaseSongId,
+  selectSearchSources,
+  sourceSearchQuery,
   server
 };

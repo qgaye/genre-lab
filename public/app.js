@@ -24,6 +24,8 @@ const audioState = document.querySelector("#audioState");
 const evidenceList = document.querySelector("#evidenceList");
 const evidenceCount = document.querySelector("#evidenceCount");
 const scoreTemplate = document.querySelector("#scoreTemplate");
+const resultBoard = document.querySelector("#resultBoard");
+const verdictCard = document.querySelector(".verdict");
 
 let metadata = null;
 let downloadedAudioUrl = "";
@@ -62,6 +64,22 @@ function keepFocusedFieldVisible(event) {
   setTimeout(() => {
     event.target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
   }, 260);
+}
+
+function shouldGuideToResults() {
+  return window.matchMedia("(max-width: 980px)").matches;
+}
+
+function revealResults() {
+  if (!shouldGuideToResults() || !resultBoard || !verdictCard) return;
+  verdictCard.classList.remove("is-revealed");
+  resultBoard.scrollIntoView({ block: "start", behavior: "smooth" });
+  window.setTimeout(() => {
+    verdictCard.classList.add("is-revealed");
+  }, 360);
+  window.setTimeout(() => {
+    verdictCard.classList.remove("is-revealed");
+  }, 2200);
 }
 
 updateViewportMetrics();
@@ -433,50 +451,6 @@ function scoreKeyword(scores, tag, source, weight = 18, genreHint = "") {
   addDiscogsScore(scores, tag, genreHint, weight, `${source} 给出 Discogs Genre / Style 标签 “${tag}”`);
 }
 
-function scoreAudio(scores, features, evidence) {
-  if (!features) return;
-  const { bpm, bassRatio, cowbellRatio, brightness, onsetDensity, zcr, duration } = features;
-  evidence.push(`音频已解码：约 <strong>${Math.round(duration)} 秒</strong>，估计 BPM <strong>${Math.round(bpm || 0)}</strong>。`);
-
-  if (bpm >= 120 && bpm <= 180 && bassRatio > 0.32 && cowbellRatio > 0.11) {
-    addDiscogsScore(scores, "Trap", "Hip Hop", 34, "音频：高速区间 + 低频强 + cowbell/中高频脉冲突出");
-    evidence.push("音频特征显示低频和 cowbell 区间能量较强；本地 Discogs400 不含 Phonk，按最接近的 Hip Hop / Trap 计入。");
-  }
-  if (bpm >= 120 && bpm <= 180 && bassRatio > 0.45 && onsetDensity > 42 && brightness < 0.16) {
-    addDiscogsScore(scores, "Trap", "Hip Hop", 24, "音频：强低频、高推进感、暗色半拍制作");
-    evidence.push("音频特征显示 120-180 BPM、强低频和较暗的频谱重心；在 Discogs400 范围内按 Hip Hop / Trap 计入。");
-  }
-  if (bpm >= 95 && bpm < 125 && bassRatio > 0.45 && onsetDensity > 55 && brightness < 0.18) {
-    addDiscogsScore(scores, "Trap", "Hip Hop", 18, "音频：中速、强低频、暗色 Hip Hop 制作倾向");
-    evidence.push("音频特征显示中速但低频很强、频谱偏暗；在 Discogs400 范围内按 Hip Hop / Trap 倾向处理。");
-  }
-  if ((bpm >= 70 && bpm <= 105) || (bpm >= 130 && bpm <= 170)) {
-    if (bassRatio > 0.26 && onsetDensity > 22) {
-      addDiscogsScore(scores, "Hip Hop", "", 20, "音频：Hip Hop 常见速度区间，鼓点与低频明显");
-      addDiscogsScore(scores, "Trap", "Hip Hop", 14, "音频：半拍或双倍速度区间，808 倾向");
-    }
-  }
-  if (bpm >= 118 && bpm <= 136 && onsetDensity > 38) {
-    addDiscogsScore(scores, "House", "Electronic", 18, "音频：120-135 BPM 且起音密集");
-    addDiscogsScore(scores, "Techno", "Electronic", 12, "音频：120-135 BPM 且起音密集");
-  }
-  if (bpm >= 160 && bpm <= 185 && onsetDensity > 48 && brightness > 0.38) {
-    addDiscogsScore(scores, "Drum n Bass", "Electronic", 28, "音频：高速、明亮、起音密集");
-  }
-  if (brightness > 0.45 && zcr > 0.11 && onsetDensity > 32) {
-    addDiscogsScore(scores, "Rock", "", 14, "音频：高频/过零率较高，可能有失真或真实鼓组");
-  }
-  if (brightness > 0.52 && zcr > 0.14 && onsetDensity > 44) {
-    addDiscogsScore(scores, "Heavy Metal", "Rock", 12, "音频：高亮度、高过零率和密集起音");
-  }
-  if (onsetDensity < 12 && bassRatio < 0.22) {
-    addDiscogsScore(scores, "Ambient", "Electronic", 18, "音频：起伏较少、低频冲击弱");
-  }
-  if (bpm >= 88 && bpm <= 112 && brightness < 0.36 && onsetDensity < 34) {
-    addDiscogsScore(scores, "Contemporary R&B", "Funk / Soul", 10, "音频：中速、较柔和、起音不密集");
-  }
-}
-
 function splitEssentiaLabel(label) {
   const [genre, style] = String(label || "").split("---");
   return {
@@ -571,7 +545,7 @@ function buildVerdictReason(composition) {
   const uniqueReasons = uniqueBy(reasons, reason => reason).slice(0, 2);
   return uniqueReasons.length
     ? `主要依据：${uniqueReasons.join("；")}。`
-    : "主要依据：现有元信息与音频特征综合得分最高。";
+    : "主要依据：Essentia 音频模型与现有元信息综合得分最高。";
 }
 
 function analyzeEvidence() {
@@ -586,7 +560,9 @@ function analyzeEvidence() {
   for (const item of metadataTags.tags) scoreKeyword(scores, item.tag, item.source, item.weight || 18, item.genreHint || "");
   evidence.push(...metadataTags.evidence);
   scoreEssentia(scores, essentiaAnalysis, evidence);
-  scoreAudio(scores, audioFeatures, evidence);
+  if (audioFeatures) {
+    evidence.push(`音频已解码：约 <strong>${Math.round(audioFeatures.duration)} 秒</strong>，估计 BPM <strong>${Math.round(audioFeatures.bpm || 0)}</strong>；这些浏览器端轻量指标仅展示，不参与曲风评分。`);
+  }
 
   const sorted = [...scores.values()]
     .map(item => ({ ...item, score: Math.max(0, Math.min(100, Math.round(item.score))) }))
@@ -811,7 +787,7 @@ async function analyzeAudio(source) {
 
   audioState.textContent = source instanceof File ? "本地上传" : "已下载";
   renderFeatures(audioFeatures);
-  setProgress("decode", "音频指纹完成", 86, `BPM ${Math.round(audioFeatures.bpm || 0)}，低频 ${Math.round(audioFeatures.bassRatio * 100)}%`);
+  setProgress("decode", "音频诊断完成", 86, `BPM ${Math.round(audioFeatures.bpm || 0)}，低频 ${Math.round(audioFeatures.bassRatio * 100)}%`);
   setStatus("音频完成");
 }
 
@@ -956,6 +932,7 @@ for (const input of formatInputs) {
 
 form.addEventListener("submit", async event => {
   event.preventDefault();
+  if (document.activeElement?.matches("input")) document.activeElement.blur();
   try {
     const track = currentTrack();
     if (selectedFormat() === "netease-url") {
@@ -983,9 +960,10 @@ form.addEventListener("submit", async event => {
       downloadEvidence = `按当前格式解析为 <strong>${escapeHtml(failedTrack.title)}</strong> / <strong>${escapeHtml(failedTrack.artists || "未知艺人")}</strong>，但没有找到足够匹配的公开音频：${escapeHtml(downloadError.message)}。`;
       setProgress("download", "音频获取失败", 72, "当前格式没有找到匹配音频");
     }
-    setProgress("score", "融合证据评分", 90, "合并艺人、标签、专辑与音频指纹");
+    setProgress("score", "融合证据评分", 90, "合并 Essentia、艺人、标签与专辑证据");
     analyzeEvidence();
     setProgress("score", "分析完成", 100, "结果已生成");
+    revealResults();
   } catch (error) {
     setStatus("失败");
     setProgress("score", "分析失败", 100, error.message);
