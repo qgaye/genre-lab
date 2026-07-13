@@ -1144,7 +1144,14 @@ function serveStatic(req, res) {
       res.end("Not found");
       return;
     }
-    res.writeHead(200, { "content-type": MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream" });
+    const ext = path.extname(filePath).toLowerCase();
+    const headers = {
+      "content-type": MIME[ext] || "application/octet-stream"
+    };
+    if ([".html", ".css", ".js"].includes(ext)) {
+      headers["cache-control"] = "no-cache, must-revalidate";
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 }
