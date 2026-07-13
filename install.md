@@ -236,7 +236,7 @@ node scripts/build_discogs_taxonomy.js
 1. 用户上传本地音频
 2. 使用 `yt-dlp` 搜索/下载公开视频音频
 
-项目默认工作流是输入歌名/艺人后自动搜索并下载可分析音频，因此 **`yt-dlp` 是推荐安装的必需依赖**。
+项目默认工作流是输入歌名/艺人后自动搜索并下载可分析音频，因此 **`yt-dlp` 是推荐安装的必需依赖**。当 `yt-dlp` 需要抽取音频或转码为 mp3 时，还必须能找到 **`ffmpeg` 和 `ffprobe`**。
 
 只有在完全依赖页面里的“本地音频上传”时，才可以不安装 `yt-dlp`。这种情况下无法使用自动搜索和下载能力。
 
@@ -244,18 +244,33 @@ node scripts/build_discogs_taxonomy.js
 
 ```bash
 yt-dlp --version
+ffmpeg -version
+ffprobe -version
 ```
 
 安装方式可按本机环境选择，例如：
 
 ```bash
-brew install yt-dlp
+brew install yt-dlp ffmpeg
 ```
 
 或：
 
 ```bash
 python3 -m pip install -U yt-dlp
+sudo apt-get install -y ffmpeg
+```
+
+远端部署推荐直接运行：
+
+```bash
+bash scripts/setup_server.sh
+```
+
+脚本会安装/校验 `yt-dlp`、`ffmpeg`、`ffprobe`，并把 `ffmpeg/ffprobe` 链接到项目 `bin/` 目录，服务端会自动把这个目录传给 `yt-dlp`。如果使用自定义安装路径，可以在启动服务前设置：
+
+```bash
+FFMPEG_LOCATION=/path/to/ffmpeg-directory npm start
 ```
 
 相关服务端函数：
@@ -391,6 +406,6 @@ curl --fail --silent --show-error \
 
 Essentia / TensorFlow 首次加载 graph 时会输出 INFO/WARNING 日志。这不代表分析失败，最终 JSON 或 `Top genre/style predictions` 才是结果。
 
-### yt-dlp 不可用
+### yt-dlp 或 ffmpeg 不可用
 
-自动搜索/下载音频依赖 `yt-dlp`。如果不可用，输入歌名后的自动音频获取会失败；可以临时使用页面里的本地音频上传，Essentia 分析仍然可用。
+自动搜索/下载音频依赖 `yt-dlp`，音频抽取/转码依赖 `ffmpeg` 和 `ffprobe`。如果不可用，输入歌名后的自动音频获取会失败；可以临时使用页面里的本地音频上传，Essentia 分析仍然可用。

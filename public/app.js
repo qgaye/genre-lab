@@ -794,6 +794,7 @@ async function analyzeEssentia(fileName) {
     setProgress("decode", "Essentia 未完成", 88, error.message);
   }
   renderFeatures(audioFeatures);
+  return essentiaAnalysis;
 }
 
 async function fetchMetadata() {
@@ -858,7 +859,10 @@ async function findAndAnalyzeAudio() {
     downloadedAudioUrl = uploaded.audioUrl;
     downloadEvidence = `使用用户上传的本地音频 ${escapeHtml(file.name)}；已保存为 ${escapeHtml(uploaded.fileName)} 并纳入 Essentia 分析。`;
     await analyzeAudio(file);
-    await analyzeEssentia(uploaded.fileName);
+    const essentia = await analyzeEssentia(uploaded.fileName);
+    if (essentia && essentia.deletedAudio) {
+      downloadEvidence += " 分析完成后已删除服务端临时音频。";
+    }
     return;
   }
 
@@ -874,7 +878,10 @@ async function findAndAnalyzeAudio() {
     : `使用指定音频来源：${escapeHtml(data.source)}`;
   downloadEvidence = `${sourceText}；已下载为 ${escapeHtml(data.fileName)} 并解码分析。`;
   await analyzeAudio(downloadedAudioUrl);
-  await analyzeEssentia(data.fileName);
+  const essentia = await analyzeEssentia(data.fileName);
+  if (essentia && essentia.deletedAudio) {
+    downloadEvidence += " 分析完成后已删除本地临时音频。";
+  }
 }
 
 fileInput.addEventListener("change", () => {

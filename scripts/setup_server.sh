@@ -344,6 +344,36 @@ install_python_packages() {
     "$VENV_DIR/bin/python" -m pip install --upgrade essentia-tensorflow yt-dlp
 }
 
+install_ffmpeg() {
+  if ! command_exists ffmpeg || ! command_exists ffprobe; then
+    if command_exists brew; then
+      brew install ffmpeg || true
+    elif command_exists apt-get; then
+      sudo_cmd apt-get update || true
+      sudo_cmd apt-get install -y ffmpeg || true
+    elif command_exists dnf; then
+      sudo_cmd dnf install -y ffmpeg || true
+    elif command_exists yum; then
+      sudo_cmd yum install -y ffmpeg || true
+    elif command_exists apk; then
+      sudo_cmd apk add --no-cache ffmpeg || true
+    else
+      echo "No supported package manager found. Install ffmpeg manually, or set FFMPEG_LOCATION."
+    fi
+  fi
+
+  if ! command_exists ffmpeg || ! command_exists ffprobe; then
+    echo "ffmpeg and ffprobe are required for yt-dlp audio postprocessing."
+    return 1
+  fi
+
+  mkdir -p "$NODE_BIN_DIR"
+  ln -sfn "$(command -v ffmpeg)" "$NODE_BIN_DIR/ffmpeg"
+  ln -sfn "$(command -v ffprobe)" "$NODE_BIN_DIR/ffprobe"
+  ffmpeg -version | head -n 1
+  ffprobe -version | head -n 1
+}
+
 verify_essentia() {
   "$VENV_DIR/bin/python" - <<'PY'
 import essentia
@@ -468,6 +498,7 @@ main() {
   run_step "Python 3.10" install_python310
   run_step "Python virtualenv" create_python_env
   run_step "Python packages" install_python_packages
+  run_step "ffmpeg / ffprobe" install_ffmpeg
   run_step "Essentia import" verify_essentia
   run_step "yt-dlp" verify_ytdlp
   run_step "Essentia models" download_models

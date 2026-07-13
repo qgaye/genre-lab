@@ -19,6 +19,40 @@ const RUNTIME_PATH = [
 ].join(path.delimiter);
 const MAX_AUDIO_BYTES = 90 * 1024 * 1024;
 
+function executablePath(commandName) {
+  for (const dir of RUNTIME_PATH.split(path.delimiter).filter(Boolean)) {
+    const candidate = path.join(dir, commandName);
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {}
+  }
+  return "";
+}
+
+function ytdlpFfmpegLocation() {
+  const configured = process.env.FFMPEG_LOCATION || process.env.YTDLP_FFMPEG_LOCATION || "";
+  if (configured) return configured;
+
+  const ffmpeg = executablePath("ffmpeg");
+  const ffprobe = executablePath("ffprobe");
+  if (ffmpeg && ffprobe && path.dirname(ffmpeg) === path.dirname(ffprobe)) {
+    return path.dirname(ffmpeg);
+  }
+  return "";
+}
+
+function cleanYtDlpError(stderr, fallback) {
+  const message = stderr.trim() || fallback;
+  if (/ffprobe and ffmpeg not found|ffmpeg not found|ffprobe not found/i.test(message)) {
+    return [
+      "服务器缺少 ffmpeg/ffprobe，yt-dlp 无法把公开视频转成可分析音频。",
+      "请在远端运行 scripts/setup_server.sh，或安装 ffmpeg 后重启服务；也可以设置 FFMPEG_LOCATION 指向 ffmpeg/ffprobe 所在目录。"
+    ].join(" ");
+  }
+  return message;
+}
+
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return;
   const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
@@ -488,8 +522,23 @@ function safeAudioExtension(fileName, fallback = ".mp3") {
 function localDownloadPath(fileName) {
   const baseName = path.basename(String(fileName || ""));
   if (!baseName) return "";
-  const filePath = path.normalize(path.join(DOWNLOAD_DIR, baseName));
-  return filePath.startsWith(DOWNLOAD_DIR) ? filePath : "";
+  const filePath = path.resolve(DOWNLOAD_DIR, baseName);
+  const relative = path.relative(DOWNLOAD_DIR, filePath);
+  return relative && !relative.startsWith("..") && !path.isAbsolute(relative) ? filePath : "";
+}
+
+async function deleteLocalAudio(filePath) {
+  const relative = path.relative(DOWNLOAD_DIR, filePath);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) return false;
+  try {
+    await fs.promises.unlink(filePath);
+    return true;
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.warn(`无法删除临时音频 ${path.basename(filePath)}: ${error.message}`);
+    }
+    return false;
+  }
 }
 
 function downloadDirectAudio(url, outputPath) {
@@ -542,10 +591,11 @@ function downloadWithYtDlp(input) {
       "--max-filesize", "90M",
       "--extract-audio",
       "--audio-format", "mp3",
-      "--audio-quality", "5",
-      "-o", template,
-      input
+      "--audio-quality", "5"
     ];
+    const ffmpegLocation = ytdlpFfmpegLocation();
+    if (ffmpegLocation) args.push("--ffmpeg-location", ffmpegLocation);
+    args.push("-o", template, input);
     const child = spawn("yt-dlp", args, {
       cwd: ROOT,
       env: { ...process.env, PATH: RUNTIME_PATH },
@@ -565,7 +615,7 @@ function downloadWithYtDlp(input) {
     child.on("close", code => {
       clearTimeout(timer);
       if (code !== 0) {
-        reject(new Error(stderr.trim() || `yt-dlp 退出码 ${code}`));
+        reject(new Error(cleanYtDlpError(stderr, `yt-dlp 退出码 ${code}`)));
         return;
       }
       const file = fs.readdirSync(DOWNLOAD_DIR).find(name => name.startsWith(base + "."));
@@ -793,6 +843,7 @@ function analyzeWithEssentia(filePath, top = 12) {
 }
 
 async function handleEssentia(req, res) {
+  let cleanupPath = "";
   try {
     const body = await readBody(req);
     const fileName = body.fileName || String(body.audioUrl || "").replace(/^\/downloads\//, "");
@@ -801,13 +852,18 @@ async function handleEssentia(req, res) {
       sendJson(res, 404, { error: "没有找到可供 Essentia 分析的本地音频文件。" });
       return;
     }
+    cleanupPath = filePath;
     const result = await analyzeWithEssentia(filePath, Math.max(1, Math.min(30, Number(body.top || 12))));
+    const deletedAudio = await deleteLocalAudio(filePath);
+    cleanupPath = "";
     sendJson(res, 200, {
       ...result,
       fileName: path.basename(filePath),
-      source: "essentia-discogs400"
+      source: "essentia-discogs400",
+      deletedAudio
     });
   } catch (error) {
+    if (cleanupPath) await deleteLocalAudio(cleanupPath);
     sendJson(res, 500, { error: error.message });
   }
 }
