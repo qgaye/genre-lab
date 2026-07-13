@@ -1,5 +1,7 @@
 :root {
   color-scheme: dark;
+  --app-height: 100vh;
+  --keyboard-inset: 0px;
   --ink: #f4f0e8;
   --muted: #a9aa9d;
   --dim: #73766c;
@@ -17,9 +19,15 @@
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: var(--app-height);
+  overflow-x: hidden;
   color: var(--ink);
   background:
     linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
@@ -37,9 +45,9 @@ input {
 }
 
 .shell {
-  width: min(1440px, calc(100vw - 32px));
+  width: min(1440px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0;
+  padding: 28px 0 calc(28px + env(safe-area-inset-bottom) + var(--keyboard-inset));
   display: grid;
   grid-template-columns: minmax(340px, 0.88fr) minmax(520px, 1.12fr);
   gap: 18px;
@@ -55,7 +63,7 @@ input {
 }
 
 .console {
-  min-height: calc(100vh - 56px);
+  min-height: calc(var(--app-height) - 56px);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -233,6 +241,7 @@ input {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.055);
   padding: 0 14px;
+  font-size: max(16px, 1em);
 }
 
 input:focus {
@@ -266,6 +275,10 @@ input:focus {
 
 .format-options input {
   position: absolute;
+  width: 1px;
+  min-height: 0;
+  height: 1px;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
 }
@@ -546,8 +559,9 @@ li strong {
 
 @media (max-width: 620px) {
   .shell {
-    width: min(100vw - 20px, 1440px);
-    padding: 10px 0;
+    width: min(calc(100% - 20px), 1440px);
+    padding: max(10px, env(safe-area-inset-top)) 0 calc(18px + env(safe-area-inset-bottom) + var(--keyboard-inset));
+    gap: 14px;
   }
 
   .console,
@@ -565,5 +579,43 @@ li strong {
 
   .score-row b {
     text-align: left;
+  }
+
+  .mast {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-size: clamp(36px, 11vw, 52px);
+  }
+
+  .status-pill {
+    min-width: auto;
+    white-space: nowrap;
+  }
+
+  .query-field input {
+    min-height: 58px;
+    font-size: 18px;
+  }
+
+  .format-options span,
+  button {
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 620px) {
+  html.is-keyboard-open .shell {
+    padding-top: 8px;
+  }
+
+  html.is-keyboard-open .mast {
+    margin-bottom: 14px;
+  }
+
+  html.is-keyboard-open h1 {
+    font-size: clamp(32px, 10vw, 46px);
   }
 }

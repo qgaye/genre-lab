@@ -18,6 +18,7 @@ const RUNTIME_PATH = [
   process.env.PATH || ""
 ].join(path.delimiter);
 const MAX_AUDIO_BYTES = 90 * 1024 * 1024;
+const NETEASE_LINK_HOSTS = new Set(["163cn.tv", "music.163.com"]);
 
 function executablePath(commandName) {
   for (const dir of RUNTIME_PATH.split(path.delimiter).filter(Boolean)) {
@@ -150,6 +151,32 @@ function fetchJson(url, headers = {}) {
         } catch (error) {
           reject(new Error(`Could not parse ${url}: ${error.message}`));
         }
+      });
+    });
+    req.on("timeout", () => {
+      req.destroy(new Error("Network request timed out."));
+    });
+    req.on("error", reject);
+  });
+}
+
+function fetchRedirectLocation(url) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith("https:") ? https : http;
+    const req = lib.get(url, {
+      headers: {
+        "accept": "text/html,application/xhtml+xml",
+        "user-agent": "GenreLab/1.0 (local research tool)"
+      },
+      timeout: 12000
+    }, res => {
+      const location = res.headers.location
+        ? new URL(res.headers.location, url).toString()
+        : "";
+      res.resume();
+      resolve({
+        statusCode: res.statusCode || 0,
+        location
       });
     });
     req.on("timeout", () => {
@@ -474,14 +501,53 @@ async function handleMetadata(req, res) {
 
 function extractNetEaseSongId(value) {
   const text = cleanTerm(value);
-  const idMatch = text.match(/[?&]id=(\d+)/) || text.match(/\/song\/(\d+)/) || text.match(/^\d+$/);
-  return idMatch ? idMatch[1] : "";
+  const idMatch = text.match(/[?&#]id=(\d+)/i) || text.match(/\/song\/(\d+)/i) || text.match(/^\d+$/);
+  return idMatch ? (idMatch[1] || idMatch[0]) : "";
+}
+
+function extractHttpUrl(value) {
+  const text = cleanTerm(value);
+  const urlMatch = text.match(/https?:\/\/[^\s<>"'，。；、]+/i);
+  if (!urlMatch) return "";
+  return urlMatch[0].replace(/[)\]）】,，。；;!！?？]+$/g, "");
+}
+
+function isAllowedNetEaseLink(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return NETEASE_LINK_HOSTS.has(host) || host.endsWith(".music.163.com");
+  } catch {
+    return false;
+  }
+}
+
+async function resolveNetEaseSongId(value) {
+  const directId = extractNetEaseSongId(value);
+  if (directId) return directId;
+
+  let url = extractHttpUrl(value);
+  if (!url || !isAllowedNetEaseLink(url)) return "";
+
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const id = extractNetEaseSongId(url);
+    if (id) return id;
+
+    const result = await fetchRedirectLocation(url);
+    if (result.statusCode < 300 || result.statusCode >= 400 || !result.location) {
+      return "";
+    }
+    if (!isAllowedNetEaseLink(result.location)) {
+      return "";
+    }
+    url = result.location;
+  }
+  return "";
 }
 
 async function handleNetEaseSong(req, res) {
   try {
     const body = await readBody(req);
-    const id = extractNetEaseSongId(body.url || body.id || "");
+    const id = await resolveNetEaseSongId(body.url || body.id || "");
     if (!id) {
       sendJson(res, 400, { error: "没有在网易云链接中找到 song id。" });
       return;
@@ -924,6 +990,15 @@ const server = http.createServer((req, res) => {
   sendJson(res, 405, { error: "Method not allowed" });
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`Genre Lab running at http://${HOST}:${PORT}`);
-});
+if (require.main === module) {
+  server.listen(PORT, HOST, () => {
+    console.log(`Genre Lab running at http://${HOST}:${PORT}`);
+  });
+}
+
+module.exports = {
+  extractHttpUrl,
+  extractNetEaseSongId,
+  resolveNetEaseSongId,
+  server
+};

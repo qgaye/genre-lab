@@ -51,7 +51,9 @@ run_step() {
 }
 
 command_exists() {
-  command -v "$1" >/dev/null 2>&1
+  local command_path
+  command_path="$(command -v "$1" 2>/dev/null)" || return 1
+  [ -n "$command_path" ] && [ -x "$command_path" ]
 }
 
 sudo_cmd() {
@@ -383,7 +385,9 @@ install_static_ffmpeg() {
 
   if [ ! -x "$install_dir/ffmpeg" ] || [ ! -x "$install_dir/ffprobe" ]; then
     rm -rf "$install_dir" "$LOG_DIR"/ffmpeg-*-static
-    curl --fail --location --output "$tmp_archive" "$url"
+    echo "Downloading static ffmpeg from $url"
+    echo "This archive can be large; timeout is 15 minutes."
+    curl --fail --location --connect-timeout 20 --max-time 900 --output "$tmp_archive" "$url"
     tar -xJf "$tmp_archive" -C "$LOG_DIR"
     extracted_dir="$(find "$LOG_DIR" -maxdepth 1 -type d -name "ffmpeg-*-static" | head -n 1)"
     if [ -z "$extracted_dir" ]; then
@@ -401,6 +405,7 @@ install_static_ffmpeg() {
 }
 
 install_ffmpeg() {
+  local ffmpeg_path ffprobe_path
   export PATH="$NODE_BIN_DIR:$PATH"
 
   if ! command_exists ffmpeg || ! command_exists ffprobe; then
@@ -430,11 +435,19 @@ install_ffmpeg() {
     return 1
   fi
 
+  ffmpeg_path="$(command -v ffmpeg)"
+  ffprobe_path="$(command -v ffprobe)"
+
   mkdir -p "$NODE_BIN_DIR"
-  ln -sfn "$(command -v ffmpeg)" "$NODE_BIN_DIR/ffmpeg"
-  ln -sfn "$(command -v ffprobe)" "$NODE_BIN_DIR/ffprobe"
-  ffmpeg -version | head -n 1
-  ffprobe -version | head -n 1
+  if [ "$ffmpeg_path" != "$NODE_BIN_DIR/ffmpeg" ]; then
+    ln -sfn "$ffmpeg_path" "$NODE_BIN_DIR/ffmpeg"
+  fi
+  if [ "$ffprobe_path" != "$NODE_BIN_DIR/ffprobe" ]; then
+    ln -sfn "$ffprobe_path" "$NODE_BIN_DIR/ffprobe"
+  fi
+
+  "$NODE_BIN_DIR/ffmpeg" -version | head -n 1
+  "$NODE_BIN_DIR/ffprobe" -version | head -n 1
 }
 
 verify_essentia() {
@@ -469,7 +482,7 @@ download_file() {
 
   local tmp="${output}.part"
   rm -f "$tmp"
-  curl --fail --location --output "$tmp" "$url"
+  curl --fail --location --connect-timeout 20 --max-time 900 --output "$tmp" "$url"
   local size
   size="$(wc -c <"$tmp" | tr -d ' ')"
   if [ "$size" -lt "$min_bytes" ]; then

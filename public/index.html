@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
@@ -22,24 +22,16 @@
             <legend>输入格式</legend>
             <div class="format-options">
               <label>
-                <input type="radio" name="inputFormat" value="song-artist" checked>
-                <span>歌曲 - 艺人</span>
-              </label>
-              <label>
-                <input type="radio" name="inputFormat" value="artist-song">
-                <span>艺人 - 歌曲</span>
-              </label>
-              <label>
-                <input type="radio" name="inputFormat" value="netease-url">
+                <input type="radio" name="inputFormat" value="netease-url" checked>
                 <span>网易云音乐链接</span>
               </label>
             </div>
           </fieldset>
           <label class="query-field">
             <span>歌曲信息</span>
-            <input id="trackInput" autocomplete="off" placeholder="例如：WALK IN PARADISE - DVRST">
+            <input id="trackInput" autocomplete="off" placeholder="例如：https://music.163.com/song?id=38689021&uct2=...">
           </label>
-          <div class="parsed-line" id="parsedLine">默认按“歌曲 - 艺人”解析，并搜索对应公开音频</div>
+          <div class="parsed-line" id="parsedLine">将解析网易云歌曲链接，再搜索对应公开音频</div>
           <div class="progress-card" id="progressCard">
             <div class="progress-top">
               <span id="progressLabel">准备就绪</span>

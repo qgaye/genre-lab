@@ -36,6 +36,44 @@ let parseEvidence = "";
 const MIN_VISIBLE_STYLE_PERCENT = 10;
 const MAX_VISIBLE_STYLE_ITEMS = 6;
 
+const viewportRoot = document.documentElement;
+let viewportUpdateFrame = 0;
+
+function updateViewportMetrics() {
+  if (viewportUpdateFrame) cancelAnimationFrame(viewportUpdateFrame);
+  viewportUpdateFrame = requestAnimationFrame(() => {
+    const visualViewport = window.visualViewport;
+    const viewportHeight = visualViewport ? visualViewport.height : window.innerHeight;
+    const rawKeyboardInset = visualViewport
+      ? Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
+      : 0;
+    const isTextInputFocused = document.activeElement?.matches("input");
+    const keyboardInset = isTextInputFocused && rawKeyboardInset > 80 ? rawKeyboardInset : 0;
+
+    viewportRoot.style.setProperty("--app-height", `${Math.round(viewportHeight)}px`);
+    viewportRoot.style.setProperty("--keyboard-inset", `${Math.round(keyboardInset)}px`);
+    viewportRoot.classList.toggle("is-keyboard-open", keyboardInset > 0);
+    viewportUpdateFrame = 0;
+  });
+}
+
+function keepFocusedFieldVisible(event) {
+  if (!event.target.matches("input")) return;
+  setTimeout(() => {
+    event.target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  }, 260);
+}
+
+updateViewportMetrics();
+window.addEventListener("resize", updateViewportMetrics);
+window.addEventListener("orientationchange", updateViewportMetrics);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", updateViewportMetrics);
+  window.visualViewport.addEventListener("scroll", updateViewportMetrics);
+}
+document.addEventListener("focusin", keepFocusedFieldVisible);
+document.addEventListener("focusout", updateViewportMetrics);
+
 const TAXONOMY = window.DISCOGS_TAXONOMY || { genres: [], aliases: {} };
 const GENRES = (TAXONOMY.genres || []).map(genre => ({
   name: genre.name,
@@ -161,7 +199,7 @@ function uniqueBy(items, keyFn) {
 }
 
 function selectedFormat() {
-  return formatInputs.find(input => input.checked)?.value || "song-artist";
+  return formatInputs.find(input => input.checked)?.value || "netease-url";
 }
 
 function formatLabel() {
@@ -170,7 +208,7 @@ function formatLabel() {
     "artist-song": "艺人 - 歌曲",
     "netease-url": "网易云音乐链接"
   };
-  return labels[selectedFormat()] || labels["song-artist"];
+  return labels[selectedFormat()] || labels["netease-url"];
 }
 
 function parseTrackInput(value) {
