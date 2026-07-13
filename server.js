@@ -10,6 +10,7 @@ const HOST = process.env.HOST || "127.0.0.1";
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DOWNLOAD_DIR = path.join(ROOT, "downloads");
+const DEFAULT_CONFIG_FILE = path.join(ROOT, "config", "defaults.json");
 const ESSENTIA_PYTHON = path.join(ROOT, ".venv-essentia", "bin", "python");
 const ESSENTIA_SCRIPT = path.join(ROOT, "scripts", "analyze_genre.py");
 const RUNTIME_PATH = [
@@ -170,6 +171,18 @@ function loadEnvFile(filePath) {
   }
 }
 
+function loadDefaultConfig() {
+  if (!fs.existsSync(DEFAULT_CONFIG_FILE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(DEFAULT_CONFIG_FILE, "utf8"));
+  } catch (error) {
+    console.warn(`无法读取默认配置 ${DEFAULT_CONFIG_FILE}: ${error.message}`);
+    return {};
+  }
+}
+
+const DEFAULT_CONFIG = loadDefaultConfig();
+
 loadEnvFile(path.join(ROOT, ".env.local"));
 loadEnvFile(path.join(ROOT, ".env"));
 
@@ -251,6 +264,18 @@ function fetchJson(url, headers = {}) {
       res.setEncoding("utf8");
       res.on("data", chunk => data += chunk);
       res.on("end", () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          const source = (() => {
+            try {
+              const parsed = new URL(url);
+              return `${parsed.hostname}${parsed.pathname}`;
+            } catch {
+              return url;
+            }
+          })();
+          reject(new Error(`${source} 返回 HTTP ${res.statusCode}${data ? `：${data.slice(0, 160)}` : ""}`));
+          return;
+        }
         try {
           resolve(JSON.parse(data));
         } catch (error) {
@@ -432,8 +457,15 @@ function lastFmPathPart(value) {
 }
 
 async function searchITunes(title, artists) {
-  const term = encodeURIComponent([title, artists[0] || ""].join(" "));
-  const url = `https://itunes.apple.com/search?entity=song&limit=8&term=${term}`;
+  const params = new URLSearchParams({
+    media: "music",
+    entity: "song",
+    limit: "8",
+    term: [title, artists[0] || ""].join(" ")
+  });
+  const country = String(process.env.ITUNES_COUNTRY || DEFAULT_CONFIG.itunesCountry || "").trim();
+  if (/^[a-z]{2}$/i.test(country)) params.set("country", country.toUpperCase());
+  const url = `https://itunes.apple.com/search?${params.toString()}`;
   const data = await fetchJson(url, { "user-agent": "GenreLab/1.0" });
   return (data.results || [])
     .map(item => {

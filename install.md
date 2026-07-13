@@ -318,6 +318,16 @@ DISCOGS_TOKEN
 
 没有 `DISCOGS_TOKEN` 时，Discogs 搜索仍会尝试匿名请求，但可能被限流。
 
+iTunes Search API 是公开 HTTPS 接口，不依赖 macOS 或本机 iTunes。云服务器需要能访问 `https://itunes.apple.com/search`；如果云上有访问限制，页面证据链会显示 iTunes 请求失败原因。
+
+项目默认配置位于：
+
+```text
+config/defaults.json
+```
+
+其中 `itunesCountry` 默认是 `CN`。如需临时覆盖 iTunes Search API 的 storefront，也可以设置环境变量 `ITUNES_COUNTRY`，例如 `CN`、`US`、`JP`。
+
 ## 目录依赖
 
 服务启动或运行过程中会使用这些目录：

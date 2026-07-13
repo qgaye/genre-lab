@@ -143,6 +143,8 @@ primaryGenreName
 
 它通常是较粗的大类，例如 `Pop`、`Hip-Hop/Rap`、`R&B/Soul`。项目会尝试把它映射到 Discogs400，但它不是 style 级别证据，因此权重较低。
 
+iTunes Search API 是公开 HTTPS 接口，不依赖 macOS 或本机 iTunes。云服务器只需要能访问 `https://itunes.apple.com/search`。项目默认使用 `config/defaults.json` 中的 `itunesCountry: "CN"`；如果临时需要覆盖，可设置 `ITUNES_COUNTRY`。
+
 ### 6. Browser Audio Diagnostics
 
 前端还会展示轻量音频诊断指标：
@@ -347,3 +349,11 @@ HOST=127.0.0.1
 没有 `LASTFM_API_KEY` 时，Last.fm 歌曲级标签不会参与评分。
 
 没有 `DISCOGS_TOKEN` 时，Discogs 搜索仍会尝试匿名请求，但可能遇到限流。
+
+项目默认配置位于：
+
+```text
+config/defaults.json
+```
+
+其中 `itunesCountry` 默认是 `CN`。如需临时覆盖 iTunes Search API 的 storefront，也可以设置 `ITUNES_COUNTRY`，例如 `CN`、`US`、`JP`。

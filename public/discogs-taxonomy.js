@@ -907,6 +907,12 @@ window.DISCOGS_TAXONOMY = {
     "hip hop": {
       "genre": "Hip Hop"
     },
+    "hip hop rap": {
+      "genre": "Hip Hop"
+    },
+    "rap": {
+      "genre": "Hip Hop"
+    },
     "r and b": {
       "genre": "Funk / Soul",
       "style": "Contemporary R&B"
@@ -915,9 +921,53 @@ window.DISCOGS_TAXONOMY = {
       "genre": "Funk / Soul",
       "style": "Contemporary R&B"
     },
+    "r b": {
+      "genre": "Funk / Soul",
+      "style": "Contemporary R&B"
+    },
+    "r b soul": {
+      "genre": "Funk / Soul",
+      "style": "Contemporary R&B"
+    },
+    "r and b soul": {
+      "genre": "Funk / Soul",
+      "style": "Contemporary R&B"
+    },
     "rhythm and blues": {
       "genre": "Funk / Soul",
       "style": "Rhythm & Blues"
+    },
+    "alternative": {
+      "genre": "Rock",
+      "style": "Alternative Rock"
+    },
+    "dance": {
+      "genre": "Electronic",
+      "style": "Dance-pop"
+    },
+    "soundtrack": {
+      "genre": "Stage & Screen",
+      "style": "Soundtrack"
+    },
+    "sound track": {
+      "genre": "Stage & Screen",
+      "style": "Soundtrack"
+    },
+    "j pop": {
+      "genre": "Pop",
+      "style": "J-pop"
+    },
+    "jpop": {
+      "genre": "Pop",
+      "style": "J-pop"
+    },
+    "k pop": {
+      "genre": "Pop",
+      "style": "K-pop"
+    },
+    "kpop": {
+      "genre": "Pop",
+      "style": "K-pop"
     },
     "lo fi": {
       "genre": "Rock",
