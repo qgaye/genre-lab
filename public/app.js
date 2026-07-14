@@ -24,6 +24,7 @@ const evidenceCount = document.querySelector("#evidenceCount");
 const scoreTemplate = document.querySelector("#scoreTemplate");
 const resultBoard = document.querySelector("#resultBoard");
 const verdictCard = document.querySelector(".verdict");
+const shareVerdictBtn = document.querySelector("#shareVerdict");
 const styleDialog = document.querySelector("#styleDialog");
 const styleDialogTitle = document.querySelector("#styleDialogTitle");
 const styleDialogKicker = document.querySelector("#styleDialogKicker");
@@ -76,6 +77,13 @@ const I18N = {
     "field.upload": "上传本地音频",
     "file.none": "没有选择文件",
     "verdict.mix": "曲风判定",
+    "share.button": "分享",
+    "share.hint": "生成结论卡图片并保存到本地",
+    "share.busy": "生成中…",
+    "share.done": "结论卡已保存",
+    "share.empty": "先分析一首歌，再生成结论卡。",
+    "share.error": "生成结论卡失败，请重试。",
+    "share.cardHint": "由 Genre Lab · 歌曲曲风识别 生成",
     "mix.other": "其他",
     "mix.detail": "查看最终得分",
     "mix.detail.score": "最终分 {score}",
@@ -268,6 +276,13 @@ const I18N = {
     "field.upload": "Upload local audio",
     "file.none": "No file selected",
     "verdict.mix": "Genre verdict",
+    "share.button": "Share",
+    "share.hint": "Generate a verdict card image and save it",
+    "share.busy": "Generating…",
+    "share.done": "Verdict card saved",
+    "share.empty": "Analyze a track first, then generate the card.",
+    "share.error": "Failed to generate the card, please retry.",
+    "share.cardHint": "Made with Genre Lab · Song genre detection",
     "mix.other": "Other",
     "mix.detail": "Show final scores",
     "mix.detail.score": "Final {score}",
@@ -454,6 +469,8 @@ let audioStateKey = "audio.notRead";
 let downloadEvidenceBuilder = null;
 let activeTrack = null;
 let parseEvidenceBuilder = null;
+// Snapshot of the latest verdict used to render the shareable image card.
+let lastVerdict = null;
 
 const MIN_VISIBLE_STYLE_PERCENT = 10;
 const MAX_VISIBLE_STYLE_ITEMS = 6;
@@ -1328,6 +1345,23 @@ function analyzeEvidence() {
     ? buildVerdictReason(composition)
     : t("verdict.notEnough");
   setStatus(t("status.analyzeDone"));
+
+  // Snapshot the verdict so the share card can be rendered on demand.
+  lastVerdict = composition.length
+    ? {
+        track,
+        titleParts,
+        composition,
+        reason: genreReason.textContent
+      }
+    : null;
+  updateShareAvailability();
+}
+
+// Toggle the share button based on whether a shareable verdict exists.
+function updateShareAvailability() {
+  if (!shareVerdictBtn) return;
+  shareVerdictBtn.disabled = !lastVerdict;
 }
 
 function renderScores(items) {
@@ -1988,6 +2022,282 @@ if (langToggle) {
   langToggle.addEventListener("click", () => {
     setLang(LANG === "zh" ? "en" : "zh");
   });
+}
+
+// ---------------------------------------------------------------------------
+// Share card: render the current verdict into a standalone PNG on a <canvas>
+// and trigger a download. Self-contained (no external libs) so it works with
+// the plain static server. The layout mirrors the on-screen verdict card.
+// ---------------------------------------------------------------------------
+const SHARE_CARD_WIDTH = 1200;
+const SHARE_CARD_PAD = 64;
+const SHARE_SCALE = 2;
+
+function splitGenreStyle(name) {
+  const full = displayName(name);
+  const sepIdx = full.indexOf(" / ");
+  if (sepIdx === -1) return { genre: "", style: full };
+  return { genre: full.slice(0, sepIdx), style: full.slice(sepIdx + 3) };
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+// Draw a mix bar + wrapped legend, returning the y offset after drawing.
+function drawShareMix(ctx, composition, x, y, width) {
+  const shown = composition.reduce((sum, item) => sum + item.percent, 0);
+  const other = Math.max(0, 100 - shown);
+  const segments = composition.map((item, index) => ({
+    label: displayName(item.name),
+    percent: item.percent,
+    color: MIX_COLORS[index % MIX_COLORS.length]
+  }));
+  if (other > 0) {
+    segments.push({ label: t("mix.other"), percent: other, color: "rgba(255,255,255,0.16)" });
+  }
+
+  const barHeight = 26;
+  let cursor = x;
+  for (const seg of segments) {
+    const segWidth = Math.max(0, (seg.percent / 100) * width);
+    ctx.fillStyle = seg.color;
+    drawRoundedRect(ctx, cursor, y, Math.max(segWidth - 3, 1), barHeight, 6);
+    ctx.fill();
+    cursor += segWidth;
+  }
+
+  let legendY = y + barHeight + 34;
+  let legendX = x;
+  ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+  const rowHeight = 34;
+  for (const seg of segments) {
+    const label = `${seg.label} ${Math.round(seg.percent)}%`;
+    const dotW = 16;
+    const gap = 10;
+    const textW = ctx.measureText(label).width;
+    const itemW = dotW + gap + textW + 26;
+    if (legendX + itemW > x + width) {
+      legendX = x;
+      legendY += rowHeight;
+    }
+    ctx.fillStyle = seg.color;
+    drawRoundedRect(ctx, legendX, legendY - 13, dotW, dotW, 4);
+    ctx.fill();
+    ctx.fillStyle = "#c9cabb";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, legendX + dotW + gap, legendY - 4);
+    legendX += itemW;
+  }
+  return legendY + rowHeight;
+}
+
+function renderShareCard(verdict) {
+  const canvas = document.createElement("canvas");
+  const width = SHARE_CARD_WIDTH;
+  // Estimate height; canvas is generous and we crop by drawing top-down.
+  const height = 760;
+  canvas.width = width * SHARE_SCALE;
+  canvas.height = height * SHARE_SCALE;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(SHARE_SCALE, SHARE_SCALE);
+  ctx.textBaseline = "alphabetic";
+
+  // Background: base panel color + accent gradient wash (mirrors .verdict).
+  ctx.fillStyle = "#181b17";
+  ctx.fillRect(0, 0, width, height);
+  const wash = ctx.createLinearGradient(0, 0, width * 0.7, height * 0.5);
+  wash.addColorStop(0, "rgba(200, 255, 95, 0.16)");
+  wash.addColorStop(0.4, "rgba(200, 255, 95, 0)");
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "rgba(244, 240, 232, 0.16)";
+  ctx.lineWidth = 2;
+  drawRoundedRect(ctx, 3, 3, width - 6, height - 6, 22);
+  ctx.stroke();
+
+  const x = SHARE_CARD_PAD;
+  const contentW = width - SHARE_CARD_PAD * 2;
+  let y = SHARE_CARD_PAD;
+
+  // Kicker
+  ctx.fillStyle = "#a9aa9d";
+  ctx.font = "600 22px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(t("verdict.mix"), x, y);
+  y += 44;
+
+  // Track pill
+  if (verdict.track && verdict.track.title) {
+    const title = verdict.track.title;
+    const artists = verdict.track.artists || t("track.unknownArtist");
+    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    const titleW = ctx.measureText(title).width;
+    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    const byW = ctx.measureText(`  ·  ${artists}`).width;
+    const iconW = 26;
+    const pillW = iconW + titleW + byW + 44;
+    const pillH = 48;
+    ctx.fillStyle = "rgba(200, 255, 95, 0.10)";
+    ctx.strokeStyle = "rgba(200, 255, 95, 0.4)";
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, x, y, Math.min(pillW, contentW), pillH, 24);
+    ctx.fill();
+    ctx.stroke();
+    let tx = x + 22;
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#c8ff5f";
+    ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillText("♪", tx, y + pillH / 2);
+    tx += iconW;
+    ctx.fillStyle = "#f4f0e8";
+    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillText(title, tx, y + pillH / 2 + 1);
+    tx += titleW;
+    ctx.fillStyle = "#a9aa9d";
+    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillText(`  ·  ${artists}`, tx, y + pillH / 2 + 1);
+    ctx.textBaseline = "top";
+    y += pillH + 30;
+  }
+
+  // Headline: parts with small genre tag + large style word, "+" between.
+  const parts = verdict.titleParts.length ? verdict.titleParts : verdict.composition.slice(0, 1);
+  const lead = parts[0].percent || parts[0].score || 1;
+  const baseSize = 92;
+  let hx = x;
+  const headlineTop = y;
+  let maxBottom = y;
+  parts.forEach((part, index) => {
+    if (index > 0) {
+      ctx.fillStyle = "#a9aa9d";
+      ctx.font = `500 ${Math.round(baseSize * 0.42)}px Georgia, serif`;
+      ctx.textBaseline = "alphabetic";
+      const plusY = headlineTop + baseSize * 0.62;
+      ctx.fillText("+", hx + 8, plusY);
+      hx += ctx.measureText("+").width + 28;
+    }
+    const ratio = Math.max(0.55, Math.min(1, (part.percent || part.score || 0) / lead));
+    const size = Math.round(baseSize * ratio);
+    const { genre, style } = splitGenreStyle(part.name);
+    let colY = headlineTop;
+    if (genre) {
+      ctx.fillStyle = "#a9aa9d";
+      ctx.font = `700 ${Math.round(size * 0.2)}px Avenir Next, Helvetica, Arial, sans-serif`;
+      ctx.textBaseline = "top";
+      ctx.fillText(genre.toUpperCase(), hx, colY);
+      colY += Math.round(size * 0.2) + 10;
+    }
+    ctx.fillStyle = "#f4f0e8";
+    ctx.font = `500 ${size}px Georgia, Cambria, serif`;
+    ctx.textBaseline = "top";
+    ctx.fillText(style, hx, colY);
+    const styleW = ctx.measureText(style).width;
+    hx += styleW + 24;
+    maxBottom = Math.max(maxBottom, colY + size);
+  });
+  y = maxBottom + 34;
+
+  // Reason (wrapped)
+  ctx.fillStyle = "#a9aa9d";
+  ctx.font = "400 22px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.textBaseline = "top";
+  y = drawWrappedText(ctx, verdict.reason || "", x, y, contentW, 32);
+  y += 30;
+
+  // Mix bar + legend
+  y = drawShareMix(ctx, verdict.composition, x, y, contentW);
+  y += 8;
+
+  // Footer hint
+  ctx.fillStyle = "#73766c";
+  ctx.font = "500 18px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.fillText(t("share.cardHint"), x, y);
+  y += 34;
+
+  // Crop the canvas to the used height.
+  const finalHeight = Math.min(height, y + SHARE_CARD_PAD - 20);
+  const cropped = document.createElement("canvas");
+  cropped.width = width * SHARE_SCALE;
+  cropped.height = finalHeight * SHARE_SCALE;
+  const cctx = cropped.getContext("2d");
+  cctx.drawImage(canvas, 0, 0);
+  return cropped;
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  const value = String(text || "");
+  let line = "";
+  let cursorY = y;
+  const flush = () => {
+    if (line) {
+      ctx.fillText(line, x, cursorY);
+      cursorY += lineHeight;
+      line = "";
+    }
+  };
+  // Character-based wrapping works for both CJK and latin text.
+  for (const ch of value) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, cursorY);
+      cursorY += lineHeight;
+      line = ch;
+    } else {
+      line = test;
+    }
+  }
+  flush();
+  return cursorY;
+}
+
+function shareFileName(verdict) {
+  const title = verdict.track && verdict.track.title ? verdict.track.title : "verdict";
+  const safe = title.replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, "-").slice(0, 40) || "verdict";
+  return `genre-lab-${safe}.png`;
+}
+
+async function handleShareVerdict() {
+  if (!lastVerdict || !shareVerdictBtn) {
+    setStatus(t("share.empty"));
+    return;
+  }
+  const label = shareVerdictBtn.querySelector(".verdict-share-label");
+  const originalLabel = label ? label.textContent : "";
+  shareVerdictBtn.classList.add("is-busy");
+  shareVerdictBtn.disabled = true;
+  if (label) label.textContent = t("share.busy");
+  try {
+    const canvas = renderShareCard(lastVerdict);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error("toBlob failed");
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = shareFileName(lastVerdict);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setStatus(t("share.done"));
+  } catch (error) {
+    setStatus(t("share.error"));
+  } finally {
+    shareVerdictBtn.classList.remove("is-busy");
+    if (label) label.textContent = originalLabel || t("share.button");
+    updateShareAvailability();
+  }
+}
+
+if (shareVerdictBtn) {
+  shareVerdictBtn.addEventListener("click", handleShareVerdict);
 }
 
 resetProgress();

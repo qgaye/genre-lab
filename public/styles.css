@@ -437,6 +437,42 @@ button:disabled {
   font-size: 13px;
 }
 
+.verdict-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border: 1px solid rgba(200, 255, 95, 0.4);
+  border-radius: 999px;
+  background: rgba(200, 255, 95, 0.08);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.verdict-share:hover:not(:disabled) {
+  background: rgba(200, 255, 95, 0.16);
+  border-color: rgba(200, 255, 95, 0.7);
+}
+
+.verdict-share:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.verdict-share-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.verdict-share.is-busy {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 h2 {
   margin: 24px 0 10px;
   font-family: Georgia, Cambria, serif;
