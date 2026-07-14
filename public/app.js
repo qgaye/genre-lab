@@ -58,6 +58,7 @@ const I18N = {
     "field.inputFormat": "输入格式",
     "format.neteaseUrl": "网易云音乐链接",
     "format.qqUrl": "QQ音乐链接",
+    "format.spotifyUrl": "Spotify链接",
     "field.model": "曲风模型",
     "field.track": "歌曲信息",
     "action.analyze": "分析这首歌",
@@ -149,12 +150,14 @@ const I18N = {
     "parsed.titleOnly": "只识别到歌名：<strong>{title}</strong>，仍会尝试搜索音频",
     "ph.netease": "例如：https://music.163.com/song?id=38689021&uct2=...",
     "ph.qq": "例如：周杰伦《搁浅》 https://c6.y.qq.com/base/fcgi-bin/u?__=CawAX8bL58oP @QQ音乐",
+    "ph.spotify": "例如：https://open.spotify.com/track/7mrEpwmQJ7qK1ik7ZjjcdD",
     "ph.artistSong": "例如：TAKF - We All Desire",
     "ph.titleOnly": "例如：WALK IN PARADISE - DVRST",
     "format.songArtist": "歌曲 - 艺人",
     "format.artistSong": "艺人 - 歌曲",
     "platform.qq": "QQ音乐",
     "platform.netease": "网易云",
+    "platform.spotify": "Spotify",
     "err.requestFailed": "请求失败",
     "err.uploadFailed": "上传音频失败",
     "err.readAudio": "无法读取音频文件",
@@ -162,6 +165,7 @@ const I18N = {
     "err.needLink": "请输入{platform}歌曲链接。",
     "err.needNetease": "请输入网易云音乐歌曲链接。",
     "err.needQQ": "请输入 QQ 音乐歌曲链接。",
+    "err.needSpotify": "请输入 Spotify 歌曲链接。",
     "err.needSongArtist": "请输入类似 “WALK IN PARADISE - DVRST” 的歌曲和艺人。",
     "ev.itunesMatch": "iTunes Search API 匹配到 <strong>{track}</strong>{artist}{score}；Apple 标签 <strong>{genre}</strong> 可映射到本地 Discogs 范围。",
     "ev.itunesMatch.artist": " / <strong>{artist}</strong>",
@@ -245,6 +249,7 @@ const I18N = {
     "field.inputFormat": "Input format",
     "format.neteaseUrl": "NetEase Music link",
     "format.qqUrl": "QQ Music link",
+    "format.spotifyUrl": "Spotify link",
     "field.model": "Genre model",
     "field.track": "Track info",
     "action.analyze": "Analyze this track",
@@ -336,12 +341,14 @@ const I18N = {
     "parsed.titleOnly": "Only title detected: <strong>{title}</strong>; will still search audio",
     "ph.netease": "e.g. https://music.163.com/song?id=38689021&uct2=...",
     "ph.qq": "e.g. Jay Chou \u300A\u6041\u6d45\u300B https://c6.y.qq.com/base/fcgi-bin/u?__=CawAX8bL58oP @QQ Music",
+    "ph.spotify": "e.g. https://open.spotify.com/track/7mrEpwmQJ7qK1ik7ZjjcdD",
     "ph.artistSong": "e.g. TAKF - We All Desire",
     "ph.titleOnly": "e.g. WALK IN PARADISE - DVRST",
     "format.songArtist": "Song - Artist",
     "format.artistSong": "Artist - Song",
     "platform.qq": "QQ Music",
     "platform.netease": "NetEase",
+    "platform.spotify": "Spotify",
     "err.requestFailed": "Request failed",
     "err.uploadFailed": "Audio upload failed",
     "err.readAudio": "Cannot read audio file",
@@ -349,6 +356,7 @@ const I18N = {
     "err.needLink": "Please enter a {platform} track link.",
     "err.needNetease": "Please enter a NetEase Music track link.",
     "err.needQQ": "Please enter a QQ Music track link.",
+    "err.needSpotify": "Please enter a Spotify track link.",
     "err.needSongArtist": "Please enter a track & artist like \u201CWALK IN PARADISE - DVRST\u201D.",
     "ev.itunesMatch": "iTunes Search API matched <strong>{track}</strong>{artist}{score}; the Apple tag <strong>{genre}</strong> maps into the local Discogs taxonomy.",
     "ev.itunesMatch.artist": " / <strong>{artist}</strong>",
@@ -807,17 +815,20 @@ function formatLabel() {
     "song-artist": "format.songArtist",
     "artist-song": "format.artistSong",
     "netease-url": "format.neteaseUrl",
-    "qq-music-url": "format.qqUrl"
+    "qq-music-url": "format.qqUrl",
+    "spotify-url": "format.spotifyUrl"
   };
   return t(keys[selectedFormat()] || "format.neteaseUrl");
 }
 
 function isMusicLinkFormat(format = selectedFormat()) {
-  return format === "netease-url" || format === "qq-music-url";
+  return format === "netease-url" || format === "qq-music-url" || format === "spotify-url";
 }
 
 function currentPlatformName(format = selectedFormat()) {
-  return format === "qq-music-url" ? t("platform.qq") : t("platform.netease");
+  if (format === "qq-music-url") return t("platform.qq");
+  if (format === "spotify-url") return t("platform.spotify");
+  return t("platform.netease");
 }
 
 function parseTrackInput(value) {
@@ -884,6 +895,8 @@ function updateInputPlaceholder() {
     trackInput.placeholder = t("ph.netease");
   } else if (selectedFormat() === "qq-music-url") {
     trackInput.placeholder = t("ph.qq");
+  } else if (selectedFormat() === "spotify-url") {
+    trackInput.placeholder = t("ph.spotify");
   } else if (selectedFormat() === "artist-song") {
     trackInput.placeholder = t("ph.artistSong");
   } else {
@@ -1747,6 +1760,19 @@ async function resolveQQMusicSong() {
   });
 }
 
+async function resolveSpotifySong() {
+  const raw = trackInput.value.trim();
+  if (!raw) throw new Error(t("err.needSpotify"));
+  await resolvePlatformSong({
+    raw,
+    endpoint: "/api/spotify-song",
+    orientation: "spotify-url",
+    platform: t("platform.spotify"),
+    idKey: "id",
+    idLabel: "track id"
+  });
+}
+
 async function resolvePlatformSong({ raw, endpoint, orientation, platform, idKey, idLabel }) {
   setStatus(t("status.parsePlatform", { platform }), true);
   setProgress("parse", t("progress.parse.platformLabel", { platform }), 12, t("progress.parse.platformDetail", { platform, idLabel }));
@@ -1890,6 +1916,8 @@ form.addEventListener("submit", async event => {
       await resolveNetEaseSong();
     } else if (selectedFormat() === "qq-music-url") {
       await resolveQQMusicSong();
+    } else if (selectedFormat() === "spotify-url") {
+      await resolveSpotifySong();
     }
     await fetchMetadata();
     try {

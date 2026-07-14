@@ -7,6 +7,7 @@ const {
   extractHttpUrl,
   extractNetEaseSongId,
   extractQQMusicSongMid,
+  extractSpotifyTrackId,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
@@ -33,6 +34,16 @@ test("extracts QQ Music share links and song mids", () => {
     "001Bbywq2gicae"
   );
   assert.equal(extractQQMusicSongMid("https://y.qq.com/n/ryqq/songDetail/001Bbywq2gicae"), "001Bbywq2gicae");
+});
+
+test("extracts Spotify track ids from common URL shapes", () => {
+  assert.equal(
+    extractSpotifyTrackId("https://open.spotify.com/track/7mrEpwmQJ7qK1ik7ZjjcdD?si=1a57xtIMSvK_d7vCui5X_g&utm_source=copy-link"),
+    "7mrEpwmQJ7qK1ik7ZjjcdD"
+  );
+  assert.equal(extractSpotifyTrackId("spotify:track:7mrEpwmQJ7qK1ik7ZjjcdD"), "7mrEpwmQJ7qK1ik7ZjjcdD");
+  assert.equal(extractSpotifyTrackId("7mrEpwmQJ7qK1ik7ZjjcdD"), "7mrEpwmQJ7qK1ik7ZjjcdD");
+  assert.equal(extractSpotifyTrackId("https://open.spotify.com/album/abc"), "");
 });
 
 test("detects platform links for preferred yt-dlp downloads", () => {

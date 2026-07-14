@@ -21,6 +21,7 @@ const RUNTIME_PATH = [
 const MAX_AUDIO_BYTES = 90 * 1024 * 1024;
 const NETEASE_LINK_HOSTS = new Set(["163cn.tv", "music.163.com"]);
 const QQ_MUSIC_LINK_HOSTS = new Set(["y.qq.com", "i.y.qq.com"]);
+const SPOTIFY_LINK_HOSTS = new Set(["open.spotify.com", "spotify.link"]);
 const SEARCH_RESULT_LIMIT = 5;
 const YTDLP_SEARCH_SOURCES = {
   youtube: { name: "youtube", label: "YouTube", prefix: "ytsearch", priority: 0 },
@@ -357,6 +358,41 @@ function fetchRedirectLocation(url) {
 
 function cleanTerm(value) {
   return String(value || "").replace(/[“”"]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function fetchText(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith("https:") ? https : http;
+    const req = lib.get(url, {
+      headers: {
+        "accept": "text/html,application/xhtml+xml",
+        "user-agent": "Mozilla/5.0 (compatible; GenreLab/1.0; local research tool)",
+        ...headers
+      },
+      timeout: 12000
+    }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const next = new URL(res.headers.location, url).toString();
+        res.resume();
+        resolve(fetchText(next, headers));
+        return;
+      }
+      let data = "";
+      res.setEncoding("utf8");
+      res.on("data", chunk => data += chunk);
+      res.on("end", () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`${url} 返回 HTTP ${res.statusCode}`));
+          return;
+        }
+        resolve(data);
+      });
+    });
+    req.on("timeout", () => {
+      req.destroy(new Error("Network request timed out."));
+    });
+    req.on("error", reject);
+  });
 }
 
 function normalizeText(value) {
@@ -716,6 +752,23 @@ function isAllowedQQMusicLink(url) {
   }
 }
 
+function extractSpotifyTrackId(value) {
+  const text = cleanTerm(value);
+  const idMatch = text.match(/\/track\/([A-Za-z0-9]{22})/i)
+    || text.match(/spotify:track:([A-Za-z0-9]{22})/i)
+    || text.match(/^([A-Za-z0-9]{22})$/);
+  return idMatch ? idMatch[1] : "";
+}
+
+function isAllowedSpotifyLink(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return SPOTIFY_LINK_HOSTS.has(host) || host.endsWith(".spotify.com");
+  } catch {
+    return false;
+  }
+}
+
 function musicPlatformDownloadSource(value) {
   const text = cleanTerm(value);
   const url = extractHttpUrl(text) || text;
@@ -837,6 +890,73 @@ async function handleQQMusicSong(req, res) {
     const song = await fetchQQMusicSong(songMid);
     if (!song) {
       sendJson(res, 404, { error: `QQ 音乐没有返回 songmid ${songMid} 的歌曲信息。` });
+      return;
+    }
+    sendJson(res, 200, song);
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
+async function resolveSpotifyTrackId(value) {
+  const directId = extractSpotifyTrackId(value);
+  if (directId) return directId;
+
+  let url = extractHttpUrl(value);
+  if (!url || !isAllowedSpotifyLink(url)) return "";
+
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const id = extractSpotifyTrackId(url);
+    if (id) return id;
+
+    const result = await fetchRedirectLocation(url);
+    if (result.statusCode < 300 || result.statusCode >= 400 || !result.location) {
+      return "";
+    }
+    if (!isAllowedSpotifyLink(result.location)) {
+      return "";
+    }
+    url = result.location;
+  }
+  return "";
+}
+
+async function fetchSpotifyTrack(trackId) {
+  const html = await fetchText(`https://open.spotify.com/embed/track/${trackId}`, {
+    referer: "https://open.spotify.com/"
+  });
+  const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!match) return null;
+
+  let entity;
+  try {
+    entity = JSON.parse(match[1]).props.pageProps.state.data.entity;
+  } catch {
+    return null;
+  }
+  if (!entity || !(entity.name || entity.title)) return null;
+
+  return {
+    id: String(entity.id || trackId),
+    title: entity.name || entity.title,
+    artists: (entity.artists || []).map(artist => artist.name).filter(Boolean),
+    album: entity.album && entity.album.name ? entity.album.name : "",
+    sourceUrl: `https://open.spotify.com/track/${trackId}`
+  };
+}
+
+async function handleSpotifySong(req, res) {
+  try {
+    const body = await readBody(req);
+    const trackId = await resolveSpotifyTrackId(body.url || body.id || "");
+    if (!trackId) {
+      sendJson(res, 400, { error: "没有在 Spotify 链接中找到 track id。" });
+      return;
+    }
+
+    const song = await fetchSpotifyTrack(trackId);
+    if (!song) {
+      sendJson(res, 404, { error: `Spotify 没有返回 track ${trackId} 的歌曲信息。` });
       return;
     }
     sendJson(res, 200, song);
@@ -1456,6 +1576,10 @@ const server = http.createServer((req, res) => {
     handleQQMusicSong(req, res);
     return;
   }
+  if (req.method === "POST" && req.url === "/api/spotify-song") {
+    handleSpotifySong(req, res);
+    return;
+  }
   if (req.method === "POST" && req.url === "/api/download") {
     handleDownload(req, res);
     return;
@@ -1487,11 +1611,13 @@ module.exports = {
   extractHttpUrl,
   extractNetEaseSongId,
   extractQQMusicSongMid,
+  extractSpotifyTrackId,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
   resolveNetEaseSongId,
   resolveQQMusicSongMid,
+  resolveSpotifyTrackId,
   selectSearchSources,
   sourceSearchQuery,
   server
