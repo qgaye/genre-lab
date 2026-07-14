@@ -132,7 +132,7 @@ const I18N = {
     "audio.localUpload": "本地上传",
     "audio.downloaded": "已下载",
     "progress.essentia.label": "音频曲风模型分析",
-    "progress.essentia.detail": "使用本地曲风模型直接判断音频曲风",
+    "progress.essentia.detail": "使用 {model} 直接判断音频曲风",
     "audio.essentiaDone": "Essentia 已完成",
     "progress.essentia.done": "Essentia 完成",
     "progress.essentia.doneDetail": "最高标签：{label}；耗时 {seconds} 秒",
@@ -335,7 +335,7 @@ const I18N = {
     "audio.localUpload": "Local upload",
     "audio.downloaded": "Downloaded",
     "progress.essentia.label": "Audio genre model analysis",
-    "progress.essentia.detail": "Using local genre model to classify audio directly",
+    "progress.essentia.detail": "Using {model} to classify audio directly",
     "audio.essentiaDone": "Essentia done",
     "progress.essentia.done": "Essentia complete",
     "progress.essentia.doneDetail": "Top label: {label}; elapsed {seconds}s",
@@ -852,6 +852,14 @@ function uniqueBy(items, keyFn) {
 
 function selectedFormat() {
   return formatInputs.find(input => input.checked)?.value || "netease-url";
+}
+
+function currentModelLabel() {
+  const selectedOption = modelSelect && modelSelect.selectedOptions && modelSelect.selectedOptions[0];
+  if (selectedOption && selectedOption.textContent.trim()) return selectedOption.textContent.trim();
+  if (activeModel === "effnet400") return "Essentia Discogs400";
+  if (activeModel === "maest519") return "Essentia MAEST519";
+  return activeModel || "Essentia";
 }
 
 function formatLabel() {
@@ -1846,7 +1854,7 @@ async function analyzeAudio(source) {
 async function analyzeEssentia(fileName) {
   if (!fileName) return;
   setStatus(t("status.essentia"), true);
-  setProgress("decode", t("progress.essentia.label"), 88, t("progress.essentia.detail"));
+  setProgress("decode", t("progress.essentia.label"), 88, t("progress.essentia.detail", { model: currentModelLabel() }));
   try {
     essentiaAnalysis = await postJson("/api/essentia", { fileName, top: 12, model: activeModel });
     essentiaElapsedSeconds = Number.isFinite(Number(essentiaAnalysis.elapsedSeconds)) ? Number(essentiaAnalysis.elapsedSeconds) : null;
