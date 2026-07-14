@@ -14,7 +14,6 @@ const statusPill = document.querySelector("#statusPill");
 const genreTitle = document.querySelector("#genreTitle");
 const verdictTrack = document.querySelector("#verdictTrack");
 const genreReason = document.querySelector("#genreReason");
-const confidenceLabel = document.querySelector("#confidenceLabel");
 const genreMix = document.querySelector("#genreMix");
 const scoreList = document.querySelector("#scoreList");
 const scoreCount = document.querySelector("#scoreCount");
@@ -52,13 +51,16 @@ const I18N = {
   zh: {
     "list.sep": "、",
     "reason.group.sep": "；",
-    "app.title": "Genre / Style 证据分析器",
+    "app.title": "歌曲曲风识别",
     "status.waiting": "等待输入",
     "console.aria": "曲风识别工作台",
     "field.inputFormat": "输入格式",
     "format.neteaseUrl": "网易云音乐链接",
     "format.qqUrl": "QQ音乐链接",
     "format.spotifyUrl": "Spotify链接",
+    "format.neteaseShort": "网易云",
+    "format.qqShort": "QQ音乐",
+    "format.spotifyShort": "Spotify",
     "field.model": "曲风模型",
     "field.track": "歌曲信息",
     "action.analyze": "分析这首歌",
@@ -73,16 +75,15 @@ const I18N = {
     "field.fallbacks": "备用输入",
     "field.upload": "上传本地音频",
     "file.none": "没有选择文件",
-    "verdict.mix": "Genre / Style 构成",
+    "verdict.mix": "曲风判定",
     "mix.other": "其他",
     "mix.detail": "查看最终得分",
     "mix.detail.score": "最终分 {score}",
     "mix.detail.boosted": "已加成",
-    "confidence.init": "证据覆盖 --",
     "verdict.notAnalyzed": "尚未分析",
     "verdict.intro": "输入歌曲信息，并尽量提供音频。只有元信息时会给出“倾向判断”；加入音频后会提升证据质量。",
-    "panel.ratio": "Genre / Style 比例",
-    "panel.audio": "音频诊断",
+    "panel.ratio": "各曲风占比",
+    "panel.audio": "音频特征",
     "audio.notRead": "未读取",
     "panel.evidence": "证据链",
     "dialog.kicker": "Discogs Style",
@@ -235,7 +236,6 @@ const I18N = {
     "count.items": "{n} 项",
     "count.evidence": "{n} 条",
     "score.noStrong": "未命中强证据",
-    "confidence.coverage": "证据覆盖 {n}%",
     "dialog.noEntry": "暂无稳定入门曲",
     "dialog.kickerGenre": "{genre} / Discogs Style",
     "dialog.infoTitle": "查看 {label} 风格介绍"
@@ -243,13 +243,16 @@ const I18N = {
   en: {
     "list.sep": ", ",
     "reason.group.sep": "; ",
-    "app.title": "Genre / Style Evidence Analyzer",
+    "app.title": "Song genre detection",
     "status.waiting": "Waiting for input",
     "console.aria": "Genre analysis workbench",
     "field.inputFormat": "Input format",
     "format.neteaseUrl": "NetEase Music link",
     "format.qqUrl": "QQ Music link",
     "format.spotifyUrl": "Spotify link",
+    "format.neteaseShort": "NetEase",
+    "format.qqShort": "QQ Music",
+    "format.spotifyShort": "Spotify",
     "field.model": "Genre model",
     "field.track": "Track info",
     "action.analyze": "Analyze this track",
@@ -264,16 +267,15 @@ const I18N = {
     "field.fallbacks": "Fallback inputs",
     "field.upload": "Upload local audio",
     "file.none": "No file selected",
-    "verdict.mix": "Genre / Style mix",
+    "verdict.mix": "Genre verdict",
     "mix.other": "Other",
     "mix.detail": "Show final scores",
     "mix.detail.score": "Final {score}",
     "mix.detail.boosted": "boosted",
-    "confidence.init": "Evidence coverage --",
     "verdict.notAnalyzed": "Not analyzed yet",
     "verdict.intro": "Enter track info and provide audio if possible. Metadata alone gives a \u201Ctendency\u201D; adding audio improves evidence quality.",
-    "panel.ratio": "Genre / Style ratio",
-    "panel.audio": "Audio diagnostics",
+    "panel.ratio": "Genre breakdown",
+    "panel.audio": "Audio features",
     "audio.notRead": "Not read",
     "panel.evidence": "Evidence chain",
     "dialog.kicker": "Discogs Style",
@@ -426,7 +428,6 @@ const I18N = {
     "count.items": "{n} items",
     "count.evidence": "{n} entries",
     "score.noStrong": "No strong evidence",
-    "confidence.coverage": "Evidence coverage {n}%",
     "dialog.noEntry": "No stable entry track",
     "dialog.kickerGenre": "{genre} / Discogs Style",
     "dialog.infoTitle": "View the {label} style intro"
@@ -1226,7 +1227,10 @@ function renderVerdictTrack(track) {
   const title = track.title;
   const artists = track.artists || t("track.unknownArtist");
   verdictTrack.hidden = false;
-  verdictTrack.innerHTML = `<strong>${escapeHtml(title)}</strong><span class="verdict-track-sep">—</span>${escapeHtml(artists)}`;
+  verdictTrack.innerHTML =
+    `<span class="verdict-track-icon" aria-hidden="true">♪</span>` +
+    `<span class="verdict-track-name">${escapeHtml(title)}</span>` +
+    `<span class="verdict-track-by">${escapeHtml(artists)}</span>`;
 }
 
 function compactValue(text, maxLength = 34) {
@@ -1311,7 +1315,6 @@ function analyzeEvidence() {
     .sort((a, b) => b.score - a.score);
 
   const composition = buildGenreComposition(sorted);
-  const coverage = Math.max(0, Math.min(96, composition.reduce((sum, item) => sum + item.score, 0)));
   const titleParts = buildVerdictTitle(composition);
 
   renderScores(composition.length ? composition : sorted.slice(0, 8));
@@ -1321,7 +1324,6 @@ function analyzeEvidence() {
 
   renderVerdictTrack(track);
   renderVerdictTitle(titleParts);
-  confidenceLabel.textContent = t("confidence.coverage", { n: Math.round(coverage) });
   genreReason.textContent = composition.length
     ? buildVerdictReason(composition)
     : t("verdict.notEnough");

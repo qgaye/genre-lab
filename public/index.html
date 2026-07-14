@@ -12,7 +12,7 @@
         <header class="mast">
           <div>
             <p class="kicker">Genre Lab</p>
-            <h1 data-i18n="app.title">Genre / Style 证据分析器</h1>
+            <h1 data-i18n="app.title">歌曲曲风识别</h1>
           </div>
           <div class="mast-actions">
             <button type="button" class="lang-toggle" id="langToggle" data-i18n="lang.toggle">EN</button>
@@ -26,15 +26,15 @@
             <div class="format-options">
               <label>
                 <input type="radio" name="inputFormat" value="netease-url" checked>
-                <span data-i18n="format.neteaseUrl">网易云音乐链接</span>
+                <span data-i18n="format.neteaseShort">网易云</span>
               </label>
               <label>
                 <input type="radio" name="inputFormat" value="qq-music-url">
-                <span data-i18n="format.qqUrl">QQ音乐链接</span>
+                <span data-i18n="format.qqShort">QQ音乐</span>
               </label>
               <label>
                 <input type="radio" name="inputFormat" value="spotify-url">
-                <span data-i18n="format.spotifyUrl">Spotify链接</span>
+                <span data-i18n="format.spotifyShort">Spotify</span>
               </label>
             </div>
           </fieldset>
@@ -80,8 +80,7 @@
       <section class="result-board" id="resultBoard" aria-live="polite">
         <article class="verdict">
           <div class="verdict-top">
-            <p data-i18n="verdict.mix">Genre / Style 构成</p>
-            <span id="confidenceLabel" data-i18n="confidence.init">证据覆盖 --</span>
+            <p data-i18n="verdict.mix">曲风判定</p>
           </div>
           <p id="verdictTrack" class="verdict-track" hidden></p>
           <h2 id="genreTitle" data-i18n="verdict.notAnalyzed">尚未分析</h2>
@@ -91,7 +90,7 @@
 
         <article class="panel">
           <div class="panel-head">
-            <h3 data-i18n="panel.ratio">Genre / Style 比例</h3>
+            <h3 data-i18n="panel.ratio">各曲风占比</h3>
             <span id="scoreCount">0 项</span>
           </div>
           <div class="score-list" id="scoreList"></div>
@@ -99,7 +98,7 @@
 
         <article class="panel">
           <div class="panel-head">
-            <h3 data-i18n="panel.audio">音频诊断</h3>
+            <h3 data-i18n="panel.audio">音频特征</h3>
             <span id="audioState" data-i18n="audio.notRead">未读取</span>
           </div>
           <div class="feature-grid" id="featureGrid"></div>
