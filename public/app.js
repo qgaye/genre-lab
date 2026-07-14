@@ -14,7 +14,6 @@ const statusPill = document.querySelector("#statusPill");
 const genreTitle = document.querySelector("#genreTitle");
 const genreReason = document.querySelector("#genreReason");
 const confidenceLabel = document.querySelector("#confidenceLabel");
-const confidenceMeter = document.querySelector("#confidenceMeter");
 const genreMix = document.querySelector("#genreMix");
 const scoreList = document.querySelector("#scoreList");
 const scoreCount = document.querySelector("#scoreCount");
@@ -73,6 +72,10 @@ const I18N = {
     "field.upload": "上传本地音频",
     "file.none": "没有选择文件",
     "verdict.mix": "Genre / Style 构成",
+    "mix.other": "其他",
+    "mix.detail": "查看最终得分",
+    "mix.detail.score": "最终分 {score}",
+    "mix.detail.boosted": "已加成",
     "confidence.init": "证据覆盖 --",
     "verdict.notAnalyzed": "尚未分析",
     "verdict.intro": "输入歌曲信息，并尽量提供音频。只有元信息时会给出“倾向判断”；加入音频后会提升证据质量。",
@@ -203,12 +206,30 @@ const I18N = {
     "de.tail": "{sourceText}{fallback}；已下载为 {name} 并解码分析。",
     "de.fallbackReason": "（{reason}）",
     "de.failed": "按当前格式解析为 <strong>{title}</strong> / <strong>{artists}</strong>，但没有找到足够匹配的公开音频：{err}。",
-    "feat.essentiaTop": "Essentia Top",
+    "feat.explain": "查看指标含义",
     "feat.bpm": "BPM",
+    "feat.bpm.note": "每分钟节拍数。数值越高越快：民谣/抒情约 60-90，流行约 100-130，电子舞曲/朋克常在 128+。",
+    "feat.duration": "时长",
     "feat.bassRatio": "低频占比",
+    "feat.bassRatio.note": "低频能量比例。偏高常见于 Hip-Hop、EDM、Dub、Reggae；偏低多为原声/民谣/古典。",
     "feat.cowbell": "Cowbell 区间",
+    "feat.cowbell.note": "中频（约 0.7-1.1kHz）能量占比。人声与主奏乐器集中区，占比高说明旋律/人声突出。",
     "feat.brightness": "明亮度",
+    "feat.brightness.note": "高频（2-7kHz）能量占比。越高越明亮：金属、电子偏亮；氛围、Lo-Fi 偏暗。",
     "feat.onset": "起音密度",
+    "feat.onset.note": "每分钟音符触发次数。越密越繁忙：电子、Drum&Bass、爵士偏高；Ambient、慢歌偏低。",
+    "feat.centroid": "频谱质心",
+    "feat.centroid.note": "频谱能量重心（Hz）。越高音色越亮/尖锐（金属、电子），越低越厚/暗（Dub、氛围）。",
+    "feat.rolloff": "频谱滚降",
+    "feat.rolloff.note": "85% 能量以下的频率上限（Hz）。越高高频延展越丰富，失真吉他/明亮制作偏高。",
+    "feat.dynamicRange": "动态范围",
+    "feat.dynamicRange.note": "响与轻部分的响度差（dB）。越大越动态：古典、爵士偏高；EDM/流行经压缩后偏低。",
+    "feat.regularity": "节奏规整度",
+    "feat.regularity.note": "主导节拍的稳定程度。越高节拍越机械规整：电子舞曲、House；越低越松散：爵士、自由演奏。",
+    "feat.zcr": "过零率",
+    "feat.zcr.note": "波形穿越零点频率，反映噪度。偏高常见于失真吉他/金属、擦音；纯人声/低音偏低。",
+    "feat.rms": "整体响度",
+    "feat.rms.note": "平均能量（dBFS，越接近 0 越响）。响度大且压缩重多为现代流行/EDM，动态保留多为原声/古典。",
     "count.items": "{n} 项",
     "count.evidence": "{n} 条",
     "score.noStrong": "未命中强证据",
@@ -241,6 +262,10 @@ const I18N = {
     "field.upload": "Upload local audio",
     "file.none": "No file selected",
     "verdict.mix": "Genre / Style mix",
+    "mix.other": "Other",
+    "mix.detail": "Show final scores",
+    "mix.detail.score": "Final {score}",
+    "mix.detail.boosted": "boosted",
     "confidence.init": "Evidence coverage --",
     "verdict.notAnalyzed": "Not analyzed yet",
     "verdict.intro": "Enter track info and provide audio if possible. Metadata alone gives a \u201Ctendency\u201D; adding audio improves evidence quality.",
@@ -371,12 +396,30 @@ const I18N = {
     "de.tail": "{sourceText}{fallback}; downloaded as {name} and decoded for analysis.",
     "de.fallbackReason": " ({reason})",
     "de.failed": "Parsed as <strong>{title}</strong> / <strong>{artists}</strong> for the current format, but no closely matching public audio was found: {err}.",
-    "feat.essentiaTop": "Essentia Top",
+    "feat.explain": "Show metric meaning",
     "feat.bpm": "BPM",
+    "feat.bpm.note": "Beats per minute. Higher = faster: folk/ballad ~60-90, pop ~100-130, EDM/punk often 128+.",
+    "feat.duration": "Duration",
     "feat.bassRatio": "Bass ratio",
+    "feat.bassRatio.note": "Low-frequency energy share. High is common in Hip-Hop, EDM, Dub, Reggae; low in acoustic/folk/classical.",
     "feat.cowbell": "Cowbell band",
+    "feat.cowbell.note": "Mid band (~0.7-1.1kHz) share. Where vocals and lead instruments sit; high means prominent melody/vocals.",
     "feat.brightness": "Brightness",
+    "feat.brightness.note": "High-frequency (2-7kHz) share. Higher = brighter: metal/electronic bright; ambient/Lo-Fi darker.",
     "feat.onset": "Onset density",
+    "feat.onset.note": "Note onsets per minute. Denser = busier: electronic, Drum&Bass, jazz high; Ambient/ballads low.",
+    "feat.centroid": "Spectral centroid",
+    "feat.centroid.note": "Center of spectral energy (Hz). Higher = brighter/sharper (metal, electronic); lower = warm/dark (Dub, ambient).",
+    "feat.rolloff": "Spectral rolloff",
+    "feat.rolloff.note": "Frequency below which 85% of energy sits (Hz). Higher = more high-end extension, e.g. distorted guitar/bright mixes.",
+    "feat.dynamicRange": "Dynamic range",
+    "feat.dynamicRange.note": "Loudness gap between loud and quiet parts (dB). Larger = more dynamic: classical/jazz high; EDM/pop low after compression.",
+    "feat.regularity": "Rhythm regularity",
+    "feat.regularity.note": "Stability of the dominant beat. Higher = more mechanical: EDM, House; lower = looser: jazz, free playing.",
+    "feat.zcr": "Zero-crossing rate",
+    "feat.zcr.note": "How often the waveform crosses zero; reflects noisiness. High for distorted guitar/metal, sibilance; low for pure vocals/bass.",
+    "feat.rms": "Overall loudness",
+    "feat.rms.note": "Average energy (dBFS, closer to 0 = louder). Loud and heavily compressed suggests modern pop/EDM; preserved dynamics suggests acoustic/classical.",
     "count.items": "{n} items",
     "count.evidence": "{n} entries",
     "score.noStrong": "No strong evidence",
@@ -1009,15 +1052,39 @@ function addDiscogsScore(scores, tag, genreHint, amount, reason) {
   const divided = Math.max(4, Math.round(amount / candidates.length));
   for (const candidate of candidates) {
     addScore(scores, candidate.label, divided, reason);
-    if (candidate.style) {
-      addScore(scores, candidate.genre, Math.max(3, Math.round(divided * 0.32)), reason);
-    }
   }
   return true;
 }
 
-function scoreKeyword(scores, tag, source, weight = 18, genreHint = "") {
-  addDiscogsScore(scores, tag, genreHint, weight, { source, value: tag, isGenre: false });
+// 元信息只做加成：把每个标签映射到 Discogs 候选风格，累积加成点，
+// 最终以乘法方式（封顶 +50%）作用于 Essentia 已经命中的风格，不引入新风格。
+function applyMetadataBoost(scores, tags) {
+  if (!scores.size || !tags.length) return;
+  const boosts = new Map();
+  for (const item of tags) {
+    const candidates = uniqueCandidates(discogsCandidates(item.tag, item.genreHint || ""));
+    if (!candidates.length) continue;
+    const weight = item.weight || 18;
+    const reason = { source: item.source, value: item.tag };
+    for (const candidate of candidates) {
+      collectBoost(boosts, candidate.label, weight, reason);
+    }
+  }
+  for (const [label, boost] of boosts) {
+    const item = scores.get(label);
+    if (!item) continue; // 只加成 Essentia 已命中的风格
+    const factor = 1 + Math.min(0.5, boost.points / 100);
+    item.score *= factor;
+    item.boosted = true;
+    item.reasons.push(...boost.reasons);
+  }
+}
+
+function collectBoost(boosts, label, points, reason) {
+  const entry = boosts.get(label) || { points: 0, reasons: [] };
+  entry.points += points;
+  entry.reasons.push(reason);
+  boosts.set(label, entry);
 }
 
 function splitEssentiaLabel(label) {
@@ -1189,9 +1256,11 @@ function analyzeEvidence() {
   if (downloadEvidenceBuilder) evidence.push(downloadEvidenceBuilder());
 
   const metadataTags = collectMetadataTags(metadata);
-  for (const item of metadataTags.tags) scoreKeyword(scores, item.tag, item.source, item.weight || 18, item.genreHint || "");
   evidence.push(...metadataTags.evidence);
+  // Essentia 音频模型输出作为基准分，唯一决定候选风格集合
   scoreEssentia(scores, essentiaAnalysis, evidence);
+  // 元信息（Last.fm / Discogs / iTunes）只对 Essentia 已命中的风格做加成，不引入新风格
+  applyMetadataBoost(scores, metadataTags.tags);
   if (audioFeatures) {
     evidence.push(t("ev.audioDecoded", {
       sec: Math.round(audioFeatures.duration),
@@ -1208,13 +1277,12 @@ function analyzeEvidence() {
   const titleParts = buildVerdictTitle(composition);
 
   renderScores(composition.length ? composition : sorted.slice(0, 8));
-  renderMix(composition);
+  renderMix(composition, sorted);
   renderEvidence(evidence, composition);
   renderFeatures(audioFeatures);
 
   renderVerdictTitle(titleParts);
   confidenceLabel.textContent = t("confidence.coverage", { n: Math.round(coverage) });
-  confidenceMeter.style.width = `${Math.round(coverage)}%`;
   genreReason.textContent = composition.length
     ? buildVerdictReason(composition)
     : t("verdict.notEnough");
@@ -1241,17 +1309,92 @@ function renderScores(items) {
   }
 }
 
-function renderMix(composition) {
+// 循环色板：给堆叠条每个风格段分配一个可区分的颜色
+const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be3a3"];
+
+function renderMix(composition, allScores = composition) {
   genreMix.innerHTML = "";
-  for (const item of composition) {
-    const chip = document.createElement("span");
-    chip.className = "mix-chip";
-    chip.append(document.createTextNode(displayName(item.name)));
-    const percent = document.createElement("b");
-    percent.textContent = `${item.percent}%`;
-    chip.appendChild(percent);
-    genreMix.appendChild(chip);
+  if (!composition.length) return;
+
+  const shown = composition.reduce((sum, item) => sum + item.percent, 0);
+  const other = Math.max(0, 100 - shown);
+
+  const segments = composition.map((item, index) => ({
+    label: displayName(item.name),
+    percent: item.percent,
+    score: item.score,
+    boosted: !!item.boosted,
+    color: MIX_COLORS[index % MIX_COLORS.length]
+  }));
+  if (other > 0) {
+    segments.push({ label: t("mix.other"), percent: other, color: "rgba(255,255,255,0.14)", isOther: true });
   }
+
+  // 记录可见风格的颜色，供“最终分”详情区对齐；其余风格使用中性色
+  const colorByName = new Map(composition.map((item, index) => [item.name, MIX_COLORS[index % MIX_COLORS.length]]));
+
+  const bar = document.createElement("div");
+  bar.className = "mix-bar";
+  const legend = document.createElement("div");
+  legend.className = "mix-legend";
+
+  for (const seg of segments) {
+    const cell = document.createElement("span");
+    cell.className = "mix-seg";
+    cell.style.width = `${seg.percent}%`;
+    cell.style.background = seg.color;
+    cell.title = `${seg.label} ${seg.percent}%`;
+    if (seg.isOther) cell.classList.add("is-other");
+    bar.appendChild(cell);
+
+    const tag = document.createElement("span");
+    tag.className = "mix-legend-item";
+    if (seg.isOther) tag.classList.add("is-other");
+    const dot = document.createElement("i");
+    dot.className = "mix-dot";
+    dot.style.background = seg.color;
+    tag.appendChild(dot);
+    tag.append(document.createTextNode(seg.label));
+    const percent = document.createElement("b");
+    percent.textContent = `${seg.percent}%`;
+    tag.appendChild(percent);
+    legend.appendChild(tag);
+  }
+
+  genreMix.appendChild(bar);
+  genreMix.appendChild(legend);
+
+  // 默认折叠的“最终分”详情，颜色与堆叠条 / 图例对齐
+  const detail = document.createElement("details");
+  detail.className = "mix-detail";
+  const summary = document.createElement("summary");
+  summary.textContent = t("mix.detail");
+  detail.appendChild(summary);
+  const scoreRows = document.createElement("div");
+  scoreRows.className = "mix-score-list";
+  for (const item of allScores) {
+    const row = document.createElement("span");
+    row.className = "mix-score-item";
+    const color = colorByName.get(item.name);
+    const dot = document.createElement("i");
+    dot.className = "mix-dot";
+    dot.style.background = color || "rgba(255,255,255,0.2)";
+    if (!color) row.classList.add("is-muted");
+    row.appendChild(dot);
+    row.append(document.createTextNode(displayName(item.name)));
+    const score = document.createElement("b");
+    score.textContent = t("mix.detail.score", { score: formatModelScore(item.score) });
+    row.appendChild(score);
+    if (item.boosted) {
+      const badge = document.createElement("em");
+      badge.className = "mix-boost-badge";
+      badge.textContent = t("mix.detail.boosted");
+      row.appendChild(badge);
+    }
+    scoreRows.appendChild(row);
+  }
+  detail.appendChild(scoreRows);
+  genreMix.appendChild(detail);
 }
 
 function renderEvidence(items, composition) {
@@ -1272,31 +1415,48 @@ function renderEvidence(items, composition) {
   }
 }
 
+function formatDuration(seconds) {
+  const total = Math.max(0, Math.round(seconds || 0));
+  const minutes = Math.floor(total / 60);
+  return `${minutes}:${String(total % 60).padStart(2, "0")}`;
+}
+
 function renderFeatures(features) {
   featureGrid.innerHTML = "";
-  const essentiaTop = essentiaAnalysis && Array.isArray(essentiaAnalysis.predictions) && essentiaAnalysis.predictions[0]
-    ? displayName(splitEssentiaLabel(essentiaAnalysis.predictions[0].label).display)
-    : "--";
-  const rows = features ? [
-    [t("feat.essentiaTop"), essentiaTop],
-    [t("feat.bpm"), Math.round(features.bpm || 0)],
-    [t("feat.bassRatio"), `${Math.round(features.bassRatio * 100)}%`],
-    [t("feat.cowbell"), `${Math.round(features.cowbellRatio * 100)}%`],
-    [t("feat.brightness"), `${Math.round(features.brightness * 100)}%`],
-    [t("feat.onset"), `${Math.round(features.onsetDensity)}/min`]
-  ] : [
-    [t("feat.essentiaTop"), "--"],
-    [t("feat.bpm"), "--"],
-    [t("feat.bassRatio"), "--"],
-    [t("feat.cowbell"), "--"],
-    [t("feat.brightness"), "--"],
-    [t("feat.onset"), "--"]
+  // 每一项：[i18n key, 计算展示值的函数, 是否有说明]。说明文案取 `<key>.note`，
+  // 默认隐藏，点卡片上的按钮才展开。没有音频时统一显示 "--"。
+  const defs = [
+    ["feat.bpm", f => Math.round(f.bpm || 0), true],
+    ["feat.duration", f => formatDuration(f.duration), false],
+    ["feat.bassRatio", f => `${Math.round(f.bassRatio * 100)}%`, true],
+    ["feat.cowbell", f => `${Math.round(f.cowbellRatio * 100)}%`, true],
+    ["feat.brightness", f => `${Math.round(f.brightness * 100)}%`, true],
+    ["feat.onset", f => `${Math.round(f.onsetDensity)}/min`, true],
+    ["feat.centroid", f => `${Math.round(f.centroid || 0)} Hz`, true],
+    ["feat.rolloff", f => `${Math.round(f.rolloff || 0)} Hz`, true],
+    ["feat.dynamicRange", f => `${(f.dynamicRange || 0).toFixed(1)} dB`, true],
+    ["feat.regularity", f => `${Math.round((f.rhythmRegularity || 0) * 100)}%`, true],
+    ["feat.zcr", f => (f.zcr || 0).toFixed(3), true],
+    ["feat.rms", f => `${(20 * Math.log10(Math.max(f.rms || 0, 1e-6))).toFixed(1)} dB`, true]
   ];
 
-  for (const [label, value] of rows) {
+  for (const [key, format, hasNote] of defs) {
     const card = document.createElement("div");
     card.className = "feature";
-    card.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+    const head = hasNote
+      ? `<span>${t(key)}<button type="button" class="feature-info" aria-expanded="false" aria-label="${t("feat.explain")}" title="${t("feat.explain")}">?</button></span>`
+      : `<span>${t(key)}</span>`;
+    const note = hasNote ? `<small hidden>${t(`${key}.note`)}</small>` : "";
+    card.innerHTML = `${head}<strong>${features ? format(features) : "--"}</strong>${note}`;
+    if (hasNote) {
+      const button = card.querySelector(".feature-info");
+      const small = card.querySelector("small");
+      button.addEventListener("click", () => {
+        const open = small.hidden;
+        small.hidden = !open;
+        button.setAttribute("aria-expanded", String(open));
+      });
+    }
     featureGrid.appendChild(card);
   }
 }
@@ -1317,6 +1477,7 @@ function pickPeaks(energies) {
 function estimateBpm(energies, sampleRate, hopSize) {
   const peaks = pickPeaks(energies);
   const histogram = new Map();
+  let total = 0;
   for (let i = 0; i < peaks.length; i++) {
     for (let j = i + 1; j < Math.min(i + 12, peaks.length); j++) {
       const seconds = (peaks[j] - peaks[i]) * hopSize / sampleRate;
@@ -1326,10 +1487,49 @@ function estimateBpm(energies, sampleRate, hopSize) {
       while (bpm > 190) bpm /= 2;
       const bucket = Math.round(bpm);
       histogram.set(bucket, (histogram.get(bucket) || 0) + 1);
+      total++;
     }
   }
   const best = [...histogram.entries()].sort((a, b) => b[1] - a[1])[0];
-  return best ? best[0] : 0;
+  // 节奏规整度：主导 BPM 桶（含相邻 ±1）占全部间隔投票的比例，越高越规整。
+  let regularity = 0;
+  if (best && total > 0) {
+    const dominant = best[0];
+    let hits = 0;
+    for (const [bucket, count] of histogram) {
+      if (Math.abs(bucket - dominant) <= 1) hits += count;
+    }
+    regularity = hits / total;
+  }
+  return { bpm: best ? best[0] : 0, regularity };
+}
+
+// 用 Goertzel 在一组对数频率点上探测能量，得到近似频谱，用于计算频谱质心与滚降。
+function spectralShape(samples, start, size, sampleRate) {
+  const freqs = [60, 90, 130, 190, 280, 400, 580, 840, 1200, 1750, 2500, 3600, 5200, 7500, 10800];
+  let weighted = 0;
+  let totalPower = 0;
+  const powers = [];
+  for (const freq of freqs) {
+    if (freq >= sampleRate / 2) break;
+    const power = goertzelPower(samples, start, size, sampleRate, freq);
+    powers.push([freq, power]);
+    weighted += freq * power;
+    totalPower += power;
+  }
+  const centroid = totalPower > 0 ? weighted / totalPower : 0;
+  // 滚降：累计能量达到 85% 时对应的频率。
+  let rolloff = 0;
+  let cumulative = 0;
+  const target = totalPower * 0.85;
+  for (const [freq, power] of powers) {
+    cumulative += power;
+    if (cumulative >= target) {
+      rolloff = freq;
+      break;
+    }
+  }
+  return { centroid, rolloff };
 }
 
 function goertzelPower(samples, start, size, sampleRate, frequency) {
@@ -1391,6 +1591,9 @@ async function analyzeAudio(source) {
   let cowbell = 0;
   let bright = 0;
   let totalBand = 0;
+  let centroidSum = 0;
+  let rolloffSum = 0;
+  let bandFrames = 0;
   const bandFrameStep = Math.max(1, Math.floor((maxSamples - frameSize) / 70));
 
   for (let start = 0; start + frameSize < maxSamples; start += hopSize) {
@@ -1416,10 +1619,19 @@ async function analyzeAudio(source) {
     cowbell += midBell;
     bright += high;
     totalBand += total || 1;
+    const shape = spectralShape(mono, start, frameSize, sampleRate);
+    centroidSum += shape.centroid;
+    rolloffSum += shape.rolloff;
+    bandFrames++;
   }
 
-  const bpm = estimateBpm(energies, sampleRate, hopSize);
+  const { bpm, regularity } = estimateBpm(energies, sampleRate, hopSize);
   const peaks = pickPeaks(energies);
+  // 动态范围：帧响度的 95 与 10 百分位之差（dB），古典大、EDM/流行小。
+  const sortedEnergies = [...energies].sort((a, b) => a - b);
+  const loudPct = sortedEnergies[Math.min(sortedEnergies.length - 1, Math.floor(sortedEnergies.length * 0.95))] || 1e-6;
+  const quietPct = sortedEnergies[Math.floor(sortedEnergies.length * 0.1)] || 1e-6;
+  const dynamicRange = 20 * Math.log10(Math.max(loudPct, 1e-6) / Math.max(quietPct, 1e-6));
   audioFeatures = {
     duration,
     bpm,
@@ -1427,6 +1639,10 @@ async function analyzeAudio(source) {
     cowbellRatio: cowbell / totalBand,
     brightness: bright / totalBand,
     onsetDensity: peaks.length / Math.max(1, maxSeconds / 60),
+    centroid: centroidSum / Math.max(1, bandFrames),
+    rolloff: rolloffSum / Math.max(1, bandFrames),
+    dynamicRange,
+    rhythmRegularity: regularity,
     zcr: zcrSum / Math.max(1, frames),
     rms: rmsSum / Math.max(1, frames)
   };

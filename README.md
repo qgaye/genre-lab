@@ -161,39 +161,36 @@ Cowbell 区间能量
 
 ## 打分 / 投票方式
 
-最终评分采用“统一 taxonomy 下的加权投票”：
+最终评分采用“Essentia 基准分 + 元信息加成（boost）”：
 
 ```text
-证据源 -> 映射到 Discogs400 Genre/Style -> 加权投票 -> 排序 -> 构成比例
+Essentia 输出 -> 映射到 Discogs400 Genre/Style -> 作为基准分（唯一候选来源）
+元信息（Discogs / Last.fm / iTunes）-> 命中已有风格时按乘法 boost -> 排序 -> 构成比例
 ```
 
 简化公式：
 
 ```text
-styleScore(label) =
-  EssentiaVote(label)
-  + DiscogsVote(label)
-  + LastFmVote(label)
-  + ITunesVote(label)
+baseScore(style) = EssentiaVote(style)          // 只有 Essentia 能创建候选风格
 
-genreScore(genre) =
-  directGenreVotes(genre)
-  + 0.32 * sum(styleScore(style under genre))
+# 元信息只加成 Essentia 已命中的风格，不引入新风格
+finalScore(style) = baseScore(style) * (1 + min(0.5, boostPoints(style) / 100))
 
-finalPercent(label) =
-  visibleScore(label) / sum(visibleScores) * 100
+finalPercent(style) =
+  visibleScore(style) / sum(visibleScores) * 100
 ```
 
 其中：
 
 ```text
-EssentiaVote = max(14, 18 + relativeStrength * 72 * rankDecay)
-DiscogsVote = 14 for genre, 20 for style
-LastFmVote = 24 + countBoost
-ITunesVote = 16
+EssentiaVote = max(14, 18 + relativeStrength * 72 * rankDecay)   // 基准分
+boostPoints  = sum(DiscogsBoost / LastFmBoost / iTunesBoost)     // 仅加成，封顶 +50%
+DiscogsBoost = 14 for genre, 20 for style
+LastFmBoost  = 24 + countBoost
+iTunesBoost  = 16
 ```
 
-`relativeStrength` 是 Essentia 当前标签相对 Top1 的强度，`rankDecay` 是按 Essentia 排名递减的轻微衰减系数。最终百分比只表示融合评分后的构成，不表示 Essentia 原始概率。
+`relativeStrength` 是 Essentia 当前标签相对 Top1 的强度，`rankDecay` 是按 Essentia 排名递减的轻微衰减系数。MAEST / EffNet 输出的都是 `Genre---Style` 组合（style 层级），因此评分**只在 style 层级进行**，不再单独合成粗粒度 genre 聚合项。元信息只能对 Essentia 已经命中的风格做乘法加成（单风格最多 +50%），**无法**创建 Essentia 没有输出的风格；因此没有音频 / Essentia 输出时会直接判定证据不足。最终百分比只表示融合评分后的构成，不表示 Essentia 原始概率。
 
 ### Essentia 投票
 
@@ -222,37 +219,37 @@ minimum weight = 14
 
 因此，哪怕 Essentia 原始模型分看起来不高，只要它是 Top 标签，仍会作为最高权重证据进入最终判断。
 
-### Discogs 投票
+### Discogs 加成
 
-Discogs release 的标签进入评分时：
+Discogs release 的标签命中 Essentia 已有风格时，按以下加成点参与 boost：
 
 ```text
-genre weight = 14
-style weight = 20
+genre boost = 14
+style boost = 20
 ```
 
-Discogs 的作用是补充发行物层面的元数据语境。
+Discogs 的作用是补充发行物层面的元数据语境，只放大 Essentia 已有的判断。
 
-### Last.fm 投票
+### Last.fm 加成
 
-Last.fm 歌曲级 tag 进入评分时：
+Last.fm 歌曲级 tag 命中 Essentia 已有风格时的加成点：
 
 ```text
-base weight = 24
+base = 24
 count boost = 0-10
 ```
 
 如果 Last.fm 返回 tag count，会按最高 count 做相对增强。
 
-### iTunes 投票
+### iTunes 加成
 
-iTunes `primaryGenreName` 进入评分时：
+iTunes `primaryGenreName` 命中 Essentia 已有风格时的加成点：
 
 ```text
-weight = 16
+boost = 16
 ```
 
-它是粗粒度辅助证据。
+它是粗粒度辅助证据。所有元信息加成累积后，对单个风格最多产生 +50% 的乘法加成，且不会创建 Essentia 未输出的风格。
 
 ### Browser Audio Diagnostics
 
@@ -260,26 +257,20 @@ weight = 16
 
 ## Style 与 Genre 的关系
 
-项目优先给 `Genre / Style` 组合加分，例如：
+MAEST / EffNet 模型输出的分类本身就是 `Genre---Style` 组合（style 层级），例如：
 
 ```text
 Rock / Pop Rock
 Hip Hop / Trap
 ```
 
-当某个 Style 命中时，也会给其上级 Genre 一部分归因分：
-
-```text
-style score -> genre score * 0.32
-```
+因此评分**只在 style 层级进行**，不再单独合成粗粒度 genre 聚合项。之所以不做 genre 归纳，是因为模型的分类空间里根本没有独立的 genre 类别，人为聚合出的"纯 genre"会与真实的 style 项在构成条里重复出现（例如同时出现 `Hip Hop / Pop Rap` 和纯 `Hip Hop`），造成混淆。
 
 相关逻辑：
 
 ```text
-public/app.js -> addDiscogsScore()
+public/app.js -> addDiscogsScore() / applyMetadataBoost()
 ```
-
-这样可以同时保留细粒度 style 判断和粗粒度 genre 归纳。
 
 ## 最终构成比例
 
@@ -288,7 +279,8 @@ public/app.js -> addDiscogsScore()
 流程：
 
 ```text
-所有证据加权得分
+Essentia 基准分
+-> 元信息乘法 boost（命中已有风格，封顶 +50%）
 -> 过滤低分项
 -> 对保留项归一化
 -> 显示为构成比例

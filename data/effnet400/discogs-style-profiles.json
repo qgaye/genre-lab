@@ -4829,24 +4829,25 @@
       "genre": "Hip Hop",
       "style": "Jazzy Hip-Hop",
       "title": "Hip Hop / Jazzy Hip-Hop",
-      "overview": "Jazzy Hip-Hop 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于以即兴、和声色彩和乐手互动为中心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "overview": "Jazzy Hip-Hop 把爵士乐（Bebop、Cool Jazz、Soul Jazz）的采样与和声嫁接到 Boom Bap 节拍上，形成一种松弛、温暖、带书卷气的嘻哈。它诞生于 1980 年代末至 90 年代初的纽约，是嘻哈黄金年代实验精神与 Native Tongues 集体的产物，也是另类嘻哈（Alternative Hip-Hop）的重要源头。辨认它的关键在于：Boom Bap 骨架之上覆盖爵士化的和声色彩与原声乐器采样，flow 从容而非攻击。",
       "styleFocus": [
-        "摇摆或切分律动",
-        "即兴 solo",
-        "扩展和声",
-        "鼓贝斯与和声乐器互动"
+        "Boom Bap 鼓组，速度多在 85–95 BPM，摇摆律动明显",
+        "爵士采样：原声贝斯、Rhodes 电钢、萨克斯、小号、颤音琴",
+        "七和弦、九和弦等扩展和声带来的温暖色彩",
+        "采样切片（chopping）与保留的黑胶底噪质感",
+        "从容、口语化、重文字游戏的 flow"
       ],
-      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。爵士从 20 世纪初的美国城市音乐出发，不断吸收古巴、巴西、摇滚、Funk 和学院派语言。",
+      "history": "它承接自嘻哈的 DJ break、采样与 MC 文化，但制作人转而大量翻挖父辈的爵士唱片，把爵士的和声与音色注入嘻哈节拍。A Tribe Called Quest、De La Soul 等 Native Tongues 群体在纽约奠定其语言；随后 Guru 的《Jazzmatazz》直接邀请爵士乐手同台，J Dilla 把采样美学推向极致。日本的 Nujabes 结合动画《Samurai Champloo》将其推向 Lo-fi / 治愈系，直接催生了今天风靡全球的 Lo-fi Hip-Hop 歌单文化。",
       "listenFor": [
-        "先抓 摇摆或切分律动。",
-        "再听 即兴 solo 如何支撑情绪或舞池功能。",
-        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+        "先抓 Boom Bap 骨架：慵懒、点头式的 kick/snare 与摇摆感。",
+        "再听爵士采样与扩展和声如何营造温暖、知性的氛围。",
+        "注意黑胶底噪、原声乐器音色和从容的 flow，把它与更硬核或炫技的嘻哈子风格区分开。"
       ],
       "mainstreamEntry": {
         "artist": "A Tribe Called Quest",
         "title": "Electric Relaxation",
         "role": "主流入门曲",
-        "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+        "note": "出自 1993 年《Midnight Marauders》，慵懒 groove 配爵士贝斯采样，是理解 Jazzy Hip-Hop 声音语言最直接的入口。"
       }
     },
     {
