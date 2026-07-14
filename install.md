@@ -280,14 +280,14 @@ https://essentia.upf.edu/models.html
 每个模型的音乐风格体系是一份**固定配置文件**，直接手工维护、随代码版本管理，不再由脚本生成：
 
 ```text
-data/<model>/discogs-taxonomy.json          # 分类体系 + translations.zh 中文名
-data/<model>/discogs-style-profiles.json    # 风格文案（语境 / 示例 / 规则）
-data/<model>/discogs-style-profiles.md
+data/<model>/discogs-taxonomy.json          # 分类体系 + translations.zh 中文名（按模型区分）
+data/discogs-style-profiles.json            # 风格文案（语境 / 示例 / 规则），所有模型共用
+data/discogs-style-profiles.md
 ```
 
-其中 `discogs-taxonomy.json` 的 `translations.zh` 提供 genres/styles 的中文表达，供前后端按需查表展示。
+其中 `discogs-taxonomy.json` 的 `translations.zh` 提供 genres/styles 的中文表达，供前后端按需查表展示。`discogs-style-profiles.json` 是与模型无关的共享风格说明，按 `Genre---Style` 的 `id` 供前端查表。
 
-前端通过带 `?model=` 的稳定路径请求（如 `/discogs-taxonomy.js?model=effnet400`），服务端读取对应模型目录下的 JSON 并动态包装成 `window.DISCOGS_TAXONOMY = {...}` 返回；不带参数时回退默认模型。引入新模型时，在 `data/<model>/` 下新增这些配置文件并同步 `scripts/analyze_genre.py`、`server.js` 的模型注册即可。
+前端通过带 `?model=` 的稳定路径请求 taxonomy（如 `/discogs-taxonomy.js?model=effnet400`），服务端读取对应模型目录下的 JSON 并动态包装成 `window.DISCOGS_TAXONOMY = {...}` 返回；不带参数时回退默认模型。风格文案通过固定路径 `/discogs-style-profiles.js` 请求，服务端读取共享的 `data/discogs-style-profiles.json` 并包装成 `window.DISCOGS_STYLE_PROFILES = {...}`，不区分模型。引入新模型时，在 `data/<model>/` 下新增 taxonomy 配置并同步 `scripts/analyze_genre.py`、`server.js` 的模型注册即可。
 
 ## 下载音频依赖
 

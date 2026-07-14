@@ -12,6 +12,7 @@ const fileInput = document.querySelector("#fileInput");
 const fileName = document.querySelector("#fileName");
 const statusPill = document.querySelector("#statusPill");
 const genreTitle = document.querySelector("#genreTitle");
+const verdictTrack = document.querySelector("#verdictTrack");
 const genreReason = document.querySelector("#genreReason");
 const confidenceLabel = document.querySelector("#confidenceLabel");
 const genreMix = document.querySelector("#genreMix");
@@ -209,11 +210,8 @@ const I18N = {
     "feat.explain": "查看指标含义",
     "feat.bpm": "BPM",
     "feat.bpm.note": "每分钟节拍数。数值越高越快：民谣/抒情约 60-90，流行约 100-130，电子舞曲/朋克常在 128+。",
-    "feat.duration": "时长",
     "feat.bassRatio": "低频占比",
     "feat.bassRatio.note": "低频能量比例。偏高常见于 Hip-Hop、EDM、Dub、Reggae；偏低多为原声/民谣/古典。",
-    "feat.cowbell": "Cowbell 区间",
-    "feat.cowbell.note": "中频（约 0.7-1.1kHz）能量占比。人声与主奏乐器集中区，占比高说明旋律/人声突出。",
     "feat.brightness": "明亮度",
     "feat.brightness.note": "高频（2-7kHz）能量占比。越高越明亮：金属、电子偏亮；氛围、Lo-Fi 偏暗。",
     "feat.onset": "起音密度",
@@ -399,11 +397,8 @@ const I18N = {
     "feat.explain": "Show metric meaning",
     "feat.bpm": "BPM",
     "feat.bpm.note": "Beats per minute. Higher = faster: folk/ballad ~60-90, pop ~100-130, EDM/punk often 128+.",
-    "feat.duration": "Duration",
     "feat.bassRatio": "Bass ratio",
     "feat.bassRatio.note": "Low-frequency energy share. High is common in Hip-Hop, EDM, Dub, Reggae; low in acoustic/folk/classical.",
-    "feat.cowbell": "Cowbell band",
-    "feat.cowbell.note": "Mid band (~0.7-1.1kHz) share. Where vocals and lead instruments sit; high means prominent melody/vocals.",
     "feat.brightness": "Brightness",
     "feat.brightness.note": "High-frequency (2-7kHz) share. Higher = brighter: metal/electronic bright; ambient/Lo-Fi darker.",
     "feat.onset": "Onset density",
@@ -631,12 +626,13 @@ rebuildTaxonomyState();
 // was injected at page load; updated by the model selector.
 let activeModel = (TAXONOMY.model || "").trim();
 
-// Reload the per-model taxonomy / style-profile scripts for the given model and
-// rebuild all derived state. Resolves once the new globals are in place.
+// Reload the per-model taxonomy script for the given model and rebuild all
+// derived state. Resolves once the new global is in place.
 function loadModelTaxonomy(modelName) {
+  // Style profiles are model-agnostic and loaded once at page load; only the
+  // taxonomy needs to be reloaded when switching models.
   const sources = [
-    `/discogs-taxonomy.js?model=${encodeURIComponent(modelName)}`,
-    `/discogs-style-profiles.js?model=${encodeURIComponent(modelName)}`
+    `/discogs-taxonomy.js?model=${encodeURIComponent(modelName)}`
   ];
   return Promise.all(sources.map(src => new Promise((resolve, reject) => {
     const script = document.createElement("script");
@@ -1166,7 +1162,8 @@ function buildVerdictTitle(composition) {
 }
 
 // Render the headline with font sizes scaled by each style's share, so the
-// dominant genre reads visibly larger than the secondary one.
+// dominant genre reads visibly larger than the secondary one. Each part shows
+// the sub-style as the large word and the parent genre as a small tag above it.
 function renderVerdictTitle(parts) {
   genreTitle.innerHTML = "";
   if (!parts.length) {
@@ -1186,9 +1183,37 @@ function renderVerdictTitle(parts) {
     // Scale between 0.5em and 1em based on share relative to the leading style.
     const ratio = Math.max(0, Math.min(1, (part.percent || part.score || 0) / lead));
     span.style.fontSize = `${(0.5 + 0.5 * ratio).toFixed(3)}em`;
-    span.textContent = displayName(part.name);
+
+    const full = displayName(part.name);
+    const sepIdx = full.indexOf(" / ");
+    const genre = sepIdx === -1 ? "" : full.slice(0, sepIdx);
+    const style = sepIdx === -1 ? full : full.slice(sepIdx + 3);
+
+    if (genre) {
+      const tag = document.createElement("span");
+      tag.className = "verdict-title-genre";
+      tag.textContent = genre;
+      span.appendChild(tag);
+    }
+    const main = document.createElement("span");
+    main.className = "verdict-title-style";
+    main.textContent = style;
+    span.appendChild(main);
     genreTitle.appendChild(span);
   });
+}
+
+// Show the analyzed track (title — artist) as a kicker above the headline.
+function renderVerdictTrack(track) {
+  if (!track || !track.title) {
+    verdictTrack.hidden = true;
+    verdictTrack.textContent = "";
+    return;
+  }
+  const title = track.title;
+  const artists = track.artists || t("track.unknownArtist");
+  verdictTrack.hidden = false;
+  verdictTrack.innerHTML = `<strong>${escapeHtml(title)}</strong><span class="verdict-track-sep">—</span>${escapeHtml(artists)}`;
 }
 
 function compactValue(text, maxLength = 34) {
@@ -1281,6 +1306,7 @@ function analyzeEvidence() {
   renderEvidence(evidence, composition);
   renderFeatures(audioFeatures);
 
+  renderVerdictTrack(track);
   renderVerdictTitle(titleParts);
   confidenceLabel.textContent = t("confidence.coverage", { n: Math.round(coverage) });
   genreReason.textContent = composition.length
@@ -1415,21 +1441,13 @@ function renderEvidence(items, composition) {
   }
 }
 
-function formatDuration(seconds) {
-  const total = Math.max(0, Math.round(seconds || 0));
-  const minutes = Math.floor(total / 60);
-  return `${minutes}:${String(total % 60).padStart(2, "0")}`;
-}
-
 function renderFeatures(features) {
   featureGrid.innerHTML = "";
   // 每一项：[i18n key, 计算展示值的函数, 是否有说明]。说明文案取 `<key>.note`，
   // 默认隐藏，点卡片上的按钮才展开。没有音频时统一显示 "--"。
   const defs = [
     ["feat.bpm", f => Math.round(f.bpm || 0), true],
-    ["feat.duration", f => formatDuration(f.duration), false],
     ["feat.bassRatio", f => `${Math.round(f.bassRatio * 100)}%`, true],
-    ["feat.cowbell", f => `${Math.round(f.cowbellRatio * 100)}%`, true],
     ["feat.brightness", f => `${Math.round(f.brightness * 100)}%`, true],
     ["feat.onset", f => `${Math.round(f.onsetDensity)}/min`, true],
     ["feat.centroid", f => `${Math.round(f.centroid || 0)} Hz`, true],

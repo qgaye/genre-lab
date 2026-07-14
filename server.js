@@ -1352,20 +1352,43 @@ function serveStatic(req, res) {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
 
-  // Per-model config files. taxonomy / style-profiles are fixed JSON configs
-  // under data/<model>/. The frontend requests them as JS globals and may pass
+  // Per-model config files. taxonomy is a per-model JSON config under
+  // data/<model>/. The frontend requests it as a JS global and may pass
   // ?model=<name> to pick a model; without the query it falls back to the
   // active default. The JSON is wrapped into a `window.<VAR> = ...` script on
   // the fly, so there is no separate generated public/*.js to keep in sync.
   const PER_MODEL_CONFIG = {
-    "/discogs-taxonomy.js": { json: "discogs-taxonomy.json", global: "DISCOGS_TAXONOMY" },
-    "/discogs-style-profiles.js": { json: "discogs-style-profiles.json", global: "DISCOGS_STYLE_PROFILES" }
+    "/discogs-taxonomy.js": { json: "discogs-taxonomy.json", global: "DISCOGS_TAXONOMY" }
   };
   if (PER_MODEL_CONFIG[pathname]) {
     const { json, global } = PER_MODEL_CONFIG[pathname];
     const modelName = resolveRequestModelName(url.searchParams.get("model"));
     const modelFile = path.join(ROOT, "data", modelName, json);
     fs.readFile(modelFile, "utf8", (error, raw) => {
+      if (error) {
+        res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Not found");
+        return;
+      }
+      res.writeHead(200, {
+        "content-type": MIME[".js"],
+        "cache-control": "no-cache, must-revalidate"
+      });
+      res.end(`window.${global} = ${raw.trim()};\n`);
+    });
+    return;
+  }
+
+  // Shared config files that are model-agnostic (e.g. style profiles). They
+  // live under data/ and are served the same way as per-model configs but
+  // without a model dimension.
+  const SHARED_CONFIG = {
+    "/discogs-style-profiles.js": { json: "discogs-style-profiles.json", global: "DISCOGS_STYLE_PROFILES" }
+  };
+  if (SHARED_CONFIG[pathname]) {
+    const { json, global } = SHARED_CONFIG[pathname];
+    const sharedFile = path.join(ROOT, "data", json);
+    fs.readFile(sharedFile, "utf8", (error, raw) => {
       if (error) {
         res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
         res.end("Not found");

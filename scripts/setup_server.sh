@@ -565,9 +565,10 @@ download_models() {
 verify_taxonomy() {
   local target
   for target in $GENRE_MODEL_LIST; do
-    test -s "data/$target/discogs-taxonomy.json" &&
-      test -s "data/$target/discogs-style-profiles.json" || return 1
+    test -s "data/$target/discogs-taxonomy.json" || return 1
   done
+  # Style profiles are shared across models (model-agnostic).
+  test -s "data/discogs-style-profiles.json" || return 1
 }
 
 check_javascript() {
