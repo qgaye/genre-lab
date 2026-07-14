@@ -2233,7 +2233,7 @@ if (langToggle) {
 const SHARE_CARD_WIDTH = 1200;
 const SHARE_CARD_PAD = 64;
 const SHARE_SCALE = 2;
-const SHARE_CARD_MARK = "PRESENTED BY QGAYE";
+const SHARE_CARD_MARK = "Presented by qgaye";
 
 function splitGenreStyle(name) {
   const full = displayName(name);
@@ -2253,25 +2253,16 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawShareBrandMark(ctx, width) {
+function drawShareFooter(ctx, x, y, width) {
   ctx.save();
-  ctx.font = "700 16px Avenir Next, Helvetica, Arial, sans-serif";
-  ctx.textBaseline = "middle";
-  const padX = 16;
-  const pillH = 38;
-  const pillW = ctx.measureText(SHARE_CARD_MARK).width + padX * 2;
-  const x = width - SHARE_CARD_PAD - pillW;
-  const y = SHARE_CARD_PAD - 7;
-
-  ctx.fillStyle = "rgba(244, 240, 232, 0.035)";
-  ctx.strokeStyle = "rgba(244, 240, 232, 0.20)";
-  ctx.lineWidth = 2;
-  drawRoundedRect(ctx, x, y, pillW, pillH, 19);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(201, 202, 187, 0.62)";
-  ctx.fillText(SHARE_CARD_MARK, x + padX, y + pillH / 2 + 1);
+  ctx.font = "500 18px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#73766c";
+  ctx.fillText(t("share.cardHint"), x, y);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "rgba(115, 118, 108, 0.74)";
+  ctx.fillText(SHARE_CARD_MARK, x + width, y);
   ctx.restore();
 }
 
@@ -2346,7 +2337,6 @@ function renderShareCard(verdict) {
   ctx.lineWidth = 2;
   drawRoundedRect(ctx, 3, 3, width - 6, height - 6, 22);
   ctx.stroke();
-  drawShareBrandMark(ctx, width);
 
   const x = SHARE_CARD_PAD;
   const contentW = width - SHARE_CARD_PAD * 2;
@@ -2441,10 +2431,8 @@ function renderShareCard(verdict) {
   y = drawShareMix(ctx, verdict.composition, x, y, contentW);
   y += 8;
 
-  // Footer hint
-  ctx.fillStyle = "#73766c";
-  ctx.font = "500 18px Avenir Next, Helvetica, Arial, sans-serif";
-  ctx.fillText(t("share.cardHint"), x, y);
+  // Footer hint + subtle author credit
+  drawShareFooter(ctx, x, y, contentW);
   y += 34;
 
   // Crop the canvas to the used height.
