@@ -4,71 +4,74 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab</title>
-    <link rel="stylesheet" href="/styles.css?v=20260714-style-info">
+    <link rel="stylesheet" href="/styles.css?v=20260714-i18n">
   </head>
   <body>
     <main class="shell">
-      <section class="console" aria-label="曲风识别工作台">
+      <section class="console" aria-label="曲风识别工作台" data-i18n-aria="console.aria">
         <header class="mast">
           <div>
             <p class="kicker">Genre Lab</p>
-            <h1>Genre / Style 证据分析器</h1>
+            <h1 data-i18n="app.title">歌曲曲风识别</h1>
           </div>
-          <div class="status-pill" id="statusPill">等待输入</div>
+          <div class="mast-actions">
+            <button type="button" class="lang-toggle" id="langToggle" data-i18n="lang.toggle">EN</button>
+            <div class="status-pill" id="statusPill" data-i18n="status.waiting">等待输入</div>
+          </div>
         </header>
 
         <form class="input-grid" id="trackForm">
-          <fieldset class="format-field" aria-label="输入格式">
-            <legend>输入格式</legend>
+          <fieldset class="format-field" aria-label="输入格式" data-i18n-aria="field.inputFormat">
+            <legend data-i18n="field.inputFormat">输入格式</legend>
             <div class="format-options">
               <label>
                 <input type="radio" name="inputFormat" value="netease-url" checked>
-                <span>网易云音乐链接</span>
+                <span data-i18n="format.neteaseShort">网易云</span>
               </label>
               <label>
                 <input type="radio" name="inputFormat" value="qq-music-url">
-                <span>QQ音乐链接</span>
+                <span data-i18n="format.qqShort">QQ音乐</span>
+              </label>
+              <label>
+                <input type="radio" name="inputFormat" value="spotify-url">
+                <span data-i18n="format.spotifyShort">Spotify</span>
               </label>
             </div>
           </fieldset>
+          <label class="query-field model-field">
+            <span data-i18n="field.model">曲风模型</span>
+            <select id="modelSelect"></select>
+          </label>
           <label class="query-field">
-            <span>歌曲信息</span>
+            <span data-i18n="field.track">歌曲信息</span>
             <input id="trackInput" autocomplete="off" placeholder="例如：https://music.163.com/song?id=38689021&uct2=...">
           </label>
           <div class="parsed-line" id="parsedLine">将解析网易云歌曲链接，再搜索对应公开音频</div>
           <div class="actions">
-            <button type="submit" class="primary" title="自动查询元信息、搜索音频并融合分析">分析这首歌</button>
+            <button type="submit" class="primary" title="自动查询元信息、搜索音频并融合分析" data-i18n="action.analyze" data-i18n-title="action.analyze.title">分析这首歌</button>
           </div>
           <div class="progress-card" id="progressCard">
             <div class="progress-top">
-              <span id="progressLabel">准备就绪</span>
+              <span id="progressLabel" data-i18n="progress.ready">准备就绪</span>
               <b id="progressPercent">0%</b>
             </div>
             <div class="progress-track"><span id="progressFill"></span></div>
             <div class="progress-steps" id="progressSteps">
-              <span data-step="parse">解析</span>
-              <span data-step="metadata">标签</span>
-              <span data-step="search">音频</span>
-              <span data-step="download">下载</span>
-              <span data-step="decode">解码</span>
-              <span data-step="score">评分</span>
+              <span data-step="parse" data-i18n="step.parse">解析</span>
+              <span data-step="metadata" data-i18n="step.metadata">标签</span>
+              <span data-step="search" data-i18n="step.search">音频</span>
+              <span data-step="download" data-i18n="step.download">下载</span>
+              <span data-step="decode" data-i18n="step.decode">解码</span>
+              <span data-step="score" data-i18n="step.score">评分</span>
             </div>
             <ol class="progress-log" id="progressLog"></ol>
           </div>
           <details class="fallbacks">
-            <summary>备用输入</summary>
-            <label>
-              <span>专辑名（可选）</span>
-              <input id="albumInput" autocomplete="off" placeholder="用来辅助匹配标签">
-            </label>
-            <label>
-              <span>指定音频或公开视频链接（可选）</span>
-              <input id="urlInput" autocomplete="off" placeholder="mp3/wav/m4a 直链，或 yt-dlp 支持的公开链接">
-            </label>
+            <summary data-i18n="field.fallbacks">备用输入</summary>
             <label class="file-drop">
               <input id="fileInput" type="file" accept="audio/*">
-              <span>上传本地音频</span>
-              <strong id="fileName">没有选择文件</strong>
+              <span data-i18n="field.upload">上传本地音频</span>
+              <strong id="fileName" data-i18n="file.none">没有选择文件</strong>
             </label>
           </details>
         </form>
@@ -77,18 +80,21 @@
       <section class="result-board" id="resultBoard" aria-live="polite">
         <article class="verdict">
           <div class="verdict-top">
-            <p>Genre / Style 构成</p>
-            <span id="confidenceLabel">证据覆盖 --</span>
+            <p data-i18n="verdict.mix">曲风判定</p>
+            <button type="button" id="shareVerdict" class="verdict-share" data-i18n-title="share.hint" title="生成结论卡图片并保存到本地" disabled>
+              <span class="verdict-share-icon" aria-hidden="true">↗</span>
+              <span class="verdict-share-label" data-i18n="share.button">分享</span>
+            </button>
           </div>
-          <h2 id="genreTitle">尚未分析</h2>
-          <p id="genreReason">输入歌曲信息，并尽量提供音频。只有元信息时会给出“倾向判断”；加入音频后会提升证据质量。</p>
+          <p id="verdictTrack" class="verdict-track" hidden></p>
+          <h2 id="genreTitle" data-i18n="verdict.notAnalyzed">尚未分析</h2>
+          <p id="genreReason" data-i18n="verdict.intro">输入歌曲信息，并尽量提供音频。只有元信息时会给出“倾向判断”；加入音频后会提升证据质量。</p>
           <div class="genre-mix" id="genreMix"></div>
-          <div class="meter" aria-hidden="true"><span id="confidenceMeter"></span></div>
         </article>
 
         <article class="panel">
           <div class="panel-head">
-            <h3>Genre / Style 比例</h3>
+            <h3 data-i18n="panel.ratio">各曲风占比</h3>
             <span id="scoreCount">0 项</span>
           </div>
           <div class="score-list" id="scoreList"></div>
@@ -96,15 +102,15 @@
 
         <article class="panel">
           <div class="panel-head">
-            <h3>音频诊断</h3>
-            <span id="audioState">未读取</span>
+            <h3 data-i18n="panel.audio">音频特征</h3>
+            <span id="audioState" data-i18n="audio.notRead">未读取</span>
           </div>
           <div class="feature-grid" id="featureGrid"></div>
         </article>
 
         <article class="panel evidence">
           <div class="panel-head">
-            <h3>证据链</h3>
+            <h3 data-i18n="panel.evidence">证据链</h3>
             <span id="evidenceCount">0 条</span>
           </div>
           <ol id="evidenceList"></ol>
@@ -128,20 +134,20 @@
     <div class="style-dialog" id="styleDialog" aria-hidden="true">
       <div class="style-dialog__backdrop" data-style-dialog-close></div>
       <section class="style-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="styleDialogTitle">
-        <button class="style-dialog__close" type="button" data-style-dialog-close aria-label="关闭风格介绍">×</button>
-        <p class="style-dialog__kicker" id="styleDialogKicker">Discogs400 Style</p>
+        <button class="style-dialog__close" type="button" data-style-dialog-close aria-label="关闭风格介绍" data-i18n-aria="dialog.close">×</button>
+        <p class="style-dialog__kicker" id="styleDialogKicker" data-i18n="dialog.kicker">Discogs Style</p>
         <h2 id="styleDialogTitle"></h2>
         <p class="style-dialog__overview" id="styleDialogOverview"></p>
         <div class="style-dialog__section">
-          <h3>风格重点</h3>
+          <h3 data-i18n="dialog.focus">风格重点</h3>
           <ul id="styleDialogFocus"></ul>
         </div>
         <div class="style-dialog__section">
-          <h3>发展脉络</h3>
+          <h3 data-i18n="dialog.history">发展脉络</h3>
           <p id="styleDialogHistory"></p>
         </div>
         <div class="style-dialog__entry">
-          <span>主流入门音乐</span>
+          <span data-i18n="dialog.entry">主流入门音乐</span>
           <strong id="styleDialogTrack"></strong>
           <small id="styleDialogTrackNote"></small>
         </div>
@@ -150,6 +156,6 @@
 
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
-    <script src="/app.js?v=20260714-style-info"></script>
+    <script src="/app.js?v=20260714-i18n"></script>
   </body>
 </html>

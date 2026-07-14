@@ -13,6 +13,12 @@ MIN_NODE_MAJOR=18
 PYTHON_BIN="${PYTHON_BIN:-}"
 NODE_FALLBACK_VERSION="${NODE_FALLBACK_VERSION:-v20.11.1}"
 FFMPEG_STATIC_VERSION="${FFMPEG_STATIC_VERSION:-release}"
+GENRE_MODEL="${GENRE_MODEL:-maest519}"
+export GENRE_MODEL
+# Runtime model switching needs every model's files present locally, so the
+# installer provisions all of them by default. Override to install a subset,
+# e.g. GENRE_MODEL_LIST="maest519".
+GENRE_MODEL_LIST="${GENRE_MODEL_LIST:-effnet400 maest519}"
 
 mkdir -p "$LOG_DIR"
 
@@ -329,9 +335,9 @@ create_python_env() {
 python_packages_present() {
   [ -x "$VENV_DIR/bin/yt-dlp" ] || return 1
   "$VENV_DIR/bin/python" - <<'PY' >/dev/null 2>&1
-import essentia
 import essentia.standard as es
-raise SystemExit(0 if hasattr(es, "TensorflowPredictEffnetDiscogs") and hasattr(es, "TensorflowPredict2D") else 1)
+required = ["TensorflowPredictEffnetDiscogs", "TensorflowPredict2D", "TensorflowPredictMAEST"]
+raise SystemExit(0 if all(hasattr(es, name) for name in required) else 1)
 PY
 }
 
@@ -451,13 +457,32 @@ install_ffmpeg() {
 }
 
 verify_essentia() {
-  "$VENV_DIR/bin/python" - <<'PY'
+  GENRE_MODEL_LIST="$GENRE_MODEL_LIST" "$VENV_DIR/bin/python" - <<'PY'
+import os
 import essentia
 import essentia.standard as es
+
+models = os.environ.get("GENRE_MODEL_LIST", "maest519").split()
 print("essentia", essentia.__version__)
-print("TensorflowPredictEffnetDiscogs", hasattr(es, "TensorflowPredictEffnetDiscogs"))
-print("TensorflowPredict2D", hasattr(es, "TensorflowPredict2D"))
-raise SystemExit(0 if hasattr(es, "TensorflowPredictEffnetDiscogs") and hasattr(es, "TensorflowPredict2D") else 1)
+
+requirements = {
+    "effnet400": ["TensorflowPredictEffnetDiscogs", "TensorflowPredict2D"],
+    "maest519": ["TensorflowPredictMAEST"],
+}
+
+required = []
+for model in models:
+    for name in requirements.get(model, ["TensorflowPredictMAEST"]):
+        if name not in required:
+            required.append(name)
+
+ok = True
+for name in required:
+    present = hasattr(es, name)
+    print(name, present)
+    ok = ok and present
+
+raise SystemExit(0 if ok else 1)
 PY
 }
 
@@ -500,31 +525,50 @@ download_models() {
     return 1
   fi
 
-  download_file \
-    "$ROOT/models/discogs-effnet-bs64-1.pb" \
-    "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb" \
-    1000000 &&
+  local target
+  for target in $GENRE_MODEL_LIST; do
+    echo "== Downloading model files for: $target =="
+    if [ "$target" = "effnet400" ]; then
+      download_file \
+        "$ROOT/models/discogs-effnet-bs64-1.pb" \
+        "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb" \
+        1000000 &&
 
-  download_file \
-    "$ROOT/models/discogs-effnet-bs64-1.json" \
-    "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.json" \
-    1000 &&
+      download_file \
+        "$ROOT/models/discogs-effnet-bs64-1.json" \
+        "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.json" \
+        1000 &&
 
-  download_file \
-    "$ROOT/models/genre_discogs400-discogs-effnet-1.pb" \
-    "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb" \
-    100000 &&
+      download_file \
+        "$ROOT/models/genre_discogs400-discogs-effnet-1.pb" \
+        "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb" \
+        100000 &&
 
-  download_file \
-    "$ROOT/models/genre_discogs400-discogs-effnet-1.json" \
-    "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.json" \
-    1000
+      download_file \
+        "$ROOT/models/genre_discogs400-discogs-effnet-1.json" \
+        "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.json" \
+        1000 || return 1
+    else
+      download_file \
+        "$ROOT/models/discogs-maest-30s-pw-519l-2.pb" \
+        "https://essentia.upf.edu/models/feature-extractors/maest/discogs-maest-30s-pw-519l-2.pb" \
+        1000000 &&
+
+      download_file \
+        "$ROOT/models/discogs-maest-30s-pw-519l-2.json" \
+        "https://essentia.upf.edu/models/feature-extractors/maest/discogs-maest-30s-pw-519l-2.json" \
+        1000 || return 1
+    fi
+  done
 }
 
-build_taxonomy() {
-  node scripts/build_discogs_taxonomy.js &&
-    test -s data/discogs-taxonomy.json &&
-    test -s public/discogs-taxonomy.js
+verify_taxonomy() {
+  local target
+  for target in $GENRE_MODEL_LIST; do
+    test -s "data/$target/discogs-taxonomy.json" || return 1
+  done
+  # Style profiles are shared across models (model-agnostic).
+  test -s "data/discogs-style-profiles.json" || return 1
 }
 
 check_javascript() {
@@ -578,7 +622,7 @@ main() {
   run_step "Essentia import" verify_essentia
   run_step "yt-dlp" verify_ytdlp
   run_step "Essentia models" download_models
-  run_step "Discogs taxonomy" build_taxonomy
+  run_step "Discogs taxonomy" verify_taxonomy
   run_step "JavaScript syntax" check_javascript
   run_step "Analyze script" check_model_script
 

@@ -4,9 +4,14 @@
 
 ## 核心原则
 
-项目采用 **Essentia Discogs400** 作为唯一的音乐风格输出体系。
+项目采用 **Discogs Genre/Style** 作为唯一的音乐风格输出体系。曲风模型可通过 `config/defaults.json` 的 `genreModel`（或环境变量 `GENRE_MODEL`）切换，一次分析只运行一个模型：
 
-也就是说，最终进入评分和展示的合法曲风标签都必须能落到 Discogs400 的：
+```text
+maest519  （默认）Essentia MAEST 30s，直接输出 519 个 Discogs style，粒度更细
+effnet400          Essentia Discogs-EffNet + Discogs400（两段式）
+```
+
+也就是说，最终进入评分和展示的合法曲风标签都必须能落到所选模型的 Discogs taxonomy 的：
 
 ```text
 Genre---Style
@@ -21,45 +26,39 @@ Funk / Soul---Soul
 Electronic---House
 ```
 
-外部来源可以作为证据，但不能创造新的最终风格标签。无法映射到 Discogs400 的标签，只应作为说明性证据保留，不参与最终 `Genre / Style` 评分。
+外部来源可以作为证据，但不能创造新的最终风格标签。无法映射到当前 taxonomy 的标签，只应作为说明性证据保留，不参与最终 `Genre / Style` 评分。
 
 ## 音乐风格元数据来源
 
-### 1. Canonical Taxonomy: Essentia / Discogs400
+### 1. Canonical Taxonomy: Essentia Discogs Genre/Style
 
-本地 taxonomy 来自：
-
-```text
-models/genre_discogs400-discogs-effnet-1.json
-```
-
-构建脚本：
+每个模型的 taxonomy 是一份固定配置文件，随代码维护（`maest519` 为 519 类，`effnet400` 为 400 类）：
 
 ```text
-scripts/build_discogs_taxonomy.js
+data/<model>/discogs-taxonomy.json
 ```
 
-生成文件：
+例如默认模型：
 
 ```text
-data/discogs-taxonomy.json
-public/discogs-taxonomy.js
+data/maest519/discogs-taxonomy.json
 ```
 
-这个 taxonomy 是项目的唯一标准风格表。服务端和前端都会用它来判断某个外部标签是否能进入最终评分。
+这个 taxonomy 是项目的唯一标准风格表，其 `translations.zh` 字段提供 genres/styles 的中文名。服务端和前端都会用它来判断某个外部标签是否能进入最终评分，并按需展示中文。前端通过 `/discogs-taxonomy.js?model=<model>` 请求，服务端读取对应 JSON 并动态包装成 `window.DISCOGS_TAXONOMY` 返回。切换模型（`GENRE_MODEL` / `config/defaults.json` 的 `genreModel`）会加载对应模型目录下的那份，别名映射也来自 `config/aliases/<model>.json`。
 
 ### 2. Primary Evidence: Essentia Audio Model
 
-Essentia 是当前最重要的曲风分析依据。
+Essentia 是当前最重要的曲风分析依据。默认使用 MAEST 单模型直接出分类；也可切回旧的两段式 EffNet + Discogs400。
 
 使用模型：
 
 ```text
-Discogs-EffNet embedding:
-models/discogs-effnet-bs64-1.pb
+maest519（默认）单模型直接出 519 分类：
+models/discogs-maest-30s-pw-519l-2.pb
 
-Discogs400 classifier:
-models/genre_discogs400-discogs-effnet-1.pb
+effnet400 两段式：
+models/discogs-effnet-bs64-1.pb           （embedding）
+models/genre_discogs400-discogs-effnet-1.pb（Discogs400 classifier）
 ```
 
 分析脚本：
@@ -74,7 +73,7 @@ scripts/analyze_genre.py
 POST /api/essentia
 ```
 
-Essentia 直接从音频输出 Discogs400 标签，例如：
+Essentia 直接从音频输出 Discogs Genre/Style 标签，例如：
 
 ```text
 Rock---Pop Rock
@@ -162,39 +161,36 @@ Cowbell 区间能量
 
 ## 打分 / 投票方式
 
-最终评分采用“统一 taxonomy 下的加权投票”：
+最终评分采用“Essentia 基准分 + 元信息加成（boost）”：
 
 ```text
-证据源 -> 映射到 Discogs400 Genre/Style -> 加权投票 -> 排序 -> 构成比例
+Essentia 输出 -> 映射到 Discogs400 Genre/Style -> 作为基准分（唯一候选来源）
+元信息（Discogs / Last.fm / iTunes）-> 命中已有风格时按乘法 boost -> 排序 -> 构成比例
 ```
 
 简化公式：
 
 ```text
-styleScore(label) =
-  EssentiaVote(label)
-  + DiscogsVote(label)
-  + LastFmVote(label)
-  + ITunesVote(label)
+baseScore(style) = EssentiaVote(style)          // 只有 Essentia 能创建候选风格
 
-genreScore(genre) =
-  directGenreVotes(genre)
-  + 0.32 * sum(styleScore(style under genre))
+# 元信息只加成 Essentia 已命中的风格，不引入新风格
+finalScore(style) = baseScore(style) * (1 + min(0.5, boostPoints(style) / 100))
 
-finalPercent(label) =
-  visibleScore(label) / sum(visibleScores) * 100
+finalPercent(style) =
+  visibleScore(style) / sum(visibleScores) * 100
 ```
 
 其中：
 
 ```text
-EssentiaVote = max(14, 18 + relativeStrength * 72 * rankDecay)
-DiscogsVote = 14 for genre, 20 for style
-LastFmVote = 24 + countBoost
-ITunesVote = 16
+EssentiaVote = max(14, 18 + relativeStrength * 72 * rankDecay)   // 基准分
+boostPoints  = sum(DiscogsBoost / LastFmBoost / iTunesBoost)     // 仅加成，封顶 +50%
+DiscogsBoost = 14 for genre, 20 for style
+LastFmBoost  = 24 + countBoost
+iTunesBoost  = 16
 ```
 
-`relativeStrength` 是 Essentia 当前标签相对 Top1 的强度，`rankDecay` 是按 Essentia 排名递减的轻微衰减系数。最终百分比只表示融合评分后的构成，不表示 Essentia 原始概率。
+`relativeStrength` 是 Essentia 当前标签相对 Top1 的强度，`rankDecay` 是按 Essentia 排名递减的轻微衰减系数。MAEST / EffNet 输出的都是 `Genre---Style` 组合（style 层级），因此评分**只在 style 层级进行**，不再单独合成粗粒度 genre 聚合项。元信息只能对 Essentia 已经命中的风格做乘法加成（单风格最多 +50%），**无法**创建 Essentia 没有输出的风格；因此没有音频 / Essentia 输出时会直接判定证据不足。最终百分比只表示融合评分后的构成，不表示 Essentia 原始概率。
 
 ### Essentia 投票
 
@@ -223,37 +219,37 @@ minimum weight = 14
 
 因此，哪怕 Essentia 原始模型分看起来不高，只要它是 Top 标签，仍会作为最高权重证据进入最终判断。
 
-### Discogs 投票
+### Discogs 加成
 
-Discogs release 的标签进入评分时：
+Discogs release 的标签命中 Essentia 已有风格时，按以下加成点参与 boost：
 
 ```text
-genre weight = 14
-style weight = 20
+genre boost = 14
+style boost = 20
 ```
 
-Discogs 的作用是补充发行物层面的元数据语境。
+Discogs 的作用是补充发行物层面的元数据语境，只放大 Essentia 已有的判断。
 
-### Last.fm 投票
+### Last.fm 加成
 
-Last.fm 歌曲级 tag 进入评分时：
+Last.fm 歌曲级 tag 命中 Essentia 已有风格时的加成点：
 
 ```text
-base weight = 24
+base = 24
 count boost = 0-10
 ```
 
 如果 Last.fm 返回 tag count，会按最高 count 做相对增强。
 
-### iTunes 投票
+### iTunes 加成
 
-iTunes `primaryGenreName` 进入评分时：
+iTunes `primaryGenreName` 命中 Essentia 已有风格时的加成点：
 
 ```text
-weight = 16
+boost = 16
 ```
 
-它是粗粒度辅助证据。
+它是粗粒度辅助证据。所有元信息加成累积后，对单个风格最多产生 +50% 的乘法加成，且不会创建 Essentia 未输出的风格。
 
 ### Browser Audio Diagnostics
 
@@ -261,26 +257,20 @@ weight = 16
 
 ## Style 与 Genre 的关系
 
-项目优先给 `Genre / Style` 组合加分，例如：
+MAEST / EffNet 模型输出的分类本身就是 `Genre---Style` 组合（style 层级），例如：
 
 ```text
 Rock / Pop Rock
 Hip Hop / Trap
 ```
 
-当某个 Style 命中时，也会给其上级 Genre 一部分归因分：
-
-```text
-style score -> genre score * 0.32
-```
+因此评分**只在 style 层级进行**，不再单独合成粗粒度 genre 聚合项。之所以不做 genre 归纳，是因为模型的分类空间里根本没有独立的 genre 类别，人为聚合出的"纯 genre"会与真实的 style 项在构成条里重复出现（例如同时出现 `Hip Hop / Pop Rap` 和纯 `Hip Hop`），造成混淆。
 
 相关逻辑：
 
 ```text
-public/app.js -> addDiscogsScore()
+public/app.js -> addDiscogsScore() / applyMetadataBoost()
 ```
-
-这样可以同时保留细粒度 style 判断和粗粒度 genre 归纳。
 
 ## 最终构成比例
 
@@ -289,7 +279,8 @@ public/app.js -> addDiscogsScore()
 流程：
 
 ```text
-所有证据加权得分
+Essentia 基准分
+-> 元信息乘法 boost（命中已有风格，封顶 +50%）
 -> 过滤低分项
 -> 对保留项归一化
 -> 显示为构成比例
@@ -357,3 +348,5 @@ config/defaults.json
 ```
 
 其中 `itunesCountry` 默认是 `CN`。如需临时覆盖 iTunes Search API 的 storefront，也可以设置 `ITUNES_COUNTRY`，例如 `CN`、`US`、`JP`。
+
+`genreModel` 默认是 `maest519`，控制本次分析走哪个曲风模型；也可以用环境变量 `GENRE_MODEL` 覆盖（`maest519` 或 `effnet400`）。两个模型不会同时执行。

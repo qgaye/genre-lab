@@ -21,6 +21,7 @@ const RUNTIME_PATH = [
 const MAX_AUDIO_BYTES = 90 * 1024 * 1024;
 const NETEASE_LINK_HOSTS = new Set(["163cn.tv", "music.163.com"]);
 const QQ_MUSIC_LINK_HOSTS = new Set(["y.qq.com", "i.y.qq.com"]);
+const SPOTIFY_LINK_HOSTS = new Set(["open.spotify.com", "spotify.link"]);
 const SEARCH_RESULT_LIMIT = 5;
 const YTDLP_SEARCH_SOURCES = {
   youtube: { name: "youtube", label: "YouTube", prefix: "ytsearch", priority: 0 },
@@ -195,6 +196,36 @@ const DEFAULT_CONFIG = loadDefaultConfig();
 loadEnvFile(path.join(ROOT, ".env.local"));
 loadEnvFile(path.join(ROOT, ".env"));
 
+// Genre model registry. Keep in sync with scripts/analyze_genre.py. Each model
+// has a fixed taxonomy config at data/<model>/discogs-taxonomy.json. A request
+// may target either model; the active default is chosen by GENRE_MODEL env or
+// config/defaults.json genreModel.
+const GENRE_MODELS = {
+  effnet400: {
+    label: "Essentia Discogs-EffNet + Discogs400",
+    metadata: "genre_discogs400-discogs-effnet-1.json"
+  },
+  maest519: {
+    label: "Essentia MAEST 30s (Discogs519)",
+    metadata: "discogs-maest-30s-pw-519l-2.json"
+  }
+};
+
+function resolveGenreModelName() {
+  const name = String(process.env.GENRE_MODEL || DEFAULT_CONFIG.genreModel || "maest519").trim();
+  return GENRE_MODELS[name] ? name : "maest519";
+}
+
+// Resolve a per-request model name, falling back to the global default when the
+// request does not specify a valid model.
+function resolveRequestModelName(value) {
+  const name = String(value || "").trim();
+  return GENRE_MODELS[name] ? name : GENRE_MODEL_NAME;
+}
+
+const GENRE_MODEL_NAME = resolveGenreModelName();
+const GENRE_MODEL = GENRE_MODELS[GENRE_MODEL_NAME];
+
 fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 
 const MIME = {
@@ -329,6 +360,41 @@ function cleanTerm(value) {
   return String(value || "").replace(/[“”"]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function fetchText(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith("https:") ? https : http;
+    const req = lib.get(url, {
+      headers: {
+        "accept": "text/html,application/xhtml+xml",
+        "user-agent": "Mozilla/5.0 (compatible; GenreLab/1.0; local research tool)",
+        ...headers
+      },
+      timeout: 12000
+    }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const next = new URL(res.headers.location, url).toString();
+        res.resume();
+        resolve(fetchText(next, headers));
+        return;
+      }
+      let data = "";
+      res.setEncoding("utf8");
+      res.on("data", chunk => data += chunk);
+      res.on("end", () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`${url} 返回 HTTP ${res.statusCode}`));
+          return;
+        }
+        resolve(data);
+      });
+    });
+    req.on("timeout", () => {
+      req.destroy(new Error("Network request timed out."));
+    });
+    req.on("error", reject);
+  });
+}
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -338,47 +404,45 @@ function normalizeText(value) {
     .trim();
 }
 
-function loadDiscogsTaxonomy() {
-  const taxonomyPath = path.join(ROOT, "data", "discogs-taxonomy.json");
-  if (fs.existsSync(taxonomyPath)) {
-    return JSON.parse(fs.readFileSync(taxonomyPath, "utf8"));
+function loadDiscogsTaxonomy(modelName) {
+  const taxonomyPath = path.join(ROOT, "data", modelName, "discogs-taxonomy.json");
+  if (!fs.existsSync(taxonomyPath)) {
+    throw new Error(`Missing taxonomy config for model '${modelName}': ${taxonomyPath}`);
   }
-
-  const modelPath = path.join(ROOT, "models", "genre_discogs400-discogs-effnet-1.json");
-  const metadata = JSON.parse(fs.readFileSync(modelPath, "utf8"));
-  const byGenre = new Map();
-  for (const label of metadata.classes || []) {
-    const [genre, style] = String(label).split("---");
-    if (!genre || !style) continue;
-    if (!byGenre.has(genre)) byGenre.set(genre, []);
-    byGenre.get(genre).push(style);
-  }
-  return {
-    name: "Discogs Genre/Style Taxonomy",
-    version: "discogs400-local-fallback",
-    classes: metadata.classes || [],
-    genres: [...byGenre.entries()].map(([name, styles]) => ({ name, styles })),
-    aliases: {}
-  };
+  return JSON.parse(fs.readFileSync(taxonomyPath, "utf8"));
 }
 
-const DISCOGS_TAXONOMY = loadDiscogsTaxonomy();
-const DISCOGS_GENRES_BY_KEY = new Map();
-const DISCOGS_STYLES_BY_GENRE = new Map();
-const DISCOGS_STYLE_CANDIDATES = new Map();
-
-for (const genre of DISCOGS_TAXONOMY.genres || []) {
-  const genreKey = normalizeText(genre.name);
-  DISCOGS_GENRES_BY_KEY.set(genreKey, genre.name);
-  const styleMap = new Map();
-  for (const style of genre.styles || []) {
-    const styleKey = normalizeText(style);
-    styleMap.set(styleKey, style);
-    const candidates = DISCOGS_STYLE_CANDIDATES.get(styleKey) || [];
-    candidates.push({ genre: genre.name, style });
-    DISCOGS_STYLE_CANDIDATES.set(styleKey, candidates);
+// Per-model taxonomy bundles. A single request may target either model, so the
+// lookup maps must be selectable by model name rather than being one global
+// singleton. Bundles are built lazily and cached per model.
+function buildTaxonomyBundle(modelName) {
+  const taxonomy = loadDiscogsTaxonomy(modelName);
+  const genresByKey = new Map();
+  const stylesByGenre = new Map();
+  const styleCandidates = new Map();
+  for (const genre of taxonomy.genres || []) {
+    genresByKey.set(normalizeText(genre.name), genre.name);
+    const styleMap = new Map();
+    for (const style of genre.styles || []) {
+      const styleKey = normalizeText(style);
+      styleMap.set(styleKey, style);
+      const candidates = styleCandidates.get(styleKey) || [];
+      candidates.push({ genre: genre.name, style });
+      styleCandidates.set(styleKey, candidates);
+    }
+    stylesByGenre.set(genre.name, styleMap);
   }
-  DISCOGS_STYLES_BY_GENRE.set(genre.name, styleMap);
+  return { taxonomy, genresByKey, stylesByGenre, styleCandidates };
+}
+
+const TAXONOMY_BUNDLES = new Map();
+
+function getTaxonomyBundle(modelName) {
+  const name = GENRE_MODELS[modelName] ? modelName : GENRE_MODEL_NAME;
+  if (!TAXONOMY_BUNDLES.has(name)) {
+    TAXONOMY_BUNDLES.set(name, buildTaxonomyBundle(name));
+  }
+  return TAXONOMY_BUNDLES.get(name);
 }
 
 function uniqueNormalized(items) {
@@ -391,25 +455,25 @@ function uniqueNormalized(items) {
   });
 }
 
-function canonicalDiscogsGenre(value) {
-  return DISCOGS_GENRES_BY_KEY.get(normalizeText(value)) || "";
+function canonicalDiscogsGenre(bundle, value) {
+  return bundle.genresByKey.get(normalizeText(value)) || "";
 }
 
-function canonicalDiscogsStyle(value, genreHints = []) {
+function canonicalDiscogsStyle(bundle, value, genreHints = []) {
   const styleKey = normalizeText(value);
   if (!styleKey) return "";
   for (const genre of genreHints) {
-    const styles = DISCOGS_STYLES_BY_GENRE.get(genre);
+    const styles = bundle.stylesByGenre.get(genre);
     if (styles && styles.has(styleKey)) return styles.get(styleKey);
   }
-  const candidates = DISCOGS_STYLE_CANDIDATES.get(styleKey) || [];
+  const candidates = bundle.styleCandidates.get(styleKey) || [];
   return candidates[0] ? candidates[0].style : "";
 }
 
-function filterDiscogsTaxonomyTags(genres, styles) {
-  const canonicalGenres = uniqueNormalized((genres || []).map(canonicalDiscogsGenre).filter(Boolean));
+function filterDiscogsTaxonomyTags(bundle, genres, styles) {
+  const canonicalGenres = uniqueNormalized((genres || []).map(value => canonicalDiscogsGenre(bundle, value)).filter(Boolean));
   const canonicalStyles = uniqueNormalized((styles || [])
-    .map(style => canonicalDiscogsStyle(style, canonicalGenres))
+    .map(style => canonicalDiscogsStyle(bundle, style, canonicalGenres))
     .filter(Boolean));
   return { genre: canonicalGenres, style: canonicalStyles };
 }
@@ -553,7 +617,7 @@ async function searchLastFm(title, artists) {
   };
 }
 
-async function searchDiscogs(title, artists, album = "") {
+async function searchDiscogs(bundle, title, artists, album = "") {
   const token = process.env.DISCOGS_TOKEN || "";
   const headers = token ? { authorization: `Discogs token=${token}` } : {};
   const queries = uniqueBy([
@@ -569,7 +633,7 @@ async function searchDiscogs(title, artists, album = "") {
       const params = new URLSearchParams({ q: query, type: "release", per_page: "5" });
       const data = await fetchJson(`https://api.discogs.com/database/search?${params.toString()}`, headers);
       for (const item of data.results || []) {
-        const taxonomyTags = filterDiscogsTaxonomyTags(item.genre, item.style);
+        const taxonomyTags = filterDiscogsTaxonomyTags(bundle, item.genre, item.style);
         const releaseTitle = item.title || "";
         const albumScore = album ? textMatchScore(releaseTitle, album) : 0;
         const titleScore = textMatchScore(releaseTitle, title);
@@ -608,6 +672,8 @@ async function searchDiscogs(title, artists, album = "") {
 async function handleMetadata(req, res) {
   try {
     const body = await readBody(req);
+    const modelName = resolveRequestModelName(body.model);
+    const bundle = getTaxonomyBundle(modelName);
     const title = cleanTerm(body.title);
     const artists = splitArtists(body.artists);
     if (!title && artists.length === 0) {
@@ -631,10 +697,11 @@ async function handleMetadata(req, res) {
       return titleMatch && artistMatch && item.collectionName;
     });
     const album = cleanTerm(body.album) || lastFmData.album || (bestITunesAlbum && bestITunesAlbum.collectionName) || "";
-    const discogs = await searchDiscogs(title || artists[0], artists, album).catch(error => ({ releases: [], error: error.message }));
+    const discogs = await searchDiscogs(bundle, title || artists[0], artists, album).catch(error => ({ releases: [], error: error.message }));
 
     sendJson(res, 200, {
       query: { title, artists },
+      modelKey: modelName,
       sources: {
         itunes: itunesData.length ? itunesData : (itunes.status === "fulfilled" ? itunes.value : { error: itunes.reason.message }),
         lastfm: lastFmData,
@@ -680,6 +747,23 @@ function isAllowedQQMusicLink(url) {
   try {
     const host = new URL(url).hostname.toLowerCase();
     return QQ_MUSIC_LINK_HOSTS.has(host) || host.endsWith(".y.qq.com");
+  } catch {
+    return false;
+  }
+}
+
+function extractSpotifyTrackId(value) {
+  const text = cleanTerm(value);
+  const idMatch = text.match(/\/track\/([A-Za-z0-9]{22})/i)
+    || text.match(/spotify:track:([A-Za-z0-9]{22})/i)
+    || text.match(/^([A-Za-z0-9]{22})$/);
+  return idMatch ? idMatch[1] : "";
+}
+
+function isAllowedSpotifyLink(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return SPOTIFY_LINK_HOSTS.has(host) || host.endsWith(".spotify.com");
   } catch {
     return false;
   }
@@ -806,6 +890,73 @@ async function handleQQMusicSong(req, res) {
     const song = await fetchQQMusicSong(songMid);
     if (!song) {
       sendJson(res, 404, { error: `QQ 音乐没有返回 songmid ${songMid} 的歌曲信息。` });
+      return;
+    }
+    sendJson(res, 200, song);
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
+async function resolveSpotifyTrackId(value) {
+  const directId = extractSpotifyTrackId(value);
+  if (directId) return directId;
+
+  let url = extractHttpUrl(value);
+  if (!url || !isAllowedSpotifyLink(url)) return "";
+
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const id = extractSpotifyTrackId(url);
+    if (id) return id;
+
+    const result = await fetchRedirectLocation(url);
+    if (result.statusCode < 300 || result.statusCode >= 400 || !result.location) {
+      return "";
+    }
+    if (!isAllowedSpotifyLink(result.location)) {
+      return "";
+    }
+    url = result.location;
+  }
+  return "";
+}
+
+async function fetchSpotifyTrack(trackId) {
+  const html = await fetchText(`https://open.spotify.com/embed/track/${trackId}`, {
+    referer: "https://open.spotify.com/"
+  });
+  const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!match) return null;
+
+  let entity;
+  try {
+    entity = JSON.parse(match[1]).props.pageProps.state.data.entity;
+  } catch {
+    return null;
+  }
+  if (!entity || !(entity.name || entity.title)) return null;
+
+  return {
+    id: String(entity.id || trackId),
+    title: entity.name || entity.title,
+    artists: (entity.artists || []).map(artist => artist.name).filter(Boolean),
+    album: entity.album && entity.album.name ? entity.album.name : "",
+    sourceUrl: `https://open.spotify.com/track/${trackId}`
+  };
+}
+
+async function handleSpotifySong(req, res) {
+  try {
+    const body = await readBody(req);
+    const trackId = await resolveSpotifyTrackId(body.url || body.id || "");
+    if (!trackId) {
+      sendJson(res, 400, { error: "没有在 Spotify 链接中找到 track id。" });
+      return;
+    }
+
+    const song = await fetchSpotifyTrack(trackId);
+    if (!song) {
+      sendJson(res, 404, { error: `Spotify 没有返回 track ${trackId} 的歌曲信息。` });
       return;
     }
     sendJson(res, 200, song);
@@ -1239,7 +1390,7 @@ async function handleUploadAudio(req, res) {
   }
 }
 
-function analyzeWithEssentia(filePath, top = 12) {
+function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(ESSENTIA_PYTHON)) {
       reject(new Error("Essentia Python 环境不存在，请先安装 .venv-essentia。"));
@@ -1253,6 +1404,8 @@ function analyzeWithEssentia(filePath, top = 12) {
     const child = spawn(ESSENTIA_PYTHON, [
       ESSENTIA_SCRIPT,
       filePath,
+      "--model",
+      modelName,
       "--top",
       String(top),
       "--json"
@@ -1290,6 +1443,7 @@ async function handleEssentia(req, res) {
   let cleanupPath = "";
   try {
     const body = await readBody(req);
+    const modelName = resolveRequestModelName(body.model);
     const fileName = body.fileName || String(body.audioUrl || "").replace(/^\/downloads\//, "");
     const filePath = localDownloadPath(fileName);
     if (!filePath || !fs.existsSync(filePath)) {
@@ -1297,13 +1451,14 @@ async function handleEssentia(req, res) {
       return;
     }
     cleanupPath = filePath;
-    const result = await analyzeWithEssentia(filePath, Math.max(1, Math.min(30, Number(body.top || 12))));
+    const result = await analyzeWithEssentia(filePath, Math.max(1, Math.min(30, Number(body.top || 12))), modelName);
     const deletedAudio = await deleteLocalAudio(filePath);
     cleanupPath = "";
     sendJson(res, 200, {
       ...result,
       fileName: path.basename(filePath),
-      source: "essentia-discogs400",
+      source: `essentia-${modelName}`,
+      modelKey: modelName,
       deletedAudio
     });
   } catch (error) {
@@ -1316,6 +1471,57 @@ function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
+
+  // Per-model config files. taxonomy is a per-model JSON config under
+  // data/<model>/. The frontend requests it as a JS global and may pass
+  // ?model=<name> to pick a model; without the query it falls back to the
+  // active default. The JSON is wrapped into a `window.<VAR> = ...` script on
+  // the fly, so there is no separate generated public/*.js to keep in sync.
+  const PER_MODEL_CONFIG = {
+    "/discogs-taxonomy.js": { json: "discogs-taxonomy.json", global: "DISCOGS_TAXONOMY" }
+  };
+  if (PER_MODEL_CONFIG[pathname]) {
+    const { json, global } = PER_MODEL_CONFIG[pathname];
+    const modelName = resolveRequestModelName(url.searchParams.get("model"));
+    const modelFile = path.join(ROOT, "data", modelName, json);
+    fs.readFile(modelFile, "utf8", (error, raw) => {
+      if (error) {
+        res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Not found");
+        return;
+      }
+      res.writeHead(200, {
+        "content-type": MIME[".js"],
+        "cache-control": "no-cache, must-revalidate"
+      });
+      res.end(`window.${global} = ${raw.trim()};\n`);
+    });
+    return;
+  }
+
+  // Shared config files that are model-agnostic (e.g. style profiles). They
+  // live under data/ and are served the same way as per-model configs but
+  // without a model dimension.
+  const SHARED_CONFIG = {
+    "/discogs-style-profiles.js": { json: "discogs-style-profiles.json", global: "DISCOGS_STYLE_PROFILES" }
+  };
+  if (SHARED_CONFIG[pathname]) {
+    const { json, global } = SHARED_CONFIG[pathname];
+    const sharedFile = path.join(ROOT, "data", json);
+    fs.readFile(sharedFile, "utf8", (error, raw) => {
+      if (error) {
+        res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Not found");
+        return;
+      }
+      res.writeHead(200, {
+        "content-type": MIME[".js"],
+        "cache-control": "no-cache, must-revalidate"
+      });
+      res.end(`window.${global} = ${raw.trim()};\n`);
+    });
+    return;
+  }
 
   const baseDir = pathname.startsWith("/downloads/") ? DOWNLOAD_DIR : PUBLIC_DIR;
   const relativePath = pathname.startsWith("/downloads/")
@@ -1348,6 +1554,16 @@ function serveStatic(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  if (req.method === "GET" && req.url === "/api/models") {
+    const available = Object.entries(GENRE_MODELS)
+      .filter(([key]) => fs.existsSync(path.join(ROOT, "data", key, "discogs-taxonomy.json")))
+      .map(([key, model]) => ({ key, label: model.label }));
+    sendJson(res, 200, {
+      default: GENRE_MODEL_NAME,
+      models: available
+    });
+    return;
+  }
   if (req.method === "POST" && req.url === "/api/metadata") {
     handleMetadata(req, res);
     return;
@@ -1358,6 +1574,10 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === "POST" && req.url === "/api/qq-song") {
     handleQQMusicSong(req, res);
+    return;
+  }
+  if (req.method === "POST" && req.url === "/api/spotify-song") {
+    handleSpotifySong(req, res);
     return;
   }
   if (req.method === "POST" && req.url === "/api/download") {
@@ -1391,11 +1611,13 @@ module.exports = {
   extractHttpUrl,
   extractNetEaseSongId,
   extractQQMusicSongMid,
+  extractSpotifyTrackId,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
   resolveNetEaseSongId,
   resolveQQMusicSongMid,
+  resolveSpotifyTrackId,
   selectSearchSources,
   sourceSearchQuery,
   server
