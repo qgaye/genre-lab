@@ -32,34 +32,19 @@ Electronic---House
 
 ### 1. Canonical Taxonomy: Essentia Discogs Genre/Style
 
-本地 taxonomy 来自当前 `genreModel` 对应的 metadata（`maest519` 为 519 类，`effnet400` 为 400 类）：
-
-```text
-models/discogs-maest-30s-pw-519l-2.json       # maest519（默认）
-models/genre_discogs400-discogs-effnet-1.json # effnet400
-```
-
-构建脚本：
-
-```text
-scripts/build_discogs_taxonomy.js
-```
-
-生成文件（按模型分目录）：
+每个模型的 taxonomy 是一份固定配置文件，随代码维护（`maest519` 为 519 类，`effnet400` 为 400 类）：
 
 ```text
 data/<model>/discogs-taxonomy.json
-public/<model>/discogs-taxonomy.js
 ```
 
 例如默认模型：
 
 ```text
 data/maest519/discogs-taxonomy.json
-public/maest519/discogs-taxonomy.js
 ```
 
-这个 taxonomy 是项目的唯一标准风格表。服务端和前端都会用它来判断某个外部标签是否能进入最终评分。切换模型（`GENRE_MODEL` / `config/defaults.json` 的 `genreModel`）会加载对应模型目录下的那份，别名映射也来自 `config/aliases/<model>.json`。
+这个 taxonomy 是项目的唯一标准风格表，其 `translations.zh` 字段提供 genres/styles 的中文名。服务端和前端都会用它来判断某个外部标签是否能进入最终评分，并按需展示中文。前端通过 `/discogs-taxonomy.js?model=<model>` 请求，服务端读取对应 JSON 并动态包装成 `window.DISCOGS_TAXONOMY` 返回。切换模型（`GENRE_MODEL` / `config/defaults.json` 的 `genreModel`）会加载对应模型目录下的那份，别名映射也来自 `config/aliases/<model>.json`。
 
 ### 2. Primary Evidence: Essentia Audio Model
 

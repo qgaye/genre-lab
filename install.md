@@ -277,41 +277,17 @@ https://essentia.upf.edu/models.html
 
 ## Taxonomy 文件
 
-项目的统一音乐风格体系来自所选模型的 metadata（MAEST 为 519，Discogs400 为 400）。
-
-输入（按 `genreModel` 选择其一）：
+每个模型的音乐风格体系是一份**固定配置文件**，直接手工维护、随代码版本管理，不再由脚本生成：
 
 ```text
-models/discogs-maest-30s-pw-519l-2.json      # maest519
-models/genre_discogs400-discogs-effnet-1.json # effnet400
-```
-
-生成（按模型分目录）：
-
-```text
-data/<model>/discogs-taxonomy.json
-data/<model>/discogs-style-profiles.json
+data/<model>/discogs-taxonomy.json          # 分类体系 + translations.zh 中文名
+data/<model>/discogs-style-profiles.json    # 风格文案（语境 / 示例 / 规则）
 data/<model>/discogs-style-profiles.md
-public/<model>/discogs-taxonomy.js
-public/<model>/discogs-style-profiles.js
 ```
 
-别名映射按模型手工维护：
+其中 `discogs-taxonomy.json` 的 `translations.zh` 提供 genres/styles 的中文表达，供前后端按需查表展示。
 
-```text
-config/aliases/<model>.json
-```
-
-生成命令（`GENRE_MODEL` 决定写哪个模型目录）。支持运行时切换需要为每个模型都生成一份：
-
-```bash
-GENRE_MODEL=maest519 node scripts/build_discogs_taxonomy.js
-GENRE_MODEL=maest519 node scripts/build_style_profiles.js
-GENRE_MODEL=effnet400 node scripts/build_discogs_taxonomy.js
-GENRE_MODEL=effnet400 node scripts/build_style_profiles.js
-```
-
-如果 `data/<model>/discogs-taxonomy.json` 不存在，服务端会从当前模型的 metadata json 做 fallback，但前端页面仍需要 `public/<model>/discogs-taxonomy.js`。前端请求带 `?model=` 的稳定路径（如 `/discogs-taxonomy.js?model=effnet400`），服务端据此映射到对应模型目录；不带参数时回退默认模型。
+前端通过带 `?model=` 的稳定路径请求（如 `/discogs-taxonomy.js?model=effnet400`），服务端读取对应模型目录下的 JSON 并动态包装成 `window.DISCOGS_TAXONOMY = {...}` 返回；不带参数时回退默认模型。引入新模型时，在 `data/<model>/` 下新增这些配置文件并同步 `scripts/analyze_genre.py`、`server.js` 的模型注册即可。
 
 ## 下载音频依赖
 

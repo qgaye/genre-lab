@@ -195,9 +195,10 @@ const DEFAULT_CONFIG = loadDefaultConfig();
 loadEnvFile(path.join(ROOT, ".env.local"));
 loadEnvFile(path.join(ROOT, ".env"));
 
-// Genre model registry. Keep in sync with scripts/analyze_genre.py and
-// scripts/build_discogs_taxonomy.js. Only one model runs per analysis; the
-// active one is chosen by GENRE_MODEL env or config/defaults.json genreModel.
+// Genre model registry. Keep in sync with scripts/analyze_genre.py. Each model
+// has a fixed taxonomy config at data/<model>/discogs-taxonomy.json. A request
+// may target either model; the active default is chosen by GENRE_MODEL env or
+// config/defaults.json genreModel.
 const GENRE_MODELS = {
   effnet400: {
     label: "Essentia Discogs-EffNet + Discogs400",
@@ -368,29 +369,11 @@ function normalizeText(value) {
 }
 
 function loadDiscogsTaxonomy(modelName) {
-  const model = GENRE_MODELS[modelName];
   const taxonomyPath = path.join(ROOT, "data", modelName, "discogs-taxonomy.json");
-  if (fs.existsSync(taxonomyPath)) {
-    return JSON.parse(fs.readFileSync(taxonomyPath, "utf8"));
+  if (!fs.existsSync(taxonomyPath)) {
+    throw new Error(`Missing taxonomy config for model '${modelName}': ${taxonomyPath}`);
   }
-
-  const modelPath = path.join(ROOT, "models", model.metadata);
-  const metadata = JSON.parse(fs.readFileSync(modelPath, "utf8"));
-  const byGenre = new Map();
-  for (const label of metadata.classes || []) {
-    const [genre, style] = String(label).split("---");
-    if (!genre || !style) continue;
-    if (!byGenre.has(genre)) byGenre.set(genre, []);
-    byGenre.get(genre).push(style);
-  }
-  return {
-    name: "Discogs Genre/Style Taxonomy",
-    version: `${modelName}-local-fallback`,
-    model: modelName,
-    classes: metadata.classes || [],
-    genres: [...byGenre.entries()].map(([name, styles]) => ({ name, styles })),
-    aliases: {}
-  };
+  return JSON.parse(fs.readFileSync(taxonomyPath, "utf8"));
 }
 
 // Per-model taxonomy bundles. A single request may target either model, so the
@@ -1369,14 +1352,20 @@ function serveStatic(req, res) {
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
 
-  // Per-model data files. The frontend requests /discogs-taxonomy.js and
-  // /discogs-style-profiles.js and may pass ?model=<name> to select a specific
-  // model's directory. Without the query it falls back to the active default.
-  const PER_MODEL_PUBLIC = new Set(["/discogs-taxonomy.js", "/discogs-style-profiles.js"]);
-  if (PER_MODEL_PUBLIC.has(pathname)) {
+  // Per-model config files. taxonomy / style-profiles are fixed JSON configs
+  // under data/<model>/. The frontend requests them as JS globals and may pass
+  // ?model=<name> to pick a model; without the query it falls back to the
+  // active default. The JSON is wrapped into a `window.<VAR> = ...` script on
+  // the fly, so there is no separate generated public/*.js to keep in sync.
+  const PER_MODEL_CONFIG = {
+    "/discogs-taxonomy.js": { json: "discogs-taxonomy.json", global: "DISCOGS_TAXONOMY" },
+    "/discogs-style-profiles.js": { json: "discogs-style-profiles.json", global: "DISCOGS_STYLE_PROFILES" }
+  };
+  if (PER_MODEL_CONFIG[pathname]) {
+    const { json, global } = PER_MODEL_CONFIG[pathname];
     const modelName = resolveRequestModelName(url.searchParams.get("model"));
-    const modelFile = path.join(PUBLIC_DIR, modelName, pathname.replace(/^\//, ""));
-    fs.readFile(modelFile, (error, data) => {
+    const modelFile = path.join(ROOT, "data", modelName, json);
+    fs.readFile(modelFile, "utf8", (error, raw) => {
       if (error) {
         res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
         res.end("Not found");
@@ -1386,7 +1375,7 @@ function serveStatic(req, res) {
         "content-type": MIME[".js"],
         "cache-control": "no-cache, must-revalidate"
       });
-      res.end(data);
+      res.end(`window.${global} = ${raw.trim()};\n`);
     });
     return;
   }
@@ -1424,7 +1413,7 @@ function serveStatic(req, res) {
 const server = http.createServer((req, res) => {
   if (req.method === "GET" && req.url === "/api/models") {
     const available = Object.entries(GENRE_MODELS)
-      .filter(([key]) => fs.existsSync(path.join(PUBLIC_DIR, key, "discogs-taxonomy.js")))
+      .filter(([key]) => fs.existsSync(path.join(ROOT, "data", key, "discogs-taxonomy.json")))
       .map(([key, model]) => ({ key, label: model.label }));
     sendJson(res, 200, {
       default: GENRE_MODEL_NAME,

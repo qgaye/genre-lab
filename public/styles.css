@@ -113,6 +113,29 @@ h1 {
   text-transform: uppercase;
 }
 
+.mast-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-toggle {
+  min-height: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  color: var(--accent);
+  background: rgba(200, 255, 95, 0.06);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lang-toggle:hover {
+  border-color: var(--accent);
+  background: rgba(200, 255, 95, 0.12);
+}
+
 .input-grid {
   display: grid;
   gap: 14px;

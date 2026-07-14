@@ -562,14 +562,11 @@ download_models() {
   done
 }
 
-build_taxonomy() {
+verify_taxonomy() {
   local target
   for target in $GENRE_MODEL_LIST; do
-    GENRE_MODEL="$target" node scripts/build_discogs_taxonomy.js &&
-      GENRE_MODEL="$target" node scripts/build_style_profiles.js &&
-      test -s "data/$target/discogs-taxonomy.json" &&
-      test -s "public/$target/discogs-taxonomy.js" &&
-      test -s "public/$target/discogs-style-profiles.js" || return 1
+    test -s "data/$target/discogs-taxonomy.json" &&
+      test -s "data/$target/discogs-style-profiles.json" || return 1
   done
 }
 
@@ -624,7 +621,7 @@ main() {
   run_step "Essentia import" verify_essentia
   run_step "yt-dlp" verify_ytdlp
   run_step "Essentia models" download_models
-  run_step "Discogs taxonomy" build_taxonomy
+  run_step "Discogs taxonomy" verify_taxonomy
   run_step "JavaScript syntax" check_javascript
   run_step "Analyze script" check_model_script
 

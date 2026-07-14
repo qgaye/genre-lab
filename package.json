@@ -4,7 +4,6 @@
   "private": true,
   "description": "Local evidence-based music genre analysis workbench.",
   "scripts": {
-    "build:profiles": "node scripts/build_style_profiles.js",
     "start": "node server.js",
     "test": "node --test"
   },
