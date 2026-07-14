@@ -214,8 +214,8 @@ const GENRE_MODELS = {
 };
 
 function resolveGenreModelName() {
-  const name = String(process.env.GENRE_MODEL || DEFAULT_CONFIG.genreModel || "maest519").trim();
-  return GENRE_MODELS[name] ? name : "maest519";
+  const name = String(process.env.GENRE_MODEL || DEFAULT_CONFIG.genreModel || "effnet400").trim();
+  return GENRE_MODELS[name] ? name : "effnet400";
 }
 
 // Resolve a per-request model name, falling back to the global default when the

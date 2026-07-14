@@ -129,9 +129,9 @@ def main():
     parser.add_argument("--top", type=int, default=12, help="Number of labels to show.")
     parser.add_argument(
         "--model",
-        default=os.environ.get("GENRE_MODEL", "maest519"),
+        default=os.environ.get("GENRE_MODEL", "effnet400"),
         choices=list(MODEL_REGISTRY),
-        help="Genre model to run (default from GENRE_MODEL env or maest519).",
+        help="Genre model to run (default from GENRE_MODEL env or effnet400).",
     )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     args = parser.parse_args()
