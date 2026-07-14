@@ -8,8 +8,6 @@ const progressPercent = document.querySelector("#progressPercent");
 const progressFill = document.querySelector("#progressFill");
 const progressSteps = document.querySelector("#progressSteps");
 const progressLog = document.querySelector("#progressLog");
-const albumInput = document.querySelector("#albumInput");
-const urlInput = document.querySelector("#urlInput");
 const fileInput = document.querySelector("#fileInput");
 const fileName = document.querySelector("#fileName");
 const statusPill = document.querySelector("#statusPill");
@@ -72,10 +70,6 @@ const I18N = {
     "step.decode": "解码",
     "step.score": "评分",
     "field.fallbacks": "备用输入",
-    "field.album": "专辑名（可选）",
-    "ph.album": "用来辅助匹配标签",
-    "field.url": "指定音频或公开视频链接（可选）",
-    "ph.url": "mp3/wav/m4a 直链，或 yt-dlp 支持的公开链接",
     "field.upload": "上传本地音频",
     "file.none": "没有选择文件",
     "verdict.mix": "Genre / Style 构成",
@@ -105,7 +99,6 @@ const I18N = {
     "status.failed": "失败",
     "status.parsePlatform": "解析{platform}",
     "status.platformDone": "{platform}完成",
-    "status.downloadSpecified": "下载指定音频",
     "status.searchAudio": "搜索公开音频",
     "progress.prepare": "准备分析",
     "progress.decode.label": "解码并提取指纹",
@@ -131,9 +124,7 @@ const I18N = {
     "progress.parse.platformDone": "{platform}解析完成",
     "progress.parse.input": "解析输入",
     "progress.parse.inputDetail": "使用选择格式：{fmt}",
-    "progress.search.useSpecified": "使用指定音频",
     "progress.search.public": "搜索公开音频",
-    "progress.search.prepDownload": "准备下载指定链接",
     "progress.search.searching": "正在搜索可下载的公开视频候选",
     "progress.search.currentFmt": "当前格式：{title} / {artists}",
     "progress.download.done": "音频下载完成",
@@ -247,10 +238,6 @@ const I18N = {
     "step.decode": "Decode",
     "step.score": "Score",
     "field.fallbacks": "Fallback inputs",
-    "field.album": "Album (optional)",
-    "ph.album": "Helps match tags",
-    "field.url": "Direct audio or public video link (optional)",
-    "ph.url": "mp3/wav/m4a direct link, or a public link supported by yt-dlp",
     "field.upload": "Upload local audio",
     "file.none": "No file selected",
     "verdict.mix": "Genre / Style mix",
@@ -280,7 +267,6 @@ const I18N = {
     "status.failed": "Failed",
     "status.parsePlatform": "Parsing {platform}",
     "status.platformDone": "{platform} ready",
-    "status.downloadSpecified": "Downloading audio",
     "status.searchAudio": "Searching public audio",
     "progress.prepare": "Preparing",
     "progress.decode.label": "Decoding & fingerprinting",
@@ -306,9 +292,7 @@ const I18N = {
     "progress.parse.platformDone": "{platform} parsed",
     "progress.parse.input": "Parsing input",
     "progress.parse.inputDetail": "Using format: {fmt}",
-    "progress.search.useSpecified": "Use specified audio",
     "progress.search.public": "Search public audio",
-    "progress.search.prepDownload": "Preparing to download the link",
     "progress.search.searching": "Searching downloadable public video candidates",
     "progress.search.currentFmt": "Current: {title} / {artists}",
     "progress.download.done": "Audio downloaded",
@@ -1105,12 +1089,39 @@ function buildGenreComposition(items) {
 }
 
 function buildVerdictTitle(composition) {
-  if (!composition.length) return t("verdict.insufficient");
+  if (!composition.length) return [];
   const [first, second] = composition;
+  const parts = [first];
   if (second && second.percent >= 12 && second.score >= first.score * 0.55) {
-    return `${displayName(first.name)} + ${displayName(second.name)}`;
+    parts.push(second);
   }
-  return displayName(first.name);
+  return parts;
+}
+
+// Render the headline with font sizes scaled by each style's share, so the
+// dominant genre reads visibly larger than the secondary one.
+function renderVerdictTitle(parts) {
+  genreTitle.innerHTML = "";
+  if (!parts.length) {
+    genreTitle.textContent = t("verdict.insufficient");
+    return;
+  }
+  const lead = parts[0].percent || parts[0].score || 1;
+  parts.forEach((part, index) => {
+    if (index > 0) {
+      const plus = document.createElement("span");
+      plus.className = "verdict-title-plus";
+      plus.textContent = "+";
+      genreTitle.appendChild(plus);
+    }
+    const span = document.createElement("span");
+    span.className = "verdict-title-part";
+    // Scale between 0.5em and 1em based on share relative to the leading style.
+    const ratio = Math.max(0, Math.min(1, (part.percent || part.score || 0) / lead));
+    span.style.fontSize = `${(0.5 + 0.5 * ratio).toFixed(3)}em`;
+    span.textContent = displayName(part.name);
+    genreTitle.appendChild(span);
+  });
 }
 
 function compactValue(text, maxLength = 34) {
@@ -1194,14 +1205,14 @@ function analyzeEvidence() {
 
   const composition = buildGenreComposition(sorted);
   const coverage = Math.max(0, Math.min(96, composition.reduce((sum, item) => sum + item.score, 0)));
-  const leadingNames = buildVerdictTitle(composition);
+  const titleParts = buildVerdictTitle(composition);
 
   renderScores(composition.length ? composition : sorted.slice(0, 8));
   renderMix(composition);
   renderEvidence(evidence, composition);
   renderFeatures(audioFeatures);
 
-  genreTitle.textContent = composition.length ? leadingNames : t("verdict.insufficient");
+  renderVerdictTitle(titleParts);
   confidenceLabel.textContent = t("confidence.coverage", { n: Math.round(coverage) });
   confidenceMeter.style.width = `${Math.round(coverage)}%`;
   genreReason.textContent = composition.length
@@ -1455,7 +1466,7 @@ async function fetchMetadata() {
   metadata = await postJson("/api/metadata", {
     title: track.title,
     artists: track.artists,
-    album: albumInput.value,
+    album: track.album || "",
     model: activeModel
   });
   activeTrack = track;
@@ -1516,7 +1527,6 @@ async function resolvePlatformSong({ raw, endpoint, orientation, platform, idKey
     sourceId: data[idKey] || data.id,
     sourceUrl: data.sourceUrl || raw
   };
-  if (!albumInput.value && data.album) albumInput.value = data.album;
   const evTitle = escapeHtml(data.title);
   const evArtists = escapeHtml(data.artists.join(" / "));
   const albumHtml = data.album ? t("pe.album", { album: escapeHtml(data.album) }) : "";
@@ -1528,7 +1538,7 @@ async function resolvePlatformSong({ raw, endpoint, orientation, platform, idKey
 
 async function downloadTrackAudio(track) {
   return postJson("/api/download", {
-    url: urlInput.value.trim(),
+    url: "",
     platformUrl: isMusicLinkFormat(track.orientation) ? (track.sourceUrl || track.url || track.raw) : "",
     platform: track.orientation || "",
     title: track.title,
@@ -1553,9 +1563,8 @@ async function findAndAnalyzeAudio() {
     return;
   }
 
-  const specified = urlInput.value.trim();
-  setStatus(specified ? t("status.downloadSpecified") : t("status.searchAudio"), true);
-  setProgress("search", specified ? t("progress.search.useSpecified") : t("progress.search.public"), 48, specified ? t("progress.search.prepDownload") : t("progress.search.searching"));
+  setStatus(t("status.searchAudio"), true);
+  setProgress("search", t("progress.search.public"), 48, t("progress.search.searching"));
   const track = currentTrack();
   setProgress("search", t("progress.search.public"), 52, t("progress.search.currentFmt", { title: track.title, artists: track.artists || t("track.unknownArtist") }));
   const data = await downloadTrackAudio(track);

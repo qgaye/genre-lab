@@ -450,6 +450,23 @@ h2 {
   font-weight: 500;
 }
 
+#genreTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.12em 0.2em;
+}
+
+.verdict-title-part {
+  line-height: 0.88;
+}
+
+.verdict-title-plus {
+  font-size: 0.5em;
+  color: var(--muted);
+  align-self: center;
+}
+
 #genreReason {
   color: var(--muted);
   max-width: 860px;
