@@ -3,11 +3,32 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
-const MODEL_METADATA = path.join(ROOT, "models", "genre_discogs400-discogs-effnet-1.json");
-const DATA_DIR = path.join(ROOT, "data");
-const PUBLIC_DIR = path.join(ROOT, "public");
-const DATA_OUTPUT = path.join(DATA_DIR, "discogs-taxonomy.json");
-const PUBLIC_OUTPUT = path.join(PUBLIC_DIR, "discogs-taxonomy.js");
+const MODELS_DIR = path.join(ROOT, "models");
+const ALIASES_DIR = path.join(ROOT, "config", "aliases");
+
+// Keep this registry in sync with scripts/analyze_genre.py. The taxonomy is
+// always derived from the selected model's own metadata json, never hardcoded.
+const MODEL_REGISTRY = {
+  effnet400: {
+    label: "Essentia Discogs-EffNet + Discogs400",
+    metadata: "genre_discogs400-discogs-effnet-1.json",
+    version: "discogs400-local-1"
+  },
+  maest519: {
+    label: "Essentia MAEST 30s (Discogs519)",
+    metadata: "discogs-maest-30s-pw-519l-2.json",
+    version: "discogs519-maest-1"
+  }
+};
+
+function resolveModel(name) {
+  const config = MODEL_REGISTRY[name];
+  if (!config) {
+    console.error(`Unknown genre model '${name}'. Available: ${Object.keys(MODEL_REGISTRY).join(", ")}`);
+    process.exit(1);
+  }
+  return config;
+}
 
 function normalize(value) {
   return String(value || "")
@@ -19,8 +40,26 @@ function normalize(value) {
     .trim();
 }
 
-function buildTaxonomy() {
-  const metadata = JSON.parse(fs.readFileSync(MODEL_METADATA, "utf8"));
+// Per-model alias table. Each model keeps its own hand-maintained file under
+// config/aliases/<model>.json. Missing file just means no aliases.
+function loadAliases(modelName) {
+  const aliasPath = path.join(ALIASES_DIR, `${modelName}.json`);
+  if (!fs.existsSync(aliasPath)) {
+    console.warn(`No alias file for '${modelName}' at ${aliasPath}; using empty alias table.`);
+    return {};
+  }
+  const raw = JSON.parse(fs.readFileSync(aliasPath, "utf8"));
+  return Object.fromEntries(Object.entries(raw).map(([key, value]) => [normalize(key), value]));
+}
+
+function buildTaxonomy(modelName, config) {
+  const metadataPath = path.join(MODELS_DIR, config.metadata);
+  if (!fs.existsSync(metadataPath)) {
+    console.error(`Model metadata not found: ${metadataPath}`);
+    console.error("Download the model files first (see install.md / scripts/setup_server.sh).");
+    process.exit(1);
+  }
+  const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
   const byGenre = new Map();
 
   for (const label of metadata.classes || []) {
@@ -35,60 +74,40 @@ function buildTaxonomy() {
     styles: [...styles].sort((a, b) => a.localeCompare(b, "en"))
   }));
 
-  const aliases = {
-    "drum and bass": { genre: "Electronic", style: "Drum n Bass" },
-    dnb: { genre: "Electronic", style: "Drum n Bass" },
-    "synth pop": { genre: "Electronic", style: "Synth-pop" },
-    synthpop: { genre: "Electronic", style: "Synth-pop" },
-    "hip-hop": { genre: "Hip Hop" },
-    "hip hop": { genre: "Hip Hop" },
-    "hip hop rap": { genre: "Hip Hop" },
-    rap: { genre: "Hip Hop" },
-    "r and b": { genre: "Funk / Soul", style: "Contemporary R&B" },
-    rnb: { genre: "Funk / Soul", style: "Contemporary R&B" },
-    "r b": { genre: "Funk / Soul", style: "Contemporary R&B" },
-    "r b soul": { genre: "Funk / Soul", style: "Contemporary R&B" },
-    "r and b soul": { genre: "Funk / Soul", style: "Contemporary R&B" },
-    "rhythm and blues": { genre: "Funk / Soul", style: "Rhythm & Blues" },
-    alternative: { genre: "Rock", style: "Alternative Rock" },
-    dance: { genre: "Electronic", style: "Dance-pop" },
-    soundtrack: { genre: "Stage & Screen", style: "Soundtrack" },
-    "sound track": { genre: "Stage & Screen", style: "Soundtrack" },
-    "j pop": { genre: "Pop", style: "J-pop" },
-    jpop: { genre: "Pop", style: "J-pop" },
-    "k pop": { genre: "Pop", style: "K-pop" },
-    kpop: { genre: "Pop", style: "K-pop" },
-    "lo fi": { genre: "Rock", style: "Lo-Fi" },
-    lofi: { genre: "Rock", style: "Lo-Fi" },
-    "rock n roll": { genre: "Rock", style: "Rock & Roll" },
-    "rock and roll": { genre: "Rock", style: "Rock & Roll" },
-    bossanova: { genre: "Latin", style: "Bossanova" },
-    "bossa nova": { genre: "Jazz", style: "Bossa Nova" }
-  };
-
   return {
     name: "Discogs Genre/Style Taxonomy",
-    version: "discogs400-local-1",
+    version: config.version,
+    model: modelName,
     source: {
-      name: metadata.name || "Genre Discogs400",
+      name: metadata.name || config.label,
       description: metadata.description || "",
       link: metadata.link || "",
-      dataset: metadata.dataset && metadata.dataset.name ? metadata.dataset.name : "Discogs-4M"
+      dataset: metadata.dataset && metadata.dataset.name ? metadata.dataset.name : "Discogs"
     },
-    generatedFrom: "models/genre_discogs400-discogs-effnet-1.json",
+    generatedFrom: `models/${config.metadata}`,
     classes: metadata.classes || [],
     genres,
-    aliases: Object.fromEntries(Object.entries(aliases).map(([key, value]) => [normalize(key), value]))
+    aliases: loadAliases(modelName)
   };
 }
 
 function main() {
-  const taxonomy = buildTaxonomy();
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(DATA_OUTPUT, `${JSON.stringify(taxonomy, null, 2)}\n`);
-  fs.writeFileSync(PUBLIC_OUTPUT, `window.DISCOGS_TAXONOMY = ${JSON.stringify(taxonomy, null, 2)};\n`);
-  console.log(`Wrote ${DATA_OUTPUT}`);
-  console.log(`Wrote ${PUBLIC_OUTPUT}`);
+  const modelName = (process.env.GENRE_MODEL || "maest519").trim();
+  const config = resolveModel(modelName);
+  const taxonomy = buildTaxonomy(modelName, config);
+
+  const dataDir = path.join(ROOT, "data", modelName);
+  const publicDir = path.join(ROOT, "public", modelName);
+  const dataOutput = path.join(dataDir, "discogs-taxonomy.json");
+  const publicOutput = path.join(publicDir, "discogs-taxonomy.js");
+
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(publicDir, { recursive: true });
+  fs.writeFileSync(dataOutput, `${JSON.stringify(taxonomy, null, 2)}\n`);
+  fs.writeFileSync(publicOutput, `window.DISCOGS_TAXONOMY = ${JSON.stringify(taxonomy, null, 2)};\n`);
+  console.log(`Model: ${config.label}`);
+  console.log(`Wrote ${dataOutput}`);
+  console.log(`Wrote ${publicOutput}`);
   console.log(`Genres: ${taxonomy.genres.length}`);
   console.log(`Styles: ${taxonomy.classes.length}`);
 }

@@ -4,9 +4,14 @@
 
 ## 核心原则
 
-项目采用 **Essentia Discogs400** 作为唯一的音乐风格输出体系。
+项目采用 **Discogs Genre/Style** 作为唯一的音乐风格输出体系。曲风模型可通过 `config/defaults.json` 的 `genreModel`（或环境变量 `GENRE_MODEL`）切换，一次分析只运行一个模型：
 
-也就是说，最终进入评分和展示的合法曲风标签都必须能落到 Discogs400 的：
+```text
+maest519  （默认）Essentia MAEST 30s，直接输出 519 个 Discogs style，粒度更细
+effnet400          Essentia Discogs-EffNet + Discogs400（两段式）
+```
+
+也就是说，最终进入评分和展示的合法曲风标签都必须能落到所选模型的 Discogs taxonomy 的：
 
 ```text
 Genre---Style
@@ -21,16 +26,17 @@ Funk / Soul---Soul
 Electronic---House
 ```
 
-外部来源可以作为证据，但不能创造新的最终风格标签。无法映射到 Discogs400 的标签，只应作为说明性证据保留，不参与最终 `Genre / Style` 评分。
+外部来源可以作为证据，但不能创造新的最终风格标签。无法映射到当前 taxonomy 的标签，只应作为说明性证据保留，不参与最终 `Genre / Style` 评分。
 
 ## 音乐风格元数据来源
 
-### 1. Canonical Taxonomy: Essentia / Discogs400
+### 1. Canonical Taxonomy: Essentia Discogs Genre/Style
 
-本地 taxonomy 来自：
+本地 taxonomy 来自当前 `genreModel` 对应的 metadata（`maest519` 为 519 类，`effnet400` 为 400 类）：
 
 ```text
-models/genre_discogs400-discogs-effnet-1.json
+models/discogs-maest-30s-pw-519l-2.json       # maest519（默认）
+models/genre_discogs400-discogs-effnet-1.json # effnet400
 ```
 
 构建脚本：
@@ -39,27 +45,35 @@ models/genre_discogs400-discogs-effnet-1.json
 scripts/build_discogs_taxonomy.js
 ```
 
-生成文件：
+生成文件（按模型分目录）：
 
 ```text
-data/discogs-taxonomy.json
-public/discogs-taxonomy.js
+data/<model>/discogs-taxonomy.json
+public/<model>/discogs-taxonomy.js
 ```
 
-这个 taxonomy 是项目的唯一标准风格表。服务端和前端都会用它来判断某个外部标签是否能进入最终评分。
+例如默认模型：
+
+```text
+data/maest519/discogs-taxonomy.json
+public/maest519/discogs-taxonomy.js
+```
+
+这个 taxonomy 是项目的唯一标准风格表。服务端和前端都会用它来判断某个外部标签是否能进入最终评分。切换模型（`GENRE_MODEL` / `config/defaults.json` 的 `genreModel`）会加载对应模型目录下的那份，别名映射也来自 `config/aliases/<model>.json`。
 
 ### 2. Primary Evidence: Essentia Audio Model
 
-Essentia 是当前最重要的曲风分析依据。
+Essentia 是当前最重要的曲风分析依据。默认使用 MAEST 单模型直接出分类；也可切回旧的两段式 EffNet + Discogs400。
 
 使用模型：
 
 ```text
-Discogs-EffNet embedding:
-models/discogs-effnet-bs64-1.pb
+maest519（默认）单模型直接出 519 分类：
+models/discogs-maest-30s-pw-519l-2.pb
 
-Discogs400 classifier:
-models/genre_discogs400-discogs-effnet-1.pb
+effnet400 两段式：
+models/discogs-effnet-bs64-1.pb           （embedding）
+models/genre_discogs400-discogs-effnet-1.pb（Discogs400 classifier）
 ```
 
 分析脚本：
@@ -74,7 +88,7 @@ scripts/analyze_genre.py
 POST /api/essentia
 ```
 
-Essentia 直接从音频输出 Discogs400 标签，例如：
+Essentia 直接从音频输出 Discogs Genre/Style 标签，例如：
 
 ```text
 Rock---Pop Rock
@@ -357,3 +371,5 @@ config/defaults.json
 ```
 
 其中 `itunesCountry` 默认是 `CN`。如需临时覆盖 iTunes Search API 的 storefront，也可以设置 `ITUNES_COUNTRY`，例如 `CN`、`US`、`JP`。
+
+`genreModel` 默认是 `maest519`，控制本次分析走哪个曲风模型；也可以用环境变量 `GENRE_MODEL` 覆盖（`maest519` 或 `effnet400`）。两个模型不会同时执行。

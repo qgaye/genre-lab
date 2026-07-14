@@ -3,10 +3,11 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
-const TAXONOMY_FILE = path.join(ROOT, "data", "discogs-taxonomy.json");
-const DATA_OUTPUT = path.join(ROOT, "data", "discogs-style-profiles.json");
-const REPORT_OUTPUT = path.join(ROOT, "data", "discogs-style-profiles.md");
-const PUBLIC_OUTPUT = path.join(ROOT, "public", "discogs-style-profiles.js");
+const MODEL_NAME = (process.env.GENRE_MODEL || "maest519").trim();
+const TAXONOMY_FILE = path.join(ROOT, "data", MODEL_NAME, "discogs-taxonomy.json");
+const DATA_OUTPUT = path.join(ROOT, "data", MODEL_NAME, "discogs-style-profiles.json");
+const REPORT_OUTPUT = path.join(ROOT, "data", MODEL_NAME, "discogs-style-profiles.md");
+const PUBLIC_OUTPUT = path.join(ROOT, "public", MODEL_NAME, "discogs-style-profiles.js");
 
 const genreContext = {
   "Blues": {
@@ -450,20 +451,33 @@ function normalizeId(genre, style) {
   return `${genre}---${style}`;
 }
 
+// Fallback context for any genre not explicitly described above. Keeps the
+// generator resilient if a model introduces a genre we have not annotated.
+const DEFAULT_CONTEXT = {
+  lineage: "Discogs 曲风分类体系",
+  center: "该大类的典型节奏、音色与编曲习惯",
+  history: "它在 Discogs 分类中作为上级大类，聚合了若干细分 style。"
+};
+const DEFAULT_EXAMPLE = ["Various Artists", "Representative Compilation"];
+
+function contextFor(genre) {
+  return genreContext[genre] || DEFAULT_CONTEXT;
+}
+
 function sentenceForStyle(genre, style) {
-  const ctx = genreContext[genre];
+  const ctx = contextFor(genre);
   const rule = styleRules.find(([pattern]) => pattern.test(style) || pattern.test(`${genre} ${style}`));
   if (rule) return rule[1];
   return {
     idea: `把${ctx.center}放到更具体的 ${style} 语境中`,
-    sound: [ctx.center, "曲式与音色会随地区、年代和发行物语境变化", "在 Discogs400 中适合作为细粒度识别标签"],
+    sound: [ctx.center, "曲式与音色会随地区、年代和发行物语境变化", "在当前 taxonomy 中适合作为细粒度识别标签"],
     history: ctx.history
   };
 }
 
 function trackFor(genre, style) {
   const exact = exactExamples[normalizeId(genre, style)];
-  const fallback = fallbackExamples[genre];
+  const fallback = fallbackExamples[genre] || DEFAULT_EXAMPLE;
   const source = exact || fallback;
   return {
     artist: source[0],
@@ -476,7 +490,7 @@ function trackFor(genre, style) {
 }
 
 function buildProfile(genre, style) {
-  const ctx = genreContext[genre];
+  const ctx = contextFor(genre);
   const rule = sentenceForStyle(genre, style);
   const id = normalizeId(genre, style);
   const sound = [...new Set(rule.sound)].slice(0, 5);
@@ -507,16 +521,16 @@ function markdownFor(taxonomy, profiles) {
   }
 
   const lines = [
-    "# Discogs400 音乐风格中文分析",
+    "# Discogs 音乐风格中文分析",
     "",
     `来源：${taxonomy.name} (${taxonomy.version})`,
     "",
-    "说明：这份报告覆盖当前本地 taxonomy 的 400 个 `Genre---Style` 标签。每个条目包含风格介绍、声音识别重点、历史脉络和一首主流入门曲；少数冷门或功能性标签会使用同一大类的入门曲作为听感坐标。",
+    `说明：这份报告覆盖当前本地 taxonomy 的 ${profiles.length} 个 \`Genre---Style\` 标签。每个条目包含风格介绍、声音识别重点、历史脉络和一首主流入门曲；少数冷门或功能性标签会使用同一大类的入门曲作为听感坐标。`,
     ""
   ];
 
   for (const genre of taxonomy.genres) {
-    const ctx = genreContext[genre.name];
+    const ctx = contextFor(genre.name);
     lines.push(`## ${genre.name}`, "");
     lines.push(`大类语境：${ctx.center}。${ctx.history}`, "");
     for (const profile of byGenre.get(genre.name) || []) {
@@ -544,18 +558,21 @@ function main() {
   }
 
   const data = {
-    name: "Discogs400 Style Profiles",
+    name: "Discogs Style Profiles",
     version: `${taxonomy.version}-profiles-1`,
-    generatedFrom: "data/discogs-taxonomy.json",
+    model: MODEL_NAME,
+    generatedFrom: `data/${MODEL_NAME}/discogs-taxonomy.json`,
     language: "zh-CN",
     count: profiles.length,
     profiles
   };
 
   fs.mkdirSync(path.dirname(DATA_OUTPUT), { recursive: true });
+  fs.mkdirSync(path.dirname(PUBLIC_OUTPUT), { recursive: true });
   fs.writeFileSync(DATA_OUTPUT, `${JSON.stringify(data, null, 2)}\n`);
   fs.writeFileSync(REPORT_OUTPUT, markdownFor(taxonomy, profiles));
   fs.writeFileSync(PUBLIC_OUTPUT, `window.DISCOGS_STYLE_PROFILES = ${JSON.stringify(data, null, 2)};\n`);
+  console.log(`Model: ${MODEL_NAME}`);
   console.log(`Wrote ${DATA_OUTPUT}`);
   console.log(`Wrote ${REPORT_OUTPUT}`);
   console.log(`Wrote ${PUBLIC_OUTPUT}`);

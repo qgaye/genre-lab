@@ -1,6 +1,7 @@
 window.DISCOGS_TAXONOMY = {
   "name": "Discogs Genre/Style Taxonomy",
   "version": "discogs400-local-1",
+  "model": "effnet400",
   "source": {
     "name": "Genre Discogs400",
     "description": "Prediction of 400 music styles in the from the Discogs taxonomy",

@@ -18,8 +18,8 @@ Python 3.10
 .venv-essentia
 essentia-tensorflow
 yt-dlp
-Essentia Discogs-EffNet / Discogs400 模型文件
-Discogs400 taxonomy
+所有曲风模型的 Essentia 模型文件（MAEST 30s Discogs519 + Discogs-EffNet/Discogs400），支持运行时切换
+Discogs taxonomy
 JavaScript / Python 分析脚本可用性
 ```
 
@@ -132,6 +132,21 @@ python3.10 -m venv .venv-essentia
 
 验证 Essentia 是否可用：
 
+默认模型 MAEST：
+
+```bash
+.venv-essentia/bin/python -c "import essentia; import essentia.standard as es; print(essentia.__version__); print(hasattr(es, 'TensorflowPredictMAEST'))"
+```
+
+预期至少看到：
+
+```text
+2.1-beta6-dev
+True
+```
+
+如果切到旧的 EffNet + Discogs400 模型（`genreModel=effnet400`）：
+
 ```bash
 .venv-essentia/bin/python -c "import essentia; import essentia.standard as es; print(essentia.__version__); print(hasattr(es, 'TensorflowPredictEffnetDiscogs')); print(hasattr(es, 'TensorflowPredict2D'))"
 ```
@@ -144,9 +159,65 @@ True
 True
 ```
 
+## 曲风模型选择
+
+项目支持在运行时按请求切换曲风模型：前端下拉框和 `/api/essentia`、`/api/metadata` 的 `model` 参数都能选择本次分析用哪个模型。`config/defaults.json` 的 `genreModel`（或环境变量 `GENRE_MODEL`）只决定默认模型；请求未指定时回退到它。因为可以随时切换，所以两个模型的文件都需要在本地就位。
+
+```text
+maest519  （默认）Essentia MAEST 30s，直接输出 519 个 Discogs style 分类，粒度更细
+effnet400          Essentia Discogs-EffNet + Discogs400，两段式（embedding + 分类头）
+```
+
+`scripts/setup_server.sh` 默认会下载并校验 `GENRE_MODEL_LIST` 中的所有模型（默认 `effnet400 maest519`），同时为每个模型生成 taxonomy 产物：
+
+```bash
+# 默认安装全部模型（支持运行时切换）
+./scripts/setup_server.sh
+
+# 只安装单个模型（不需要切换时）
+GENRE_MODEL_LIST=maest519 ./scripts/setup_server.sh
+```
+
 ## Essentia 模型文件
 
-项目使用 Essentia 官方 Discogs-EffNet + Discogs400 组合。
+### MAEST 30s Discogs519（默认）
+
+`genreModel=maest519` 时，MAEST 单个模型直接完成音频到 519 个 Discogs style 分类。
+
+必需文件：
+
+```text
+models/discogs-maest-30s-pw-519l-2.pb
+models/discogs-maest-30s-pw-519l-2.json
+```
+
+下载命令：
+
+```bash
+mkdir -p models
+
+curl --fail --location \
+  --output models/discogs-maest-30s-pw-519l-2.pb \
+  https://essentia.upf.edu/models/feature-extractors/maest/discogs-maest-30s-pw-519l-2.pb
+
+curl --fail --location \
+  --output models/discogs-maest-30s-pw-519l-2.json \
+  https://essentia.upf.edu/models/feature-extractors/maest/discogs-maest-30s-pw-519l-2.json
+```
+
+模型说明：
+
+```text
+discogs-maest-30s-pw-519l-2.pb
+  MAEST（Transformer）音频模型，直接输出 519 个 Discogs Genre/Style 分类
+
+discogs-maest-30s-pw-519l-2.json
+  519 个类别清单和 metadata，taxonomy 由此生成
+```
+
+### Discogs-EffNet + Discogs400（effnet400）
+
+`genreModel=effnet400` 或请求切换到该模型时，使用 Essentia 官方 Discogs-EffNet + Discogs400 组合（两段式：embedding 提取 + 分类头）。
 
 必需文件：
 
@@ -206,28 +277,41 @@ https://essentia.upf.edu/models.html
 
 ## Taxonomy 文件
 
-项目的统一音乐风格体系来自 Essentia Discogs400 metadata。
+项目的统一音乐风格体系来自所选模型的 metadata（MAEST 为 519，Discogs400 为 400）。
 
-输入：
-
-```text
-models/genre_discogs400-discogs-effnet-1.json
-```
-
-生成：
+输入（按 `genreModel` 选择其一）：
 
 ```text
-data/discogs-taxonomy.json
-public/discogs-taxonomy.js
+models/discogs-maest-30s-pw-519l-2.json      # maest519
+models/genre_discogs400-discogs-effnet-1.json # effnet400
 ```
 
-生成命令：
+生成（按模型分目录）：
+
+```text
+data/<model>/discogs-taxonomy.json
+data/<model>/discogs-style-profiles.json
+data/<model>/discogs-style-profiles.md
+public/<model>/discogs-taxonomy.js
+public/<model>/discogs-style-profiles.js
+```
+
+别名映射按模型手工维护：
+
+```text
+config/aliases/<model>.json
+```
+
+生成命令（`GENRE_MODEL` 决定写哪个模型目录）。支持运行时切换需要为每个模型都生成一份：
 
 ```bash
-node scripts/build_discogs_taxonomy.js
+GENRE_MODEL=maest519 node scripts/build_discogs_taxonomy.js
+GENRE_MODEL=maest519 node scripts/build_style_profiles.js
+GENRE_MODEL=effnet400 node scripts/build_discogs_taxonomy.js
+GENRE_MODEL=effnet400 node scripts/build_style_profiles.js
 ```
 
-如果 `data/discogs-taxonomy.json` 不存在，服务端会从 `models/genre_discogs400-discogs-effnet-1.json` 做 fallback，但前端页面仍需要 `public/discogs-taxonomy.js`。
+如果 `data/<model>/discogs-taxonomy.json` 不存在，服务端会从当前模型的 metadata json 做 fallback，但前端页面仍需要 `public/<model>/discogs-taxonomy.js`。前端请求带 `?model=` 的稳定路径（如 `/discogs-taxonomy.js?model=effnet400`），服务端据此映射到对应模型目录；不带参数时回退默认模型。
 
 ## 下载音频依赖
 
@@ -328,6 +412,8 @@ config/defaults.json
 
 其中 `itunesCountry` 默认是 `CN`。如需临时覆盖 iTunes Search API 的 storefront，也可以设置环境变量 `ITUNES_COUNTRY`，例如 `CN`、`US`、`JP`。
 
+`genreModel` 默认是 `maest519`，作为请求未指定模型时的默认曲风模型；也可以用环境变量 `GENRE_MODEL` 覆盖（`maest519` 或 `effnet400`）。前端下拉框或 API 的 `model` 参数可在运行时逐请求切换到已生成产物的其他模型。
+
 ## 目录依赖
 
 服务启动或运行过程中会使用这些目录：
@@ -336,7 +422,7 @@ config/defaults.json
 public/      前端静态文件
 downloads/   下载或上传的音频
 models/      Essentia 模型
-data/        Discogs400 taxonomy
+data/        Discogs taxonomy
 scripts/     模型分析和 taxonomy 构建脚本
 ```
 
@@ -389,18 +475,18 @@ curl --fail --silent --show-error \
   -d '{"fileName":"example.mp3","top":5}'
 ```
 
-预期返回：
+预期返回（默认 MAEST）：
 
 ```json
 {
-  "model": "Essentia Discogs-EffNet + Discogs400",
+  "model": "Essentia MAEST 30s (Discogs519)",
   "predictions": [
     {
       "label": "Hip Hop---Trap",
       "score": 0.12
     }
   ],
-  "source": "essentia-discogs400"
+  "source": "essentia-maest519"
 }
 ```
 
@@ -412,7 +498,7 @@ curl --fail --silent --show-error \
 
 ### 模型文件缺失
 
-如果 `/api/essentia` 报错或脚本无法加载 graph，检查 `models/` 下四个模型文件是否存在。
+如果 `/api/essentia` 报错或脚本无法加载 graph，检查 `models/` 下当前 `genreModel` 对应的模型文件是否存在（`maest519` 需要 `discogs-maest-30s-pw-519l-2.pb/.json`；`effnet400` 需要 4 个 EffNet/Discogs400 文件）。
 
 ### TensorFlow 日志很多
 

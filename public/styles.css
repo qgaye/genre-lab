@@ -249,6 +249,23 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(200, 255, 95, 0.12);
 }
 
+.model-field select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(244, 240, 232, 0.18);
+  border-radius: 0;
+  outline: none;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.055);
+  padding: 0 14px;
+  font-size: max(16px, 1em);
+}
+
+.model-field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200, 255, 95, 0.12);
+}
+
 .format-field {
   display: grid;
   gap: 8px;

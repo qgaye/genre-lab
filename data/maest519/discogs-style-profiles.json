@@ -1,9 +1,10 @@
-window.DISCOGS_STYLE_PROFILES = {
-  "name": "Discogs400 Style Profiles",
-  "version": "discogs400-local-1-profiles-1",
-  "generatedFrom": "data/discogs-taxonomy.json",
+{
+  "name": "Discogs Style Profiles",
+  "version": "discogs519-maest-1-profiles-1",
+  "model": "maest519",
+  "generatedFrom": "data/maest519/discogs-taxonomy.json",
   "language": "zh-CN",
-  "count": 400,
+  "count": 519,
   "profiles": [
     {
       "id": "Blues---Boogie Woogie",
@@ -103,6 +104,30 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Cross Road Blues",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Blues---East Coast Blues",
+      "genre": "Blues",
+      "style": "East Coast Blues",
+      "title": "Blues / East Coast Blues",
+      "overview": "East Coast Blues 是 Discogs400 中 Blues 大类下的 style。它的核心不是一个孤立标签，而在于把十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答放到更具体的 East Coast Blues 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 非裔美国劳动歌、灵歌、田野呼喊和酒馆舞曲传统。从美国南方的民间表达进入唱片工业后，蓝调一路影响了爵士、R&B、摇滚和灵魂乐。",
+      "listenFor": [
+        "先抓 十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Blues 的上级语境：十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答。"
+      ],
+      "mainstreamEntry": {
+        "artist": "B.B. King",
+        "title": "The Thrill Is Gone",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -206,6 +231,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Blues---Memphis Blues",
+      "genre": "Blues",
+      "style": "Memphis Blues",
+      "title": "Blues / Memphis Blues",
+      "overview": "Memphis Blues 是 Discogs400 中 Blues 大类下的 style。它的核心不是一个孤立标签，而在于把十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答放到更具体的 Memphis Blues 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 非裔美国劳动歌、灵歌、田野呼喊和酒馆舞曲传统。从美国南方的民间表达进入唱片工业后，蓝调一路影响了爵士、R&B、摇滚和灵魂乐。",
+      "listenFor": [
+        "先抓 十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Blues 的上级语境：十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答。"
+      ],
+      "mainstreamEntry": {
+        "artist": "B.B. King",
+        "title": "The Thrill Is Gone",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Blues---Modern Electric Blues",
       "genre": "Blues",
       "style": "Modern Electric Blues",
@@ -253,6 +302,30 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Good Morning Mr. Blues",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Blues---Piedmont Blues",
+      "genre": "Blues",
+      "style": "Piedmont Blues",
+      "title": "Blues / Piedmont Blues",
+      "overview": "Piedmont Blues 是 Discogs400 中 Blues 大类下的 style。它的核心不是一个孤立标签，而在于把十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答放到更具体的 Piedmont Blues 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 非裔美国劳动歌、灵歌、田野呼喊和酒馆舞曲传统。从美国南方的民间表达进入唱片工业后，蓝调一路影响了爵士、R&B、摇滚和灵魂乐。",
+      "listenFor": [
+        "先抓 十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Blues 的上级语境：十二小节结构、蓝调音阶、呼应式唱法和带有即兴感的器乐回答。"
+      ],
+      "mainstreamEntry": {
+        "artist": "B.B. King",
+        "title": "The Thrill Is Gone",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -314,7 +387,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 军乐、社区铜管传统和公共仪式音乐。它从军队、游行和地方社团场景发展而来，也进入了体育、庆典和电影配乐语汇。",
       "listenFor": [
@@ -338,7 +411,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 军乐、社区铜管传统和公共仪式音乐。它从军队、游行和地方社团场景发展而来，也进入了体育、庆典和电影配乐语汇。",
       "listenFor": [
@@ -362,7 +435,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 军乐、社区铜管传统和公共仪式音乐。它从军队、游行和地方社团场景发展而来，也进入了体育、庆典和电影配乐语汇。",
+      "listenFor": [
+        "先抓 铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Brass & Military 的上级语境：铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律。"
+      ],
+      "mainstreamEntry": {
+        "artist": "John Philip Sousa",
+        "title": "The Stars and Stripes Forever",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Brass & Military---Pipe & Drum",
+      "genre": "Brass & Military",
+      "style": "Pipe & Drum",
+      "title": "Brass & Military / Pipe & Drum",
+      "overview": "Pipe & Drum 是 Discogs400 中 Brass & Military 大类下的 style。它的核心不是一个孤立标签，而在于把铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律放到更具体的 Pipe & Drum 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "铜管齐奏、鼓号节奏、清晰行进脉冲和适合户外传播的旋律",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 军乐、社区铜管传统和公共仪式音乐。它从军队、游行和地方社团场景发展而来，也进入了体育、庆典和电影配乐语汇。",
       "listenFor": [
@@ -411,7 +508,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "简单旋律、清楚吐字、重复句式和容易记忆的节奏",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 儿童教育、家庭娱乐、校园歌谣和广播电视节目。随着唱片、电视和流媒体儿童内容扩张，它从传统童谣延伸到教育专辑、故事音频和角色歌曲。",
       "listenFor": [
@@ -435,7 +532,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "简单旋律、清楚吐字、重复句式和容易记忆的节奏",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 儿童教育、家庭娱乐、校园歌谣和广播电视节目。随着唱片、电视和流媒体儿童内容扩张，它从传统童谣延伸到教育专辑、故事音频和角色歌曲。",
       "listenFor": [
@@ -548,6 +645,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Music for 18 Musicians",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Classical---Early",
+      "genre": "Classical",
+      "style": "Early",
+      "title": "Classical / Early",
+      "overview": "Early 是 Discogs400 中 Classical 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 欧洲艺术音乐、宗教音乐、宫廷音乐和现代学院派作曲传统。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Classical 的上级语境：书面谱面、结构发展、器乐音色组织和长期训练形成的演奏法。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Mozart",
+        "title": "Eine kleine Nachtmusik",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -701,6 +823,56 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Classical---Operetta",
+      "genre": "Classical",
+      "style": "Operetta",
+      "title": "Classical / Operetta",
+      "overview": "Operetta 是 Discogs400 中 Classical 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 欧洲艺术音乐、宗教音乐、宫廷音乐和现代学院派作曲传统。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Classical 的上级语境：书面谱面、结构发展、器乐音色组织和长期训练形成的演奏法。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Mozart",
+        "title": "Eine kleine Nachtmusik",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Classical---Oratorio",
+      "genre": "Classical",
+      "style": "Oratorio",
+      "title": "Classical / Oratorio",
+      "overview": "Oratorio 是 Discogs400 中 Classical 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 欧洲艺术音乐、宗教音乐、宫廷音乐和现代学院派作曲传统。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Classical 的上级语境：书面谱面、结构发展、器乐音色组织和长期训练形成的演奏法。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Mozart",
+        "title": "Eine kleine Nachtmusik",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Classical---Post-Modern",
       "genre": "Classical",
       "style": "Post-Modern",
@@ -776,6 +948,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Classical---Twelve-tone",
+      "genre": "Classical",
+      "style": "Twelve-tone",
+      "title": "Classical / Twelve-tone",
+      "overview": "Twelve-tone 是 Discogs400 中 Classical 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 欧洲艺术音乐、宗教音乐、宫廷音乐和现代学院派作曲传统。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Classical 的上级语境：书面谱面、结构发展、器乐音色组织和长期训练形成的演奏法。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Mozart",
+        "title": "Eine kleine Nachtmusik",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Electronic---Abstract",
       "genre": "Electronic",
       "style": "Abstract",
@@ -784,7 +981,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -808,7 +1005,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -899,6 +1096,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Electronic---Baltimore Club",
+      "genre": "Electronic",
+      "style": "Baltimore Club",
+      "title": "Electronic / Baltimore Club",
+      "overview": "Baltimore Club 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Baltimore Club 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Electronic---Bassline",
       "genre": "Electronic",
       "style": "Bassline",
@@ -907,7 +1128,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -931,7 +1152,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -955,7 +1176,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -979,7 +1200,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1003,7 +1224,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1027,7 +1248,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1051,7 +1272,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1075,7 +1296,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1099,7 +1320,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1123,7 +1344,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1147,7 +1368,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1221,7 +1442,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1345,7 +1566,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Electronic---Doomcore",
+      "genre": "Electronic",
+      "style": "Doomcore",
+      "title": "Electronic / Doomcore",
+      "overview": "Doomcore 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Doomcore 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1369,7 +1614,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1418,7 +1663,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1517,7 +1762,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1541,7 +1786,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1565,7 +1810,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1606,6 +1851,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Electronic---Electroacoustic",
+      "genre": "Electronic",
+      "style": "Electroacoustic",
+      "title": "Electronic / Electroacoustic",
+      "overview": "Electroacoustic 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Electroacoustic 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Electronic---Electroclash",
       "genre": "Electronic",
       "style": "Electroclash",
@@ -1614,7 +1883,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1688,7 +1957,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1712,7 +1981,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1736,7 +2005,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Electronic---Footwork",
+      "genre": "Electronic",
+      "style": "Footwork",
+      "title": "Electronic / Footwork",
+      "overview": "Footwork 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Footwork 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1760,7 +2053,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1809,7 +2102,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1858,7 +2151,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1899,6 +2192,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Electronic---Ghettotech",
+      "genre": "Electronic",
+      "style": "Ghettotech",
+      "title": "Electronic / Ghettotech",
+      "overview": "Ghettotech 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Ghettotech 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Electronic---Glitch",
       "genre": "Electronic",
       "style": "Glitch",
@@ -1907,7 +2224,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -1920,6 +2237,30 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Do While",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Electronic---Glitch Hop",
+      "genre": "Electronic",
+      "style": "Glitch Hop",
+      "title": "Electronic / Glitch Hop",
+      "overview": "Glitch Hop 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Glitch Hop 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -1981,7 +2322,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2005,7 +2346,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2043,6 +2384,30 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Hardcore Vibes",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Electronic---Hard Beat",
+      "genre": "Electronic",
+      "style": "Hard Beat",
+      "title": "Electronic / Hard Beat",
+      "overview": "Hard Beat 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Hard Beat 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -2154,7 +2519,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2170,6 +2535,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Electronic---Harsh Noise Wall",
+      "genre": "Electronic",
+      "style": "Harsh Noise Wall",
+      "title": "Electronic / Harsh Noise Wall",
+      "overview": "Harsh Noise Wall 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于强调直接、短促、反权威的乐队能量；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "高速下拨吉他",
+        "群体式副歌或喊唱",
+        "短歌结构",
+        "粗粝现场感"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。Punk 在 1970 年代后期爆发，Hardcore 则把速度、音量和社群伦理进一步推向地下场景。",
+      "listenFor": [
+        "先抓 高速下拨吉他。",
+        "再听 群体式副歌或喊唱 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Electronic---Hi NRG",
       "genre": "Electronic",
       "style": "Hi NRG",
@@ -2178,7 +2568,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2277,7 +2667,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2301,7 +2691,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2400,7 +2790,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2413,6 +2803,30 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Blue (Da Ba Dee)",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Electronic---J-Core",
+      "genre": "Electronic",
+      "style": "J-Core",
+      "title": "Electronic / J-Core",
+      "overview": "J-Core 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 J-Core 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -2449,7 +2863,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2473,7 +2887,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2497,7 +2911,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2521,7 +2935,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2545,7 +2959,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
+      "listenFor": [
+        "先抓 电子声源、循环律动、音色设计、低频系统和制作技术本身。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Electronic---Lento Violento",
+      "genre": "Electronic",
+      "style": "Lento Violento",
+      "title": "Electronic / Lento Violento",
+      "overview": "Lento Violento 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把电子声源、循环律动、音色设计、低频系统和制作技术本身放到更具体的 Lento Violento 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电子声源、循环律动、音色设计、低频系统和制作技术本身",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2569,7 +3007,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2593,7 +3031,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2667,7 +3105,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2680,6 +3118,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Etude aux chemins de fer",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Electronic---Neo Trance",
+      "genre": "Electronic",
+      "style": "Neo Trance",
+      "title": "Electronic / Neo Trance",
+      "overview": "Neo Trance 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于用持续脉冲、上升线条和长篇结构制造恍惚感；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "快速四拍",
+        "琶音合成器",
+        "长 build-up 与 drop",
+        "明亮或迷幻的 lead"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。Trance 在 1990 年代欧洲俱乐部与 Goa 派对文化中成型，随后进入大型电子音乐节和商业舞曲体系。",
+      "listenFor": [
+        "先抓 快速四拍。",
+        "再听 琶音合成器 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -2741,7 +3204,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2765,7 +3228,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -2864,7 +3327,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3013,7 +3476,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3062,7 +3525,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3111,7 +3574,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3235,7 +3698,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3284,7 +3747,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3325,6 +3788,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Electronic---UK Funky",
+      "genre": "Electronic",
+      "style": "UK Funky",
+      "title": "Electronic / UK Funky",
+      "overview": "UK Funky 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于把 gospel 式情感、人声爆发力和律动型乐队编制结合起来；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "强烈后拍",
+        "贝斯与鼓锁定 groove",
+        "呼应式和声",
+        "主唱情绪推进"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从教会、R&B 和 1960 年代灵魂乐起步，它影响了 Disco、Hip Hop 采样、现代 R&B 和流行制作。",
+      "listenFor": [
+        "先抓 强烈后拍。",
+        "再听 贝斯与鼓锁定 groove 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Electronic---UK Garage",
       "genre": "Electronic",
       "style": "UK Garage",
@@ -3358,7 +3846,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电子声源、循环律动、音色设计、低频系统和制作技术本身",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。从实验磁带、迪斯科和早期合成器音乐发展到 House、Techno、Bass music 与流行舞曲，电子乐的分化主要由设备、场景和舞池功能推动。",
       "listenFor": [
@@ -3374,11 +3862,186 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Electronic---Witch House",
+      "genre": "Electronic",
+      "style": "Witch House",
+      "title": "Electronic / Witch House",
+      "overview": "Witch House 是 Discogs400 中 Electronic 大类下的 style。它的核心不是一个孤立标签，而在于面向舞池的 4/4 律动，重视 groove、重复推进和人声 hook；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "稳定四拍底鼓",
+        "开放 hi-hat 与拍手",
+        "循环 bassline",
+        "灵魂乐或迪斯科采样"
+      ],
+      "history": "它的上游语境来自 合成器、鼓机、采样器、录音室实验和俱乐部文化。House 从芝加哥、纽约和英国俱乐部文化中扩散，之后按速度、低频、和声深度和商业化程度分化。",
+      "listenFor": [
+        "先抓 稳定四拍底鼓。",
+        "再听 开放 hi-hat 与拍手 如何支撑情绪或舞池功能。",
+        "最后把它放回 Electronic 的上级语境：电子声源、循环律动、音色设计、低频系统和制作技术本身。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Daft Punk",
+        "title": "One More Time",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Aboriginal",
+      "genre": "Folk, World, & Country",
+      "style": "Aboriginal",
+      "title": "Folk, World, & Country / Aboriginal",
+      "overview": "Aboriginal 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---African",
       "genre": "Folk, World, & Country",
       "style": "African",
       "title": "Folk, World, & Country / African",
       "overview": "African 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Andalusian Classical",
+      "genre": "Folk, World, & Country",
+      "style": "Andalusian Classical",
+      "title": "Folk, World, & Country / Andalusian Classical",
+      "overview": "Andalusian Classical 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Andean Music",
+      "genre": "Folk, World, & Country",
+      "style": "Andean Music",
+      "title": "Folk, World, & Country / Andean Music",
+      "overview": "Andean Music 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Appalachian Music",
+      "genre": "Folk, World, & Country",
+      "style": "Appalachian Music",
+      "title": "Folk, World, & Country / Appalachian Music",
+      "overview": "Appalachian Music 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Basque Music",
+      "genre": "Folk, World, & Country",
+      "style": "Basque Music",
+      "title": "Folk, World, & Country / Basque Music",
+      "overview": "Basque Music 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Bhangra",
+      "genre": "Folk, World, & Country",
+      "style": "Bhangra",
+      "title": "Folk, World, & Country / Bhangra",
+      "overview": "Bhangra 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -3474,6 +4137,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Carnatic",
+      "genre": "Folk, World, & Country",
+      "style": "Carnatic",
+      "title": "Folk, World, & Country / Carnatic",
+      "overview": "Carnatic 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Catalan Music",
       "genre": "Folk, World, & Country",
       "style": "Catalan Music",
@@ -3524,11 +4212,161 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Chacarera",
+      "genre": "Folk, World, & Country",
+      "style": "Chacarera",
+      "title": "Folk, World, & Country / Chacarera",
+      "overview": "Chacarera 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Chinese Classical",
+      "genre": "Folk, World, & Country",
+      "style": "Chinese Classical",
+      "title": "Folk, World, & Country / Chinese Classical",
+      "overview": "Chinese Classical 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Chutney",
+      "genre": "Folk, World, & Country",
+      "style": "Chutney",
+      "title": "Folk, World, & Country / Chutney",
+      "overview": "Chutney 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Copla",
+      "genre": "Folk, World, & Country",
+      "style": "Copla",
+      "title": "Folk, World, & Country / Copla",
+      "overview": "Copla 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Country",
       "genre": "Folk, World, & Country",
       "style": "Country",
       "title": "Folk, World, & Country / Country",
       "overview": "Country 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Cretan",
+      "genre": "Folk, World, & Country",
+      "style": "Cretan",
+      "title": "Folk, World, & Country / Cretan",
+      "overview": "Cretan 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Dangdut",
+      "genre": "Folk, World, & Country",
+      "style": "Dangdut",
+      "title": "Folk, World, & Country / Dangdut",
+      "overview": "Dangdut 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -3649,11 +4487,136 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Funaná",
+      "genre": "Folk, World, & Country",
+      "style": "Funaná",
+      "title": "Folk, World, & Country / Funaná",
+      "overview": "Funaná 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Gamelan",
+      "genre": "Folk, World, & Country",
+      "style": "Gamelan",
+      "title": "Folk, World, & Country / Gamelan",
+      "overview": "Gamelan 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Ghazal",
+      "genre": "Folk, World, & Country",
+      "style": "Ghazal",
+      "title": "Folk, World, & Country / Ghazal",
+      "overview": "Ghazal 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Gospel",
       "genre": "Folk, World, & Country",
       "style": "Gospel",
       "title": "Folk, World, & Country / Gospel",
       "overview": "Gospel 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Griot",
+      "genre": "Folk, World, & Country",
+      "style": "Griot",
+      "title": "Folk, World, & Country / Griot",
+      "overview": "Griot 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Hawaiian",
+      "genre": "Folk, World, & Country",
+      "style": "Hawaiian",
+      "title": "Folk, World, & Country / Hawaiian",
+      "overview": "Hawaiian 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -3799,11 +4762,236 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Kaseko",
+      "genre": "Folk, World, & Country",
+      "style": "Kaseko",
+      "title": "Folk, World, & Country / Kaseko",
+      "overview": "Kaseko 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Klezmer",
+      "genre": "Folk, World, & Country",
+      "style": "Klezmer",
+      "title": "Folk, World, & Country / Klezmer",
+      "overview": "Klezmer 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Laïkó",
       "genre": "Folk, World, & Country",
       "style": "Laïkó",
       "title": "Folk, World, & Country / Laïkó",
       "overview": "Laïkó 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Luk Thung",
+      "genre": "Folk, World, & Country",
+      "style": "Luk Thung",
+      "title": "Folk, World, & Country / Luk Thung",
+      "overview": "Luk Thung 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Maloya",
+      "genre": "Folk, World, & Country",
+      "style": "Maloya",
+      "title": "Folk, World, & Country / Maloya",
+      "overview": "Maloya 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Mbalax",
+      "genre": "Folk, World, & Country",
+      "style": "Mbalax",
+      "title": "Folk, World, & Country / Mbalax",
+      "overview": "Mbalax 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Min'yō",
+      "genre": "Folk, World, & Country",
+      "style": "Min'yō",
+      "title": "Folk, World, & Country / Min'yō",
+      "overview": "Min'yō 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Mizrahi",
+      "genre": "Folk, World, & Country",
+      "style": "Mizrahi",
+      "title": "Folk, World, & Country / Mizrahi",
+      "overview": "Mizrahi 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Népzene",
+      "genre": "Folk, World, & Country",
+      "style": "Népzene",
+      "title": "Folk, World, & Country / Népzene",
+      "overview": "Népzene 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Nhạc Vàng",
+      "genre": "Folk, World, & Country",
+      "style": "Nhạc Vàng",
+      "title": "Folk, World, & Country / Nhạc Vàng",
+      "overview": "Nhạc Vàng 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -3849,11 +5037,136 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Ottoman Classical",
+      "genre": "Folk, World, & Country",
+      "style": "Ottoman Classical",
+      "title": "Folk, World, & Country / Ottoman Classical",
+      "overview": "Ottoman Classical 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Overtone Singing",
+      "genre": "Folk, World, & Country",
+      "style": "Overtone Singing",
+      "title": "Folk, World, & Country / Overtone Singing",
+      "overview": "Overtone Singing 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Pacific",
       "genre": "Folk, World, & Country",
       "style": "Pacific",
       "title": "Folk, World, & Country / Pacific",
       "overview": "Pacific 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Pasodoble",
+      "genre": "Folk, World, & Country",
+      "style": "Pasodoble",
+      "title": "Folk, World, & Country / Pasodoble",
+      "overview": "Pasodoble 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Persian Classical",
+      "genre": "Folk, World, & Country",
+      "style": "Persian Classical",
+      "title": "Folk, World, & Country / Persian Classical",
+      "overview": "Persian Classical 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Phleng Phuea Chiwit",
+      "genre": "Folk, World, & Country",
+      "style": "Phleng Phuea Chiwit",
+      "title": "Folk, World, & Country / Phleng Phuea Chiwit",
+      "overview": "Phleng Phuea Chiwit 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -3899,6 +5212,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Qawwali",
+      "genre": "Folk, World, & Country",
+      "style": "Qawwali",
+      "title": "Folk, World, & Country / Qawwali",
+      "overview": "Qawwali 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Raï",
       "genre": "Folk, World, & Country",
       "style": "Raï",
@@ -3924,11 +5262,86 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Rebetiko",
+      "genre": "Folk, World, & Country",
+      "style": "Rebetiko",
+      "title": "Folk, World, & Country / Rebetiko",
+      "overview": "Rebetiko 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Romani",
       "genre": "Folk, World, & Country",
       "style": "Romani",
       "title": "Folk, World, & Country / Romani",
       "overview": "Romani 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Salegy",
+      "genre": "Folk, World, & Country",
+      "style": "Salegy",
+      "title": "Folk, World, & Country / Salegy",
+      "overview": "Salegy 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Sea Shanties",
+      "genre": "Folk, World, & Country",
+      "style": "Sea Shanties",
+      "title": "Folk, World, & Country / Sea Shanties",
+      "overview": "Sea Shanties 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -4024,11 +5437,61 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Folk, World, & Country---Western Swing",
+      "genre": "Folk, World, & Country",
+      "style": "Western Swing",
+      "title": "Folk, World, & Country / Western Swing",
+      "overview": "Western Swing 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以即兴、和声色彩和乐手互动为中心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "摇摆或切分律动",
+        "即兴 solo",
+        "扩展和声",
+        "鼓贝斯与和声乐器互动"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。爵士从 20 世纪初的美国城市音乐出发，不断吸收古巴、巴西、摇滚、Funk 和学院派语言。",
+      "listenFor": [
+        "先抓 摇摆或切分律动。",
+        "再听 即兴 solo 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Folk, World, & Country---Zouk",
       "genre": "Folk, World, & Country",
       "style": "Zouk",
       "title": "Folk, World, & Country / Zouk",
       "overview": "Zouk 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "原声弦乐器突出",
+        "叙事性歌词",
+        "舞曲或民歌结构",
+        "地域口音和传统唱法"
+      ],
+      "history": "它的上游语境来自 地方民歌、舞曲、口传传统、乡村音乐和区域性流行工业。它们常从口传、舞会和家庭演奏进入唱片与广播，再被复兴运动、旅游工业或现代流行重新诠释。",
+      "listenFor": [
+        "先抓 原声弦乐器突出。",
+        "再听 叙事性歌词 如何支撑情绪或舞池功能。",
+        "最后把它放回 Folk, World, & Country 的上级语境：地域语言、传统节奏型、民间乐器、叙事歌词和社群功能。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Johnny Cash",
+        "title": "I Walk the Line",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Folk, World, & Country---Zydeco",
+      "genre": "Folk, World, & Country",
+      "style": "Zydeco",
+      "title": "Folk, World, & Country / Zydeco",
+      "overview": "Zydeco 是 Discogs400 中 Folk, World, & Country 大类下的 style。它的核心不是一个孤立标签，而在于以地方叙事、传统乐器和歌唱腔调保留社群记忆；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "原声弦乐器突出",
         "叙事性歌词",
@@ -4071,6 +5534,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Water No Get Enemy",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Funk / Soul---Bayou Funk",
+      "genre": "Funk / Soul",
+      "style": "Bayou Funk",
+      "title": "Funk / Soul / Bayou Funk",
+      "overview": "Bayou Funk 是 Discogs400 中 Funk / Soul 大类下的 style。它的核心不是一个孤立标签，而在于把 gospel 式情感、人声爆发力和律动型乐队编制结合起来；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "强烈后拍",
+        "贝斯与鼓锁定 groove",
+        "呼应式和声",
+        "主唱情绪推进"
+      ],
+      "history": "它的上游语境来自 Gospel、R&B、爵士和非裔美国流行音乐传统。从教会、R&B 和 1960 年代灵魂乐起步，它影响了 Disco、Hip Hop 采样、现代 R&B 和流行制作。",
+      "listenFor": [
+        "先抓 强烈后拍。",
+        "再听 贝斯与鼓锁定 groove 如何支撑情绪或舞池功能。",
+        "最后把它放回 Funk / Soul 的上级语境：强后拍、律动贝斯、切分吉他、呼喊式人声和身体性的 groove。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Aretha Franklin",
+        "title": "Respect",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -4199,6 +5687,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Funk / Soul---Gogo",
+      "genre": "Funk / Soul",
+      "style": "Gogo",
+      "title": "Funk / Soul / Gogo",
+      "overview": "Gogo 是 Discogs400 中 Funk / Soul 大类下的 style。它的核心不是一个孤立标签，而在于把 gospel 式情感、人声爆发力和律动型乐队编制结合起来；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "强烈后拍",
+        "贝斯与鼓锁定 groove",
+        "呼应式和声",
+        "主唱情绪推进"
+      ],
+      "history": "它的上游语境来自 Gospel、R&B、爵士和非裔美国流行音乐传统。从教会、R&B 和 1960 年代灵魂乐起步，它影响了 Disco、Hip Hop 采样、现代 R&B 和流行制作。",
+      "listenFor": [
+        "先抓 强烈后拍。",
+        "再听 贝斯与鼓锁定 groove 如何支撑情绪或舞池功能。",
+        "最后把它放回 Funk / Soul 的上级语境：强后拍、律动贝斯、切分吉他、呼喊式人声和身体性的 groove。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Aretha Franklin",
+        "title": "Respect",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Funk / Soul---Gospel",
       "genre": "Funk / Soul",
       "style": "Gospel",
@@ -4221,6 +5734,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Move On Up a Little Higher",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Funk / Soul---Minneapolis Sound",
+      "genre": "Funk / Soul",
+      "style": "Minneapolis Sound",
+      "title": "Funk / Soul / Minneapolis Sound",
+      "overview": "Minneapolis Sound 是 Discogs400 中 Funk / Soul 大类下的 style。它的核心不是一个孤立标签，而在于把 gospel 式情感、人声爆发力和律动型乐队编制结合起来；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "强烈后拍",
+        "贝斯与鼓锁定 groove",
+        "呼应式和声",
+        "主唱情绪推进"
+      ],
+      "history": "它的上游语境来自 Gospel、R&B、爵士和非裔美国流行音乐传统。从教会、R&B 和 1960 年代灵魂乐起步，它影响了 Disco、Hip Hop 采样、现代 R&B 和流行制作。",
+      "listenFor": [
+        "先抓 强烈后拍。",
+        "再听 贝斯与鼓锁定 groove 如何支撑情绪或舞池功能。",
+        "最后把它放回 Funk / Soul 的上级语境：强后拍、律动贝斯、切分吉他、呼喊式人声和身体性的 groove。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Aretha Franklin",
+        "title": "Respect",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -4429,6 +5967,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "style": "Bass Music",
       "title": "Hip Hop / Bass Music",
       "overview": "Bass Music 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "鼓组 loop 或 808 低频",
+        "说唱 flow",
+        "采样或合成器 riff",
+        "强调地域身份"
+      ],
+      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。从 DJ break 和 block party 文化出发，Hip Hop 按城市、制作设备、商业化程度和歌词主题形成大量分支。",
+      "listenFor": [
+        "先抓 鼓组 loop 或 808 低频。",
+        "再听 说唱 flow 如何支撑情绪或舞池功能。",
+        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Grandmaster Flash & The Furious Five",
+        "title": "The Message",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Hip Hop---Beatbox",
+      "genre": "Hip Hop",
+      "style": "Beatbox",
+      "title": "Hip Hop / Beatbox",
+      "overview": "Beatbox 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
       "styleFocus": [
         "鼓组 loop 或 808 低频",
         "说唱 flow",
@@ -4674,6 +6237,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Hip Hop---Favela Funk",
+      "genre": "Hip Hop",
+      "style": "Favela Funk",
+      "title": "Hip Hop / Favela Funk",
+      "overview": "Favela Funk 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于把 gospel 式情感、人声爆发力和律动型乐队编制结合起来；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "强烈后拍",
+        "贝斯与鼓锁定 groove",
+        "呼应式和声",
+        "主唱情绪推进"
+      ],
+      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。从教会、R&B 和 1960 年代灵魂乐起步，它影响了 Disco、Hip Hop 采样、现代 R&B 和流行制作。",
+      "listenFor": [
+        "先抓 强烈后拍。",
+        "再听 贝斯与鼓锁定 groove 如何支撑情绪或舞池功能。",
+        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Grandmaster Flash & The Furious Five",
+        "title": "The Message",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Hip Hop---G-Funk",
       "genre": "Hip Hop",
       "style": "G-Funk",
@@ -4721,6 +6309,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Straight Outta Compton",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Hip Hop---Go-Go",
+      "genre": "Hip Hop",
+      "style": "Go-Go",
+      "title": "Hip Hop / Go-Go",
+      "overview": "Go-Go 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "鼓组 loop 或 808 低频",
+        "说唱 flow",
+        "采样或合成器 riff",
+        "强调地域身份"
+      ],
+      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。从 DJ break 和 block party 文化出发，Hip Hop 按城市、制作设备、商业化程度和歌词主题形成大量分支。",
+      "listenFor": [
+        "先抓 鼓组 loop 或 808 低频。",
+        "再听 说唱 flow 如何支撑情绪或舞池功能。",
+        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Grandmaster Flash & The Furious Five",
+        "title": "The Message",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -4774,6 +6387,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Hip Hop---Hiplife",
+      "genre": "Hip Hop",
+      "style": "Hiplife",
+      "title": "Hip Hop / Hiplife",
+      "overview": "Hiplife 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "鼓组 loop 或 808 低频",
+        "说唱 flow",
+        "采样或合成器 riff",
+        "强调地域身份"
+      ],
+      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。从 DJ break 和 block party 文化出发，Hip Hop 按城市、制作设备、商业化程度和歌词主题形成大量分支。",
+      "listenFor": [
+        "先抓 鼓组 loop 或 808 低频。",
+        "再听 说唱 flow 如何支撑情绪或舞池功能。",
+        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Grandmaster Flash & The Furious Five",
+        "title": "The Message",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Hip Hop---Horrorcore",
       "genre": "Hip Hop",
       "style": "Horrorcore",
@@ -4796,6 +6434,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Mind Playing Tricks on Me",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Hip Hop---Hyphy",
+      "genre": "Hip Hop",
+      "style": "Hyphy",
+      "title": "Hip Hop / Hyphy",
+      "overview": "Hyphy 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "鼓组 loop 或 808 低频",
+        "说唱 flow",
+        "采样或合成器 riff",
+        "强调地域身份"
+      ],
+      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。从 DJ break 和 block party 文化出发，Hip Hop 按城市、制作设备、商业化程度和歌词主题形成大量分支。",
+      "listenFor": [
+        "先抓 鼓组 loop 或 808 低频。",
+        "再听 说唱 flow 如何支撑情绪或舞池功能。",
+        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Grandmaster Flash & The Furious Five",
+        "title": "The Message",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -4846,6 +6509,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Electric Relaxation",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Hip Hop---Kwaito",
+      "genre": "Hip Hop",
+      "style": "Kwaito",
+      "title": "Hip Hop / Kwaito",
+      "overview": "Kwaito 是 Discogs400 中 Hip Hop 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "鼓组 loop 或 808 低频",
+        "说唱 flow",
+        "采样或合成器 riff",
+        "强调地域身份"
+      ],
+      "history": "它的上游语境来自 街区派对、DJ break、MC 说唱、采样文化和城市青年表达。从 DJ break 和 block party 文化出发，Hip Hop 按城市、制作设备、商业化程度和歌词主题形成大量分支。",
+      "listenFor": [
+        "先抓 鼓组 loop 或 808 低频。",
+        "再听 说唱 flow 如何支撑情绪或舞池功能。",
+        "最后把它放回 Hip Hop 的上级语境：鼓组 loop、押韵 flow、低频、采样拼贴和身份叙事。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Grandmaster Flash & The Furious Five",
+        "title": "The Message",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -5221,6 +6909,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "The Girl from Ipanema",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Jazz---Cape Jazz",
+      "genre": "Jazz",
+      "style": "Cape Jazz",
+      "title": "Jazz / Cape Jazz",
+      "overview": "Cape Jazz 是 Discogs400 中 Jazz 大类下的 style。它的核心不是一个孤立标签，而在于以即兴、和声色彩和乐手互动为中心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "摇摆或切分律动",
+        "即兴 solo",
+        "扩展和声",
+        "鼓贝斯与和声乐器互动"
+      ],
+      "history": "它的上游语境来自 布鲁斯、拉格泰姆、铜管乐、非裔美国即兴传统和现代和声。爵士从 20 世纪初的美国城市音乐出发，不断吸收古巴、巴西、摇滚、Funk 和学院派语言。",
+      "listenFor": [
+        "先抓 摇摆或切分律动。",
+        "再听 即兴 solo 如何支撑情绪或舞池功能。",
+        "最后把它放回 Jazz 的上级语境：摇摆感、即兴、复杂和声、互动伴奏和乐手个人音色。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Miles Davis",
+        "title": "So What",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -5707,7 +7420,55 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Axé",
+      "genre": "Latin",
+      "style": "Axé",
+      "title": "Latin / Axé",
+      "overview": "Axé 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Axé 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Bachata",
+      "genre": "Latin",
+      "style": "Bachata",
+      "title": "Latin / Bachata",
+      "overview": "Bachata 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Bachata 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5731,7 +7492,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5755,7 +7516,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5779,7 +7540,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5828,7 +7589,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5869,6 +7630,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Latin---Carimbó",
+      "genre": "Latin",
+      "style": "Carimbó",
+      "title": "Latin / Carimbó",
+      "overview": "Carimbó 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Carimbó 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Latin---Cha-Cha",
       "genre": "Latin",
       "style": "Cha-Cha",
@@ -5877,7 +7662,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5901,7 +7686,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Choro",
+      "genre": "Latin",
+      "style": "Choro",
+      "title": "Latin / Choro",
+      "overview": "Choro 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Choro 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5925,7 +7734,55 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Conjunto",
+      "genre": "Latin",
+      "style": "Conjunto",
+      "title": "Latin / Conjunto",
+      "overview": "Conjunto 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Conjunto 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Corrido",
+      "genre": "Latin",
+      "style": "Corrido",
+      "title": "Latin / Corrido",
+      "overview": "Corrido 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Corrido 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5949,7 +7806,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -5990,6 +7847,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Latin---Danzon",
+      "genre": "Latin",
+      "style": "Danzon",
+      "title": "Latin / Danzon",
+      "overview": "Danzon 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Danzon 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Latin---Descarga",
       "genre": "Latin",
       "style": "Descarga",
@@ -5998,7 +7879,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6022,7 +7903,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6038,6 +7919,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Latin---Gaita",
+      "genre": "Latin",
+      "style": "Gaita",
+      "title": "Latin / Gaita",
+      "overview": "Gaita 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Gaita 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Latin---Guaguancó",
       "genre": "Latin",
       "style": "Guaguancó",
@@ -6046,7 +7951,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6070,7 +7975,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6094,7 +7999,55 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Jibaro",
+      "genre": "Latin",
+      "style": "Jibaro",
+      "title": "Latin / Jibaro",
+      "overview": "Jibaro 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Jibaro 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Lambada",
+      "genre": "Latin",
+      "style": "Lambada",
+      "title": "Latin / Lambada",
+      "overview": "Lambada 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Lambada 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6160,6 +8113,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Latin---Marimba",
+      "genre": "Latin",
+      "style": "Marimba",
+      "title": "Latin / Marimba",
+      "overview": "Marimba 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Marimba 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Latin---Merengue",
       "genre": "Latin",
       "style": "Merengue",
@@ -6193,7 +8170,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6209,6 +8186,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Latin---Música Criolla",
+      "genre": "Latin",
+      "style": "Música Criolla",
+      "title": "Latin / Música Criolla",
+      "overview": "Música Criolla 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Música Criolla 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Latin---Norteño",
       "genre": "Latin",
       "style": "Norteño",
@@ -6217,7 +8218,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6241,7 +8242,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Nueva Trova",
+      "genre": "Latin",
+      "style": "Nueva Trova",
+      "title": "Latin / Nueva Trova",
+      "overview": "Nueva Trova 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Nueva Trova 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6265,7 +8290,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Plena",
+      "genre": "Latin",
+      "style": "Plena",
+      "title": "Latin / Plena",
+      "overview": "Plena 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Plena 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6289,7 +8338,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Quechua",
+      "genre": "Latin",
+      "style": "Quechua",
+      "title": "Latin / Quechua",
+      "overview": "Quechua 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Quechua 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6363,7 +8436,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6429,6 +8502,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Latin---Samba-Canção",
+      "genre": "Latin",
+      "style": "Samba-Canção",
+      "title": "Latin / Samba-Canção",
+      "overview": "Samba-Canção 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把地区舞蹈节奏、歌唱传统和流行编曲结合起来；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确舞步节奏",
+        "打击乐或拨弦乐器突出",
+        "旋律装饰强",
+        "常有西语或葡语主唱"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。这些风格大多在地方民间传统、城市乐队和跨国唱片工业之间成型，是拉丁音乐进入全球大众语境的重要通道。",
+      "listenFor": [
+        "先抓 明确舞步节奏。",
+        "再听 打击乐或拨弦乐器突出 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Latin---Son",
       "genre": "Latin",
       "style": "Son",
@@ -6437,7 +8535,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6461,7 +8559,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Sonero",
+      "genre": "Latin",
+      "style": "Sonero",
+      "title": "Latin / Sonero",
+      "overview": "Sonero 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Sonero 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6510,7 +8632,55 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Timba",
+      "genre": "Latin",
+      "style": "Timba",
+      "title": "Latin / Timba",
+      "overview": "Timba 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Timba 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
+      "listenFor": [
+        "先抓 clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Latin 的上级语境：clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Celia Cruz",
+        "title": "La Vida Es Un Carnaval",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Latin---Trova",
+      "genre": "Latin",
+      "style": "Trova",
+      "title": "Latin / Trova",
+      "overview": "Trova 是 Discogs400 中 Latin 大类下的 style。它的核心不是一个孤立标签，而在于把clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱放到更具体的 Trova 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6534,7 +8704,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "clave 或区域性节奏框架、打击乐、舞蹈功能、旋律装饰和西语/葡语歌唱",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 拉丁美洲、加勒比、西班牙及非洲节奏传统的混合。它常在民间舞蹈、城市乐队、移民社区和跨国唱片工业之间流动，因此同一 style 往往兼具地方身份与流行传播性。",
       "listenFor": [
@@ -6650,6 +8820,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Non-Music---Erotic",
+      "genre": "Non-Music",
+      "style": "Erotic",
+      "title": "Non-Music / Erotic",
+      "overview": "Erotic 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Erotic 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Non-Music---Field Recording",
       "genre": "Non-Music",
       "style": "Field Recording",
@@ -6665,6 +8859,30 @@ window.DISCOGS_STYLE_PROFILES = {
       "listenFor": [
         "先抓 语言信息居前。",
         "再听 环境声或现场感可能比旋律更重要 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Health-Fitness",
+      "genre": "Non-Music",
+      "style": "Health-Fitness",
+      "title": "Non-Music / Health-Fitness",
+      "overview": "Health-Fitness 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Health-Fitness 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
         "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
       ],
       "mainstreamEntry": {
@@ -6715,6 +8933,30 @@ window.DISCOGS_STYLE_PROFILES = {
       "listenFor": [
         "先抓 语言信息居前。",
         "再听 环境声或现场感可能比旋律更重要 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Movie Effects",
+      "genre": "Non-Music",
+      "style": "Movie Effects",
+      "title": "Non-Music / Movie Effects",
+      "overview": "Movie Effects 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Movie Effects 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
         "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
       ],
       "mainstreamEntry": {
@@ -6800,6 +9042,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Non-Music---Public Broadcast",
+      "genre": "Non-Music",
+      "style": "Public Broadcast",
+      "title": "Non-Music / Public Broadcast",
+      "overview": "Public Broadcast 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Public Broadcast 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Non-Music---Radioplay",
       "genre": "Non-Music",
       "style": "Radioplay",
@@ -6850,6 +9116,127 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Non-Music---Sermon",
+      "genre": "Non-Music",
+      "style": "Sermon",
+      "title": "Non-Music / Sermon",
+      "overview": "Sermon 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Sermon 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Sound Art",
+      "genre": "Non-Music",
+      "style": "Sound Art",
+      "title": "Non-Music / Sound Art",
+      "overview": "Sound Art 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Sound Art 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Sound Poetry",
+      "genre": "Non-Music",
+      "style": "Sound Poetry",
+      "title": "Non-Music / Sound Poetry",
+      "overview": "Sound Poetry 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把声音当作叙事、记录、传播或表演媒介，而不是以旋律和节拍为主要目标；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言信息居前",
+        "环境声或现场感可能比旋律更重要",
+        "剪辑节奏服务叙事",
+        "功能性和语境决定标签判断"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。这类声音从广播、唱片出版、田野记录和教育音频延伸到有声书、播客与档案出版。",
+      "listenFor": [
+        "先抓 语言信息居前。",
+        "再听 环境声或现场感可能比旋律更重要 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Special Effects",
+      "genre": "Non-Music",
+      "style": "Special Effects",
+      "title": "Non-Music / Special Effects",
+      "overview": "Special Effects 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Special Effects 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Speech",
+      "genre": "Non-Music",
+      "style": "Speech",
+      "title": "Non-Music / Speech",
+      "overview": "Speech 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Speech 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Non-Music---Spoken Word",
       "genre": "Non-Music",
       "style": "Spoken Word",
@@ -6865,6 +9252,55 @@ window.DISCOGS_STYLE_PROFILES = {
       "listenFor": [
         "先抓 语言信息居前。",
         "再听 环境声或现场感可能比旋律更重要 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Technical",
+      "genre": "Non-Music",
+      "style": "Technical",
+      "title": "Non-Music / Technical",
+      "overview": "Technical 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于把语言内容、环境声、叙事结构、记录价值或功能性信息放到更具体的 Technical 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言内容、环境声、叙事结构、记录价值或功能性信息",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。非音乐类标签更多描述声音媒介的用途；它们在广播、唱片、教育出版、有声书和播客时代不断扩张。",
+      "listenFor": [
+        "先抓 语言内容、环境声、叙事结构、记录价值或功能性信息。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
+      ],
+      "mainstreamEntry": {
+        "artist": "BBC Radio",
+        "title": "A classic radio documentary or spoken-word recording",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Non-Music---Therapy",
+      "genre": "Non-Music",
+      "style": "Therapy",
+      "title": "Non-Music / Therapy",
+      "overview": "Therapy 是 Discogs400 中 Non-Music 大类下的 style。它的核心不是一个孤立标签，而在于围绕 beat、flow、押韵和街区叙事展开；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "鼓组 loop 或 808 低频",
+        "说唱 flow",
+        "采样或合成器 riff",
+        "强调地域身份"
+      ],
+      "history": "它的上游语境来自 口述、声音档案、广播剧、现场记录、喜剧和实用音频出版。从 DJ break 和 block party 文化出发，Hip Hop 按城市、制作设备、商业化程度和歌词主题形成大量分支。",
+      "listenFor": [
+        "先抓 鼓组 loop 或 808 低频。",
+        "再听 说唱 flow 如何支撑情绪或舞池功能。",
         "最后把它放回 Non-Music 的上级语境：语言内容、环境声、叙事结构、记录价值或功能性信息。"
       ],
       "mainstreamEntry": {
@@ -6900,6 +9336,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Pop---Barbershop",
+      "genre": "Pop",
+      "style": "Barbershop",
+      "title": "Pop / Barbershop",
+      "overview": "Barbershop 是 Discogs400 中 Pop 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 大众娱乐工业、歌舞剧、广播流行曲和跨国偶像体系。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Pop 的上级语境：清晰 hook、主唱中心、短时长结构、易传播旋律和制作上的时代感。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Michael Jackson",
+        "title": "Billie Jean",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Pop---Bollywood",
       "genre": "Pop",
       "style": "Bollywood",
@@ -6922,6 +9383,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Jai Ho",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Pop---Break-In",
+      "genre": "Pop",
+      "style": "Break-In",
+      "title": "Pop / Break-In",
+      "overview": "Break-In 是 Discogs400 中 Pop 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 大众娱乐工业、歌舞剧、广播流行曲和跨国偶像体系。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Pop 的上级语境：清晰 hook、主唱中心、短时长结构、易传播旋律和制作上的时代感。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Michael Jackson",
+        "title": "Billie Jean",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -6997,6 +9483,56 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Plastic Love",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Pop---Enka",
+      "genre": "Pop",
+      "style": "Enka",
+      "title": "Pop / Enka",
+      "overview": "Enka 是 Discogs400 中 Pop 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 大众娱乐工业、歌舞剧、广播流行曲和跨国偶像体系。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Pop 的上级语境：清晰 hook、主唱中心、短时长结构、易传播旋律和制作上的时代感。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Michael Jackson",
+        "title": "Billie Jean",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Pop---Ethno-pop",
+      "genre": "Pop",
+      "style": "Ethno-pop",
+      "title": "Pop / Ethno-pop",
+      "overview": "Ethno-pop 是 Discogs400 中 Pop 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 大众娱乐工业、歌舞剧、广播流行曲和跨国偶像体系。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Pop 的上级语境：清晰 hook、主唱中心、短时长结构、易传播旋律和制作上的时代感。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Michael Jackson",
+        "title": "Billie Jean",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -7100,6 +9636,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Pop---Karaoke",
+      "genre": "Pop",
+      "style": "Karaoke",
+      "title": "Pop / Karaoke",
+      "overview": "Karaoke 是 Discogs400 中 Pop 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 大众娱乐工业、歌舞剧、广播流行曲和跨国偶像体系。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Pop 的上级语境：清晰 hook、主唱中心、短时长结构、易传播旋律和制作上的时代感。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Michael Jackson",
+        "title": "Billie Jean",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Pop---Kayōkyoku",
       "genre": "Pop",
       "style": "Kayōkyoku",
@@ -7122,6 +9683,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Ue o Muite Aruko",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Pop---Levenslied",
+      "genre": "Pop",
+      "style": "Levenslied",
+      "title": "Pop / Levenslied",
+      "overview": "Levenslied 是 Discogs400 中 Pop 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 大众娱乐工业、歌舞剧、广播流行曲和跨国偶像体系。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Pop 的上级语境：清晰 hook、主唱中心、短时长结构、易传播旋律和制作上的时代感。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Michael Jackson",
+        "title": "Billie Jean",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -7350,6 +9936,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Reggae---Dub Poetry",
+      "genre": "Reggae",
+      "style": "Dub Poetry",
+      "title": "Reggae / Dub Poetry",
+      "overview": "Dub Poetry 是 Discogs400 中 Reggae 大类下的 style。它的核心不是一个孤立标签，而在于把声音当作叙事、记录、传播或表演媒介，而不是以旋律和节拍为主要目标；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "语言信息居前",
+        "环境声或现场感可能比旋律更重要",
+        "剪辑节奏服务叙事",
+        "功能性和语境决定标签判断"
+      ],
+      "history": "它的上游语境来自 牙买加 Mento、Ska、Rocksteady、R&B 和 sound system 文化。这类声音从广播、唱片出版、田野记录和教育音频延伸到有声书、播客与档案出版。",
+      "listenFor": [
+        "先抓 语言信息居前。",
+        "再听 环境声或现场感可能比旋律更重要 如何支撑情绪或舞池功能。",
+        "最后把它放回 Reggae 的上级语境：反拍吉他、厚重贝斯、鼓组 one-drop 或 dancehall riddim、空间化混音。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Bob Marley & The Wailers",
+        "title": "No Woman, No Cry",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Reggae---Lovers Rock",
       "genre": "Reggae",
       "style": "Lovers Rock",
@@ -7372,6 +9983,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "Silly Games",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Reggae---Mento",
+      "genre": "Reggae",
+      "style": "Mento",
+      "title": "Reggae / Mento",
+      "overview": "Mento 是 Discogs400 中 Reggae 大类下的 style。它的核心不是一个孤立标签，而在于围绕加勒比律动、低频和反拍组织身体感；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "反拍吉他或键盘",
+        "厚实贝斯",
+        "鼓组 riddim",
+        "空间化混音或 toast 人声"
+      ],
+      "history": "它的上游语境来自 牙买加 Mento、Ska、Rocksteady、R&B 和 sound system 文化。牙买加和加勒比 sound system 文化使这些 style 在本地舞会、移民社区和全球流行音乐之间持续传播。",
+      "listenFor": [
+        "先抓 反拍吉他或键盘。",
+        "再听 厚实贝斯 如何支撑情绪或舞池功能。",
+        "最后把它放回 Reggae 的上级语境：反拍吉他、厚重贝斯、鼓组 one-drop 或 dancehall riddim、空间化混音。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Bob Marley & The Wailers",
+        "title": "No Woman, No Cry",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -7422,6 +10058,31 @@ window.DISCOGS_STYLE_PROFILES = {
         "title": "No Woman, No Cry",
         "role": "主流入门曲",
         "note": "这首/这件作品常被用作理解该 style 声音语言的入口。"
+      }
+    },
+    {
+      "id": "Reggae---Reggae Gospel",
+      "genre": "Reggae",
+      "style": "Reggae Gospel",
+      "title": "Reggae / Reggae Gospel",
+      "overview": "Reggae Gospel 是 Discogs400 中 Reggae 大类下的 style。它的核心不是一个孤立标签，而在于围绕加勒比律动、低频和反拍组织身体感；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "反拍吉他或键盘",
+        "厚实贝斯",
+        "鼓组 riddim",
+        "空间化混音或 toast 人声"
+      ],
+      "history": "它的上游语境来自 牙买加 Mento、Ska、Rocksteady、R&B 和 sound system 文化。牙买加和加勒比 sound system 文化使这些 style 在本地舞会、移民社区和全球流行音乐之间持续传播。",
+      "listenFor": [
+        "先抓 反拍吉他或键盘。",
+        "再听 厚实贝斯 如何支撑情绪或舞池功能。",
+        "最后把它放回 Reggae 的上级语境：反拍吉他、厚重贝斯、鼓组 one-drop 或 dancehall riddim、空间化混音。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Bob Marley & The Wailers",
+        "title": "No Woman, No Cry",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
       }
     },
     {
@@ -7550,6 +10211,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Reggae---Steel Band",
+      "genre": "Reggae",
+      "style": "Steel Band",
+      "title": "Reggae / Steel Band",
+      "overview": "Steel Band 是 Discogs400 中 Reggae 大类下的 style。它的核心不是一个孤立标签，而在于围绕加勒比律动、低频和反拍组织身体感；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "反拍吉他或键盘",
+        "厚实贝斯",
+        "鼓组 riddim",
+        "空间化混音或 toast 人声"
+      ],
+      "history": "它的上游语境来自 牙买加 Mento、Ska、Rocksteady、R&B 和 sound system 文化。牙买加和加勒比 sound system 文化使这些 style 在本地舞会、移民社区和全球流行音乐之间持续传播。",
+      "listenFor": [
+        "先抓 反拍吉他或键盘。",
+        "再听 厚实贝斯 如何支撑情绪或舞池功能。",
+        "最后把它放回 Reggae 的上级语境：反拍吉他、厚重贝斯、鼓组 one-drop 或 dancehall riddim、空间化混音。"
+      ],
+      "mainstreamEntry": {
+        "artist": "Bob Marley & The Wailers",
+        "title": "No Woman, No Cry",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Acid Rock",
       "genre": "Rock",
       "style": "Acid Rock",
@@ -7558,7 +10244,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7582,7 +10268,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7606,7 +10292,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7630,7 +10316,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7654,7 +10340,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7678,7 +10364,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7727,7 +10413,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7751,7 +10437,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7800,7 +10486,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7849,7 +10535,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7873,7 +10559,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -7997,7 +10683,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8046,7 +10732,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8070,7 +10756,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8119,7 +10805,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8168,7 +10854,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8242,7 +10928,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8316,7 +11002,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8365,7 +11051,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8389,7 +11075,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8430,6 +11116,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Rock---Groove Metal",
+      "genre": "Rock",
+      "style": "Groove Metal",
+      "title": "Rock / Groove Metal",
+      "overview": "Groove Metal 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于把电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制放到更具体的 Groove Metal 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
+      "listenFor": [
+        "先抓 电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Grunge",
       "genre": "Rock",
       "style": "Grunge",
@@ -8438,7 +11148,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8462,7 +11172,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8511,7 +11221,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8527,6 +11237,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Rock---Horror Rock",
+      "genre": "Rock",
+      "style": "Horror Rock",
+      "title": "Rock / Horror Rock",
+      "overview": "Horror Rock 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于把电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制放到更具体的 Horror Rock 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
+      "listenFor": [
+        "先抓 电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Indie Rock",
       "genre": "Rock",
       "style": "Indie Rock",
@@ -8535,7 +11269,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8576,6 +11310,104 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Rock---Industrial Metal",
+      "genre": "Rock",
+      "style": "Industrial Metal",
+      "title": "Rock / Industrial Metal",
+      "overview": "Industrial Metal 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于用机器噪声、失真和不舒适的音响挑战传统音乐性；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "金属质感噪声",
+        "失真采样",
+        "压迫性节奏",
+        "冷峻或挑衅的表演姿态"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。工业与噪音音乐在 1970 年代后与先锋艺术、磁带文化和地下演出场景结合，后来影响电子、金属和 goth。",
+      "listenFor": [
+        "先抓 金属质感噪声。",
+        "再听 失真采样 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Rock---J-Rock",
+      "genre": "Rock",
+      "style": "J-Rock",
+      "title": "Rock / J-Rock",
+      "overview": "J-Rock 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于把电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制放到更具体的 J-Rock 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
+      "listenFor": [
+        "先抓 电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Rock---Jangle Pop",
+      "genre": "Rock",
+      "style": "Jangle Pop",
+      "title": "Rock / Jangle Pop",
+      "overview": "Jangle Pop 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Rock---K-Rock",
+      "genre": "Rock",
+      "style": "K-Rock",
+      "title": "Rock / K-Rock",
+      "overview": "K-Rock 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于把电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制放到更具体的 K-Rock 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
+      "listenFor": [
+        "先抓 电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Krautrock",
       "genre": "Rock",
       "style": "Krautrock",
@@ -8584,7 +11416,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8608,7 +11440,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8632,7 +11464,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8656,7 +11488,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8730,7 +11562,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8754,7 +11586,31 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
+      "listenFor": [
+        "先抓 电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
+      "id": "Rock---NDW",
+      "genre": "Rock",
+      "style": "NDW",
+      "title": "Rock / NDW",
+      "overview": "NDW 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于把电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制放到更具体的 NDW 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8803,7 +11659,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8827,7 +11683,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8901,7 +11757,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -8950,7 +11806,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9049,7 +11905,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9098,7 +11954,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9147,7 +12003,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9221,7 +12077,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9245,7 +12101,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9319,7 +12175,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9368,7 +12224,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9384,6 +12240,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Rock---Rock Opera",
+      "genre": "Rock",
+      "style": "Rock Opera",
+      "title": "Rock / Rock Opera",
+      "overview": "Rock Opera 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于通过作曲结构、配器、和声语言和演奏传统表达时代审美；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "明确的乐句发展",
+        "器乐或声乐技法精细",
+        "和声与织体承担叙事",
+        "作品常依靠谱面和演奏诠释传承"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。艺术音乐的风格变迁通常与教会、宫廷、公共音乐会、民族主义、现代主义和录音媒介共同相关。",
+      "listenFor": [
+        "先抓 明确的乐句发展。",
+        "再听 器乐或声乐技法精细 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Rockabilly",
       "genre": "Rock",
       "style": "Rockabilly",
@@ -9392,7 +12273,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9458,6 +12339,30 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Rock---Skiffle",
+      "genre": "Rock",
+      "style": "Skiffle",
+      "title": "Rock / Skiffle",
+      "overview": "Skiffle 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于把电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制放到更具体的 Skiffle 语境中；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
+        "曲式与音色会随地区、年代和发行物语境变化",
+        "在当前 taxonomy 中适合作为细粒度识别标签"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
+      "listenFor": [
+        "先抓 电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。",
+        "再听 曲式与音色会随地区、年代和发行物语境变化 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Sludge Metal",
       "genre": "Rock",
       "style": "Sludge Metal",
@@ -9466,7 +12371,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9490,7 +12395,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9514,7 +12419,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9538,7 +12443,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9562,7 +12467,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9586,7 +12491,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9610,7 +12515,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9626,6 +12531,31 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     },
     {
+      "id": "Rock---Swamp Pop",
+      "genre": "Rock",
+      "style": "Swamp Pop",
+      "title": "Rock / Swamp Pop",
+      "overview": "Swamp Pop 是 Discogs400 中 Rock 大类下的 style。它的核心不是一个孤立标签，而在于以旋律记忆点、主唱辨识度和大众传播效率为核心；判断时应同时看节奏、音色、人声/器乐位置和发行年代。",
+      "styleFocus": [
+        "清晰主副歌",
+        "hook 密集",
+        "人声靠前",
+        "制作服务情绪和传播"
+      ],
+      "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。Pop 风格常随广播、电视、偶像体系和流媒体平台变化，既吸收地下风格，也把它们整理成大众可入口的形式。",
+      "listenFor": [
+        "先抓 清晰主副歌。",
+        "再听 hook 密集 如何支撑情绪或舞池功能。",
+        "最后把它放回 Rock 的上级语境：电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制。"
+      ],
+      "mainstreamEntry": {
+        "artist": "The Beatles",
+        "title": "Come Together",
+        "role": "大类入门曲",
+        "note": "该 style 缺少稳定单曲入口时，先从同一大类的主流曲目建立听感坐标。"
+      }
+    },
+    {
       "id": "Rock---Symphonic Rock",
       "genre": "Rock",
       "style": "Symphonic Rock",
@@ -9634,7 +12564,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9683,7 +12613,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9707,7 +12637,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9731,7 +12661,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9755,7 +12685,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "电吉他、鼓贝斯组合、riff、主唱人格、现场能量和乐队编制",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 Rock & Roll、Blues、Country、Garage、Punk 和现代录音棚乐队传统。摇滚不断以青年文化、技术放大、地下场景和主流工业之间的拉扯来分化，从传统 Rock 到金属、朋克、独立和实验分支都在这个谱系内。",
       "listenFor": [
@@ -9779,7 +12709,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "服务画面、角色、叙事或舞台动作的主题动机与情绪调度",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 戏剧、电影、电视、游戏和音乐剧工业。随着电影录音、百老汇、电视和游戏工业成熟，舞台与银幕音乐形成了从歌曲到管弦配乐的完整生产体系。",
       "listenFor": [
@@ -9803,7 +12733,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "服务画面、角色、叙事或舞台动作的主题动机与情绪调度",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 戏剧、电影、电视、游戏和音乐剧工业。随着电影录音、百老汇、电视和游戏工业成熟，舞台与银幕音乐形成了从歌曲到管弦配乐的完整生产体系。",
       "listenFor": [
@@ -9827,7 +12757,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "服务画面、角色、叙事或舞台动作的主题动机与情绪调度",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 戏剧、电影、电视、游戏和音乐剧工业。随着电影录音、百老汇、电视和游戏工业成熟，舞台与银幕音乐形成了从歌曲到管弦配乐的完整生产体系。",
       "listenFor": [
@@ -9851,7 +12781,7 @@ window.DISCOGS_STYLE_PROFILES = {
       "styleFocus": [
         "服务画面、角色、叙事或舞台动作的主题动机与情绪调度",
         "曲式与音色会随地区、年代和发行物语境变化",
-        "在 Discogs400 中适合作为细粒度识别标签"
+        "在当前 taxonomy 中适合作为细粒度识别标签"
       ],
       "history": "它的上游语境来自 戏剧、电影、电视、游戏和音乐剧工业。随着电影录音、百老汇、电视和游戏工业成熟，舞台与银幕音乐形成了从歌曲到管弦配乐的完整生产体系。",
       "listenFor": [
@@ -9867,4 +12797,4 @@ window.DISCOGS_STYLE_PROFILES = {
       }
     }
   ]
-};
+}

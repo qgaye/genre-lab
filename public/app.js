@@ -1,5 +1,6 @@
 const form = document.querySelector("#trackForm");
 const trackInput = document.querySelector("#trackInput");
+const modelSelect = document.querySelector("#modelSelect");
 const formatInputs = [...document.querySelectorAll("input[name='inputFormat']")];
 const parsedLine = document.querySelector("#parsedLine");
 const progressLabel = document.querySelector("#progressLabel");
@@ -100,19 +101,14 @@ if (window.visualViewport) {
 document.addEventListener("focusin", keepFocusedFieldVisible);
 document.addEventListener("focusout", updateViewportMetrics);
 
-const TAXONOMY = window.DISCOGS_TAXONOMY || { genres: [], aliases: {} };
-const STYLE_PROFILES = window.DISCOGS_STYLE_PROFILES || { profiles: [] };
-const GENRES = (TAXONOMY.genres || []).map(genre => ({
-  name: genre.name,
-  styles: genre.styles || [],
-  keywords: [genre.name, ...(genre.styles || [])],
-  summary: `${genre.styles ? genre.styles.length : 0} 个本地 Discogs style`
-}));
+let TAXONOMY = window.DISCOGS_TAXONOMY || { genres: [], aliases: {} };
+let STYLE_PROFILES = window.DISCOGS_STYLE_PROFILES || { profiles: [] };
+let GENRES = [];
 const DISCOGS_GENRES_BY_KEY = new Map();
 const DISCOGS_STYLES_BY_GENRE = new Map();
 const DISCOGS_STYLE_CANDIDATES = new Map();
-const DISCOGS_ALIASES = TAXONOMY.aliases || {};
-const STYLE_PROFILES_BY_ID = new Map((STYLE_PROFILES.profiles || []).map(profile => [profile.id, profile]));
+let DISCOGS_ALIASES = TAXONOMY.aliases || {};
+let STYLE_PROFILES_BY_ID = new Map();
 let lastStyleInfoTrigger = null;
 
 function setStatus(text, busy = false) {
@@ -160,18 +156,100 @@ function taxonomyKey(text) {
     .trim();
 }
 
-for (const genre of TAXONOMY.genres || []) {
-  DISCOGS_GENRES_BY_KEY.set(taxonomyKey(genre.name), genre.name);
-  const styleMap = new Map();
-  for (const style of genre.styles || []) {
-    const key = taxonomyKey(style);
-    styleMap.set(key, style);
-    const candidates = DISCOGS_STYLE_CANDIDATES.get(key) || [];
-    candidates.push({ genre: genre.name, style, label: `${genre.name} / ${style}` });
-    DISCOGS_STYLE_CANDIDATES.set(key, candidates);
+// Rebuild every taxonomy-derived structure from the current TAXONOMY /
+// STYLE_PROFILES globals. Called once on load and again whenever the active
+// model changes and its taxonomy scripts are reloaded.
+function rebuildTaxonomyState() {
+  TAXONOMY = window.DISCOGS_TAXONOMY || { genres: [], aliases: {} };
+  STYLE_PROFILES = window.DISCOGS_STYLE_PROFILES || { profiles: [] };
+  DISCOGS_ALIASES = TAXONOMY.aliases || {};
+  GENRES = (TAXONOMY.genres || []).map(genre => ({
+    name: genre.name,
+    styles: genre.styles || [],
+    keywords: [genre.name, ...(genre.styles || [])],
+    summary: `${genre.styles ? genre.styles.length : 0} 个本地 Discogs style`
+  }));
+  DISCOGS_GENRES_BY_KEY.clear();
+  DISCOGS_STYLES_BY_GENRE.clear();
+  DISCOGS_STYLE_CANDIDATES.clear();
+  for (const genre of TAXONOMY.genres || []) {
+    DISCOGS_GENRES_BY_KEY.set(taxonomyKey(genre.name), genre.name);
+    const styleMap = new Map();
+    for (const style of genre.styles || []) {
+      const key = taxonomyKey(style);
+      styleMap.set(key, style);
+      const candidates = DISCOGS_STYLE_CANDIDATES.get(key) || [];
+      candidates.push({ genre: genre.name, style, label: `${genre.name} / ${style}` });
+      DISCOGS_STYLE_CANDIDATES.set(key, candidates);
+    }
+    DISCOGS_STYLES_BY_GENRE.set(genre.name, styleMap);
   }
-  DISCOGS_STYLES_BY_GENRE.set(genre.name, styleMap);
+  STYLE_PROFILES_BY_ID = new Map((STYLE_PROFILES.profiles || []).map(profile => [profile.id, profile]));
 }
+
+rebuildTaxonomyState();
+
+// The active genre model for the next analysis. Defaults to whatever taxonomy
+// was injected at page load; updated by the model selector.
+let activeModel = (TAXONOMY.model || "").trim();
+
+// Reload the per-model taxonomy / style-profile scripts for the given model and
+// rebuild all derived state. Resolves once the new globals are in place.
+function loadModelTaxonomy(modelName) {
+  const sources = [
+    `/discogs-taxonomy.js?model=${encodeURIComponent(modelName)}`,
+    `/discogs-style-profiles.js?model=${encodeURIComponent(modelName)}`
+  ];
+  return Promise.all(sources.map(src => new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`无法加载 ${src}`));
+    document.head.appendChild(script);
+  }))).then(() => {
+    rebuildTaxonomyState();
+  });
+}
+
+// Populate the model selector and load the matching taxonomy when switched.
+async function initModelSelector() {
+  if (!modelSelect) return;
+  let config;
+  try {
+    const response = await fetch("/api/models");
+    config = await response.json();
+  } catch {
+    return;
+  }
+  const models = config.models || [];
+  if (!models.length) return;
+  modelSelect.innerHTML = "";
+  for (const model of models) {
+    const option = document.createElement("option");
+    option.value = model.key;
+    option.textContent = model.label || model.key;
+    modelSelect.appendChild(option);
+  }
+  if (!activeModel) activeModel = config.default || models[0].key;
+  modelSelect.value = activeModel;
+
+  modelSelect.addEventListener("change", async () => {
+    const next = modelSelect.value;
+    if (next === activeModel) return;
+    setStatus("切换曲风模型", true);
+    try {
+      await loadModelTaxonomy(next);
+      activeModel = next;
+      renderScores(GENRES.slice(0, 8).map(genre => ({ name: genre.name, score: 0, reasons: [] })));
+      setStatus("模型已切换");
+    } catch (error) {
+      modelSelect.value = activeModel;
+      setStatus(`模型切换失败：${error.message}`);
+    }
+  });
+}
+
+initModelSelector();
 
 function uniqueCandidates(candidates) {
   return uniqueBy(candidates, item => `${item.genre}---${item.style || ""}`);
@@ -588,7 +666,8 @@ function scoreEssentia(scores, essentia, evidence) {
     const relative = Math.round(Number(item.score || 0) / topScore * 100);
     return `<strong>${escapeHtml(parsed.display)}</strong> 模型分 ${formatModelScore(item.score)}，相对强度 ${relative}`;
   });
-  evidence.push(`Essentia Discogs-EffNet + Discogs400 直接从音频判断，作为最高权重依据；Top 标签为 ${topTags.join("、")}。`);
+  const modelName = (essentia && essentia.model) ? essentia.model : "Essentia 音频模型";
+  evidence.push(`${escapeHtml(modelName)} 直接从音频判断，作为最高权重依据；Top 标签为 ${topTags.join("、")}。`);
 }
 
 function buildGenreComposition(items) {
@@ -941,9 +1020,9 @@ async function analyzeAudio(source) {
 async function analyzeEssentia(fileName) {
   if (!fileName) return;
   setStatus("Essentia 分析", true);
-  setProgress("decode", "Essentia 曲风模型分析", 88, "使用 Discogs-EffNet + Discogs400 直接判断音频曲风");
+  setProgress("decode", "音频曲风模型分析", 88, "使用本地曲风模型直接判断音频曲风");
   try {
-    essentiaAnalysis = await postJson("/api/essentia", { fileName, top: 12 });
+    essentiaAnalysis = await postJson("/api/essentia", { fileName, top: 12, model: activeModel });
     const top = essentiaAnalysis.predictions && essentiaAnalysis.predictions[0];
     if (top) {
       const parsed = splitEssentiaLabel(top.label);
@@ -965,7 +1044,8 @@ async function fetchMetadata() {
   metadata = await postJson("/api/metadata", {
     title: track.title,
     artists: track.artists,
-    album: albumInput.value
+    album: albumInput.value,
+    model: activeModel
   });
   activeTrack = track;
   const fitScore = metadataFitScore(metadata, track);
