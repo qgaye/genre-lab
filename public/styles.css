@@ -250,6 +250,14 @@ label {
   gap: 8px;
 }
 
+.model-field {
+  display: none;
+}
+
+html.show-model-selector .model-field {
+  display: grid;
+}
+
 label span {
   color: var(--muted);
   font-size: 13px;

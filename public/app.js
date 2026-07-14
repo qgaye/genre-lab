@@ -1,6 +1,9 @@
 const form = document.querySelector("#trackForm");
 const trackInput = document.querySelector("#trackInput");
 const modelSelect = document.querySelector("#modelSelect");
+if (new URLSearchParams(window.location.search).get("showModel") === "1") {
+  document.documentElement.classList.add("show-model-selector");
+}
 const formatInputs = [...document.querySelectorAll("input[name='inputFormat']")];
 const parsedLine = document.querySelector("#parsedLine");
 const progressLabel = document.querySelector("#progressLabel");
