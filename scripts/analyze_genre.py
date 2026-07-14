@@ -28,7 +28,7 @@ MODELS = ROOT / "models"
 MODEL_REGISTRY = {
     "effnet400": {
         "type": "effnet",
-        "label": "Essentia Discogs-EffNet + Discogs400",
+        "label": "Essentia Discogs400 - 400 styles, faster/coarser",
         "embedding_graph": "discogs-effnet-bs64-1.pb",
         "embedding_output": "PartitionedCall:1",
         "classifier_graph": "genre_discogs400-discogs-effnet-1.pb",
@@ -38,7 +38,7 @@ MODEL_REGISTRY = {
     },
     "maest519": {
         "type": "maest",
-        "label": "Essentia MAEST 30s (Discogs519)",
+        "label": "Essentia MAEST - 519 styles, finer/slower",
         "graph": "discogs-maest-30s-pw-519l-2.pb",
         # Classification activations output node of the MAEST graph. The
         # embeddings node is "PartitionedCall/Identity_7"; the classification

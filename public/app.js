@@ -137,7 +137,7 @@ const I18N = {
     "progress.metadata.label": "查询标签和发行信息",
     "progress.metadata.detail": "按“{fmt}”解析：{title} / {artists}",
     "progress.metadata.done": "元信息完成",
-    "progress.metadata.doneDetail": "当前格式解析完成：{title} / {artists}",
+    "progress.metadata.doneDetail": "当前格式解析完成：{title} / {artists}；耗时 {seconds} 秒",
     "track.unknownArtist": "未知艺人",
     "progress.parse.platformLabel": "解析{platform}链接",
     "progress.parse.platformDetail": "读取{platform} {idLabel} 和歌曲信息",
@@ -340,7 +340,7 @@ const I18N = {
     "progress.metadata.label": "Fetching tags & release info",
     "progress.metadata.detail": "Parsing as \u201C{fmt}\u201D: {title} / {artists}",
     "progress.metadata.done": "Metadata ready",
-    "progress.metadata.doneDetail": "Parsed: {title} / {artists}",
+    "progress.metadata.doneDetail": "Parsed: {title} / {artists}; elapsed {seconds}s",
     "track.unknownArtist": "Unknown artist",
     "progress.parse.platformLabel": "Parsing {platform} link",
     "progress.parse.platformDetail": "Reading {platform} {idLabel} and track info",
@@ -477,6 +477,7 @@ let metadata = null;
 let downloadedAudioUrl = "";
 let audioFeatures = null;
 let essentiaAnalysis = null;
+let metadataElapsedSeconds = null;
 let downloadElapsedSeconds = null;
 let essentiaElapsedSeconds = null;
 let audioDownloadLog = null;
@@ -1034,6 +1035,10 @@ function buildAnalysisLogPayload(workflowSucceeded, workflowError = "") {
       album: track.album || "",
       sourceId: track.sourceId || "",
       sourceUrl: track.sourceUrl || track.url || track.raw || ""
+    },
+    metadata: {
+      success: Boolean(metadata),
+      elapsedSeconds: metadataElapsedSeconds
     },
     audioDownload: audioDownloadLog || {
       success: false,
@@ -1871,6 +1876,7 @@ async function fetchMetadata() {
     album: track.album || "",
     model: activeModel
   });
+  metadataElapsedSeconds = Number.isFinite(Number(metadata.elapsedSeconds)) ? Number(metadata.elapsedSeconds) : null;
   activeTrack = track;
   const fitScore = metadataFitScore(metadata, track);
   const evTitle = escapeHtml(track.title);
@@ -1885,7 +1891,11 @@ async function fetchMetadata() {
     parseEvidenceBuilder = () => t("pe.metadataNoMatch", { title: evTitle, artists: evArtists });
   }
   updateParsedLine();
-  setProgress("metadata", t("progress.metadata.done"), 36, t("progress.metadata.doneDetail", { title: track.title, artists: track.artists || t("track.unknownArtist") }));
+  setProgress("metadata", t("progress.metadata.done"), 36, t("progress.metadata.doneDetail", {
+    title: track.title,
+    artists: track.artists || t("track.unknownArtist"),
+    seconds: formatElapsedSeconds(metadataElapsedSeconds)
+  }));
   setStatus(t("status.metadataDone"));
 }
 
@@ -2045,6 +2055,7 @@ trackInput.addEventListener("input", () => {
   downloadedAudioUrl = "";
   audioFeatures = null;
   essentiaAnalysis = null;
+  metadataElapsedSeconds = null;
   downloadElapsedSeconds = null;
   essentiaElapsedSeconds = null;
   audioDownloadLog = null;
@@ -2063,6 +2074,7 @@ for (const input of formatInputs) {
     downloadedAudioUrl = "";
     audioFeatures = null;
     essentiaAnalysis = null;
+    metadataElapsedSeconds = null;
     downloadElapsedSeconds = null;
     essentiaElapsedSeconds = null;
     audioDownloadLog = null;
@@ -2103,6 +2115,7 @@ form.addEventListener("submit", async event => {
     downloadedAudioUrl = "";
     audioFeatures = null;
     essentiaAnalysis = null;
+    metadataElapsedSeconds = null;
     downloadElapsedSeconds = null;
     essentiaElapsedSeconds = null;
     audioDownloadLog = null;
@@ -2148,6 +2161,9 @@ form.addEventListener("submit", async event => {
     workflowError = workflowSucceeded ? "" : "Workflow did not fully complete";
     revealResults();
   } catch (error) {
+    if (metadataElapsedSeconds == null && Number.isFinite(Number(error.elapsedSeconds))) {
+      metadataElapsedSeconds = Number(error.elapsedSeconds);
+    }
     workflowError = error.message;
     setStatus(t("status.failed"));
     setProgress("score", t("progress.score.fail"), 100, error.message);

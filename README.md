@@ -7,8 +7,8 @@
 项目采用 **Discogs Genre/Style** 作为唯一的音乐风格输出体系。曲风模型可通过 `config/defaults.json` 的 `genreModel`（或环境变量 `GENRE_MODEL`）切换，一次分析只运行一个模型：
 
 ```text
-maest519  （默认）Essentia MAEST 30s，直接输出 519 个 Discogs style，粒度更细
-effnet400          Essentia Discogs-EffNet + Discogs400（两段式）
+maest519  （默认）Essentia MAEST，519 个 style，粒度更细，执行较慢
+effnet400          Essentia Discogs400，400 个 style，粒度较粗，执行较快
 ```
 
 也就是说，最终进入评分和展示的合法曲风标签都必须能落到所选模型的 Discogs taxonomy 的：

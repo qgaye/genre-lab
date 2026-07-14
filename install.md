@@ -164,8 +164,8 @@ True
 项目支持在运行时按请求切换曲风模型：前端下拉框和 `/api/essentia`、`/api/metadata` 的 `model` 参数都能选择本次分析用哪个模型。`config/defaults.json` 的 `genreModel`（或环境变量 `GENRE_MODEL`）只决定默认模型；请求未指定时回退到它。因为可以随时切换，所以两个模型的文件都需要在本地就位。
 
 ```text
-maest519  （默认）Essentia MAEST 30s，直接输出 519 个 Discogs style 分类，粒度更细
-effnet400          Essentia Discogs-EffNet + Discogs400，两段式（embedding + 分类头）
+maest519  （默认）Essentia MAEST，519 个 style，粒度更细，执行较慢
+effnet400          Essentia Discogs400，400 个 style，粒度较粗，执行较快
 ```
 
 `scripts/setup_server.sh` 默认会下载并校验 `GENRE_MODEL_LIST` 中的所有模型（默认 `effnet400 maest519`），同时为每个模型生成 taxonomy 产物：
@@ -215,9 +215,9 @@ discogs-maest-30s-pw-519l-2.json
   519 个类别清单和 metadata，taxonomy 由此生成
 ```
 
-### Discogs-EffNet + Discogs400（effnet400）
+### Discogs400（effnet400）
 
-`genreModel=effnet400` 或请求切换到该模型时，使用 Essentia 官方 Discogs-EffNet + Discogs400 组合（两段式：embedding 提取 + 分类头）。
+`genreModel=effnet400` 或请求切换到该模型时，使用 Essentia 官方 Discogs-EffNet + Discogs400 组合（两段式：embedding 提取 + 分类头），输出 400 个 style；相比 MAEST 粒度较粗，但通常执行更快。
 
 必需文件：
 
@@ -455,7 +455,7 @@ curl --fail --silent --show-error \
 
 ```json
 {
-  "model": "Essentia MAEST 30s (Discogs519)",
+  "model": "Essentia MAEST - 519 styles, finer/slower",
   "predictions": [
     {
       "label": "Hip Hop---Trap",

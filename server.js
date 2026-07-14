@@ -204,11 +204,11 @@ loadEnvFile(path.join(ROOT, ".env"));
 // config/defaults.json genreModel.
 const GENRE_MODELS = {
   effnet400: {
-    label: "Essentia Discogs-EffNet + Discogs400",
+    label: "Essentia Discogs400 - 400 styles, faster/coarser",
     metadata: "genre_discogs400-discogs-effnet-1.json"
   },
   maest519: {
-    label: "Essentia MAEST 30s (Discogs519)",
+    label: "Essentia MAEST - 519 styles, finer/slower",
     metadata: "discogs-maest-30s-pw-519l-2.json"
   }
 };
@@ -718,6 +718,7 @@ async function searchDiscogs(bundle, title, artists, album = "") {
 }
 
 async function handleMetadata(req, res) {
+  const startedAt = process.hrtime.bigint();
   try {
     const body = await readBody(req);
     const modelName = resolveRequestModelName(body.model);
@@ -750,6 +751,7 @@ async function handleMetadata(req, res) {
     sendJson(res, 200, {
       query: { title, artists },
       modelKey: modelName,
+      elapsedSeconds: elapsedSecondsSince(startedAt),
       sources: {
         itunes: itunesData.length ? itunesData : (itunes.status === "fulfilled" ? itunes.value : { error: itunes.reason.message }),
         lastfm: lastFmData,
@@ -757,7 +759,7 @@ async function handleMetadata(req, res) {
       }
     });
   } catch (error) {
-    sendJson(res, 500, { error: error.message });
+    sendJson(res, 500, { error: error.message, elapsedSeconds: elapsedSecondsSince(startedAt) });
   }
 }
 
