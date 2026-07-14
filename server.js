@@ -10,6 +10,8 @@ const HOST = process.env.HOST || "127.0.0.1";
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DOWNLOAD_DIR = path.join(ROOT, "downloads");
+const RUNTIME_DIR = path.join(ROOT, ".runtime");
+const ANALYSIS_LOG_FILE = path.join(RUNTIME_DIR, "analysis-log.ndjson");
 const DEFAULT_CONFIG_FILE = path.join(ROOT, "config", "defaults.json");
 const ESSENTIA_PYTHON = path.join(ROOT, ".venv-essentia", "bin", "python");
 const ESSENTIA_SCRIPT = path.join(ROOT, "scripts", "analyze_genre.py");
@@ -248,6 +250,52 @@ function sendJson(res, status, body) {
     "content-length": Buffer.byteLength(data)
   });
   res.end(data);
+}
+
+function elapsedSecondsSince(start) {
+  return Number((Number(process.hrtime.bigint() - start) / 1e9).toFixed(2));
+}
+
+function clientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  const realIp = String(req.headers["x-real-ip"] || "").trim();
+  return forwarded || realIp || req.socket.remoteAddress || "";
+}
+
+function requestDevice(req) {
+  const ua = String(req.headers["user-agent"] || "");
+  const lower = ua.toLowerCase();
+  const os = /iphone|ipad|ipod/.test(lower)
+    ? "iOS"
+    : /android/.test(lower)
+      ? "Android"
+      : /mac os x|macintosh/.test(lower)
+        ? "macOS"
+        : /windows/.test(lower)
+          ? "Windows"
+          : /linux/.test(lower)
+            ? "Linux"
+            : "Unknown";
+  const browser = /edg\//.test(lower)
+    ? "Edge"
+    : /chrome|crios/.test(lower)
+      ? "Chrome"
+      : /firefox|fxios/.test(lower)
+        ? "Firefox"
+        : /safari/.test(lower)
+          ? "Safari"
+          : "Unknown";
+  const formFactor = /mobile|iphone|ipod|android.*mobile/.test(lower)
+    ? "mobile"
+    : /ipad|tablet|android/.test(lower)
+      ? "tablet"
+      : "desktop";
+  return { os, browser, formFactor };
+}
+
+function appendAnalysisLog(entry) {
+  fs.mkdirSync(RUNTIME_DIR, { recursive: true });
+  fs.appendFileSync(ANALYSIS_LOG_FILE, `${JSON.stringify(entry)}\n`);
 }
 
 function readBody(req) {
@@ -1292,6 +1340,7 @@ async function downloadSearchAudio(query, target = {}) {
 }
 
 async function handleDownload(req, res) {
+  const startedAt = process.hrtime.bigint();
   try {
     const body = await readBody(req);
     const url = String(body.url || "").trim();
@@ -1353,6 +1402,7 @@ async function handleDownload(req, res) {
       method,
       source: selectedSource,
       fallbackReason,
+      elapsedSeconds: elapsedSecondsSince(startedAt),
       matchScore: downloadResult && downloadResult.candidate ? downloadResult.candidate.matchScore : null,
       sourcePlatform: downloadResult && downloadResult.candidate
         ? downloadResult.candidate.source
@@ -1363,6 +1413,7 @@ async function handleDownload(req, res) {
   } catch (error) {
     sendJson(res, 500, {
       error: error.message,
+      elapsedSeconds: elapsedSecondsSince(startedAt),
       hint: "如果是网易云/付费平台，通常不能直接下载受版权保护的完整音频；可以改用本地上传或公开试听/直链音频。"
     });
   }
@@ -1440,6 +1491,7 @@ function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
 }
 
 async function handleEssentia(req, res) {
+  const startedAt = process.hrtime.bigint();
   let cleanupPath = "";
   try {
     const body = await readBody(req);
@@ -1459,10 +1511,36 @@ async function handleEssentia(req, res) {
       fileName: path.basename(filePath),
       source: `essentia-${modelName}`,
       modelKey: modelName,
+      elapsedSeconds: elapsedSecondsSince(startedAt),
       deletedAudio
     });
   } catch (error) {
     if (cleanupPath) await deleteLocalAudio(cleanupPath);
+    sendJson(res, 500, { error: error.message, elapsedSeconds: elapsedSecondsSince(startedAt) });
+  }
+}
+
+async function handleLog(req, res) {
+  try {
+    const body = await readBody(req);
+    const entry = {
+      timePoint: new Date().toISOString(),
+      ip: clientIp(req),
+      device: requestDevice(req),
+      clientTimePoint: body.timePoint || "",
+      clientCompletedAt: body.completedAt || "",
+      input: body.input || {},
+      parsedTrack: body.parsedTrack || {},
+      audioDownload: body.audioDownload || {},
+      essentia: body.essentia || {},
+      workflow: body.workflow || {}
+    };
+    appendAnalysisLog(entry);
+    sendJson(res, 200, {
+      ok: true,
+      logFile: path.relative(ROOT, ANALYSIS_LOG_FILE)
+    });
+  } catch (error) {
     sendJson(res, 500, { error: error.message });
   }
 }
@@ -1590,6 +1668,10 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === "POST" && req.url === "/api/essentia") {
     handleEssentia(req, res);
+    return;
+  }
+  if (req.method === "POST" && req.url === "/api/log") {
+    handleLog(req, res);
     return;
   }
   if (req.method === "GET") {

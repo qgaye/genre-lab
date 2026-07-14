@@ -20,6 +20,7 @@ pnpm-debug.log*
 downloads/
 results/
 .setup-logs/
+# Local analysis request logs
 .runtime/
 bin/
 

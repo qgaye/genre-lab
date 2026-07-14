@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab</title>
-    <link rel="stylesheet" href="/styles.css?v=20260714-i18n">
+    <link rel="stylesheet" href="/styles.css?v=20260714-share-preview">
   </head>
   <body>
     <main class="shell">
@@ -81,7 +81,7 @@
         <article class="verdict">
           <div class="verdict-top">
             <p data-i18n="verdict.mix">曲风判定</p>
-            <button type="button" id="shareVerdict" class="verdict-share" data-i18n-title="share.hint" title="生成结论卡图片并保存到本地" disabled>
+            <button type="button" id="shareVerdict" class="verdict-share" data-i18n-title="share.hint" title="生成结论卡图片并预览" disabled>
               <span class="verdict-share-icon" aria-hidden="true">↗</span>
               <span class="verdict-share-label" data-i18n="share.button">分享</span>
             </button>
@@ -154,8 +154,25 @@
       </section>
     </div>
 
+    <div class="share-preview" id="sharePreview" aria-hidden="true">
+      <div class="share-preview__backdrop" data-share-preview-close></div>
+      <section class="share-preview__panel" role="dialog" aria-modal="true" aria-labelledby="sharePreviewTitle" aria-describedby="sharePreviewHint">
+        <div class="share-preview__top">
+          <div>
+            <p class="share-preview__kicker">Genre Lab</p>
+            <h2 id="sharePreviewTitle" data-i18n="share.previewTitle">结论卡已生成</h2>
+          </div>
+          <button class="share-preview__close" type="button" data-share-preview-close aria-label="关闭结论卡预览" data-i18n-aria="share.close">×</button>
+        </div>
+        <div class="share-preview__image-wrap">
+          <img id="sharePreviewImage" alt="Genre Lab 结论卡图片" data-i18n-alt="share.imageAlt">
+        </div>
+        <p class="share-preview__hint" id="sharePreviewHint" data-i18n="share.previewHint">长按图片，选择“保存图片”或“添加到照片”。</p>
+      </section>
+    </div>
+
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
-    <script src="/app.js?v=20260714-i18n"></script>
+    <script src="/app.js?v=20260714-share-preview"></script>
   </body>
 </html>

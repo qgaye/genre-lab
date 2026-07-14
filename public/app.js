@@ -25,6 +25,8 @@ const scoreTemplate = document.querySelector("#scoreTemplate");
 const resultBoard = document.querySelector("#resultBoard");
 const verdictCard = document.querySelector(".verdict");
 const shareVerdictBtn = document.querySelector("#shareVerdict");
+const sharePreview = document.querySelector("#sharePreview");
+const sharePreviewImage = document.querySelector("#sharePreviewImage");
 const styleDialog = document.querySelector("#styleDialog");
 const styleDialogTitle = document.querySelector("#styleDialogTitle");
 const styleDialogKicker = document.querySelector("#styleDialogKicker");
@@ -78,12 +80,16 @@ const I18N = {
     "file.none": "没有选择文件",
     "verdict.mix": "曲风判定",
     "share.button": "分享",
-    "share.hint": "生成结论卡图片并保存到本地",
+    "share.hint": "生成结论卡图片并预览",
     "share.busy": "生成中…",
-    "share.done": "结论卡已保存",
+    "share.done": "结论卡已生成，长按图片保存。",
     "share.empty": "先分析一首歌，再生成结论卡。",
     "share.error": "生成结论卡失败，请重试。",
     "share.cardHint": "由 Genre Lab · 歌曲曲风识别 生成",
+    "share.previewTitle": "结论卡已生成",
+    "share.previewHint": "长按图片，选择“保存图片”或“添加到照片”。",
+    "share.close": "关闭结论卡预览",
+    "share.imageAlt": "Genre Lab 结论卡图片",
     "mix.other": "其他",
     "mix.detail": "查看最终得分",
     "mix.detail.score": "最终分 {score}",
@@ -126,7 +132,7 @@ const I18N = {
     "progress.essentia.detail": "使用本地曲风模型直接判断音频曲风",
     "audio.essentiaDone": "Essentia 已完成",
     "progress.essentia.done": "Essentia 完成",
-    "progress.essentia.doneDetail": "最高标签：{label}",
+    "progress.essentia.doneDetail": "最高标签：{label}；耗时 {seconds} 秒",
     "progress.essentia.fail": "Essentia 未完成",
     "progress.metadata.label": "查询标签和发行信息",
     "progress.metadata.detail": "按“{fmt}”解析：{title} / {artists}",
@@ -142,7 +148,7 @@ const I18N = {
     "progress.search.searching": "正在搜索可下载的公开视频候选",
     "progress.search.currentFmt": "当前格式：{title} / {artists}",
     "progress.download.done": "音频下载完成",
-    "progress.download.doneDetail": "来源：{source}",
+    "progress.download.doneDetail": "来源：{source}；耗时 {seconds} 秒",
     "progress.decode.readLocal": "读取本地音频",
     "progress.decode.readLocalDetail": "使用上传音频，跳过网络搜索",
     "progress.download.fail": "音频获取失败",
@@ -277,12 +283,16 @@ const I18N = {
     "file.none": "No file selected",
     "verdict.mix": "Genre verdict",
     "share.button": "Share",
-    "share.hint": "Generate a verdict card image and save it",
+    "share.hint": "Generate and preview the verdict card image",
     "share.busy": "Generating…",
-    "share.done": "Verdict card saved",
+    "share.done": "Verdict card is ready. Long-press the image to save.",
     "share.empty": "Analyze a track first, then generate the card.",
     "share.error": "Failed to generate the card, please retry.",
     "share.cardHint": "Made with Genre Lab · Song genre detection",
+    "share.previewTitle": "Verdict card ready",
+    "share.previewHint": "Long-press the image, then choose Save Image or Add to Photos.",
+    "share.close": "Close verdict card preview",
+    "share.imageAlt": "Genre Lab verdict card image",
     "mix.other": "Other",
     "mix.detail": "Show final scores",
     "mix.detail.score": "Final {score}",
@@ -325,7 +335,7 @@ const I18N = {
     "progress.essentia.detail": "Using local genre model to classify audio directly",
     "audio.essentiaDone": "Essentia done",
     "progress.essentia.done": "Essentia complete",
-    "progress.essentia.doneDetail": "Top label: {label}",
+    "progress.essentia.doneDetail": "Top label: {label}; elapsed {seconds}s",
     "progress.essentia.fail": "Essentia failed",
     "progress.metadata.label": "Fetching tags & release info",
     "progress.metadata.detail": "Parsing as \u201C{fmt}\u201D: {title} / {artists}",
@@ -341,7 +351,7 @@ const I18N = {
     "progress.search.searching": "Searching downloadable public video candidates",
     "progress.search.currentFmt": "Current: {title} / {artists}",
     "progress.download.done": "Audio downloaded",
-    "progress.download.doneDetail": "Source: {source}",
+    "progress.download.doneDetail": "Source: {source}; elapsed {seconds}s",
     "progress.decode.readLocal": "Reading local audio",
     "progress.decode.readLocalDetail": "Using uploaded audio, skipping search",
     "progress.download.fail": "Audio fetch failed",
@@ -457,10 +467,21 @@ function t(key, params) {
   return str;
 }
 
+function formatElapsedSeconds(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) return "--";
+  return String(Number(seconds.toFixed(2)));
+}
+
 let metadata = null;
 let downloadedAudioUrl = "";
 let audioFeatures = null;
 let essentiaAnalysis = null;
+let downloadElapsedSeconds = null;
+let essentiaElapsedSeconds = null;
+let audioDownloadLog = null;
+let scoreCompleted = false;
+let analysisStartedAt = "";
 // i18n key for the audio-diagnostics pill, so it can be re-rendered on language
 // switch. Defaults to the "not read" state.
 let audioStateKey = "audio.notRead";
@@ -471,6 +492,7 @@ let activeTrack = null;
 let parseEvidenceBuilder = null;
 // Snapshot of the latest verdict used to render the shareable image card.
 let lastVerdict = null;
+let sharePreviewUrl = "";
 
 const MIN_VISIBLE_STYLE_PERCENT = 10;
 const MAX_VISIBLE_STYLE_ITEMS = 6;
@@ -929,7 +951,12 @@ async function postJson(url, body) {
     body: JSON.stringify(body)
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || t("err.requestFailed"));
+  if (!response.ok) {
+    const error = new Error(data.error || t("err.requestFailed"));
+    error.data = data;
+    if (data && data.elapsedSeconds != null) error.elapsedSeconds = data.elapsedSeconds;
+    throw error;
+  }
   return data;
 }
 
@@ -945,6 +972,93 @@ async function uploadAudioFile(file) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || t("err.uploadFailed"));
   return data;
+}
+
+function formatLabelForLog(format = selectedFormat()) {
+  const labels = {
+    "song-artist": "Song - Artist",
+    "artist-song": "Artist - Song",
+    "netease-url": "NetEase Music URL",
+    "qq-music-url": "QQ Music URL",
+    "spotify-url": "Spotify URL",
+    "song-by-artist": "Song by Artist",
+    "title-only": "Title only"
+  };
+  return labels[format] || format;
+}
+
+function verdictForLog() {
+  const composition = lastVerdict && Array.isArray(lastVerdict.composition)
+    ? lastVerdict.composition
+    : [];
+  return {
+    success: Boolean(lastVerdict),
+    genres: composition.map((item, index) => ({
+      rank: index + 1,
+      name: item.name,
+      percent: item.percent
+    }))
+  };
+}
+
+function workflowNodesForLog(workflowSucceeded, workflowError) {
+  const track = currentTrack();
+  const predictions = essentiaAnalysis && Array.isArray(essentiaAnalysis.predictions)
+    ? essentiaAnalysis.predictions
+    : [];
+  return {
+    parse: !isMusicLinkFormat(selectedFormat()) || Boolean(track.title),
+    metadata: Boolean(metadata),
+    audioDownload: Boolean(audioDownloadLog && audioDownloadLog.success),
+    browserDecode: Boolean(audioFeatures),
+    essentia: Boolean(essentiaAnalysis && !essentiaAnalysis.error && predictions.length),
+    score: Boolean(scoreCompleted && lastVerdict),
+    allSucceeded: Boolean(workflowSucceeded),
+    error: workflowError || ""
+  };
+}
+
+function buildAnalysisLogPayload(workflowSucceeded, workflowError = "") {
+  const track = currentTrack();
+  return {
+    timePoint: analysisStartedAt || new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    input: {
+      format: selectedFormat(),
+      formatLabel: formatLabelForLog(selectedFormat()),
+      raw: trackInput.value.trim()
+    },
+    parsedTrack: {
+      title: track.title || "",
+      artists: track.artists || "",
+      album: track.album || "",
+      sourceId: track.sourceId || "",
+      sourceUrl: track.sourceUrl || track.url || track.raw || ""
+    },
+    audioDownload: audioDownloadLog || {
+      success: false,
+      elapsedSeconds: downloadElapsedSeconds,
+      error: workflowError || ""
+    },
+    essentia: {
+      success: Boolean(essentiaAnalysis && !essentiaAnalysis.error && Array.isArray(essentiaAnalysis.predictions) && essentiaAnalysis.predictions.length),
+      elapsedSeconds: essentiaElapsedSeconds,
+      model: essentiaAnalysis && essentiaAnalysis.model ? essentiaAnalysis.model : "",
+      modelKey: essentiaAnalysis && essentiaAnalysis.modelKey ? essentiaAnalysis.modelKey : activeModel,
+      error: essentiaAnalysis && essentiaAnalysis.error ? essentiaAnalysis.error : "",
+      predictionCount: essentiaAnalysis && Array.isArray(essentiaAnalysis.predictions) ? essentiaAnalysis.predictions.length : 0
+    },
+    verdict: verdictForLog(),
+    workflow: workflowNodesForLog(workflowSucceeded, workflowError)
+  };
+}
+
+async function sendAnalysisLog(workflowSucceeded, workflowError = "") {
+  try {
+    await postJson("/api/log", buildAnalysisLogPayload(workflowSucceeded, workflowError));
+  } catch (error) {
+    console.warn("无法写入分析日志：", error.message);
+  }
 }
 
 function titleMatches(actual, wanted) {
@@ -1727,14 +1841,19 @@ async function analyzeEssentia(fileName) {
   setProgress("decode", t("progress.essentia.label"), 88, t("progress.essentia.detail"));
   try {
     essentiaAnalysis = await postJson("/api/essentia", { fileName, top: 12, model: activeModel });
+    essentiaElapsedSeconds = Number.isFinite(Number(essentiaAnalysis.elapsedSeconds)) ? Number(essentiaAnalysis.elapsedSeconds) : null;
     const top = essentiaAnalysis.predictions && essentiaAnalysis.predictions[0];
     if (top) {
       const parsed = splitEssentiaLabel(top.label);
       audioState.textContent = t("audio.essentiaDone");
       audioStateKey = "audio.essentiaDone";
-      setProgress("decode", t("progress.essentia.done"), 92, t("progress.essentia.doneDetail", { label: displayName(parsed.display) }));
+      setProgress("decode", t("progress.essentia.done"), 92, t("progress.essentia.doneDetail", {
+        label: displayName(parsed.display),
+        seconds: formatElapsedSeconds(essentiaElapsedSeconds)
+      }));
     }
   } catch (error) {
+    essentiaElapsedSeconds = Number.isFinite(Number(error.elapsedSeconds)) ? Number(error.elapsedSeconds) : null;
     essentiaAnalysis = { predictions: [], error: error.message };
     setProgress("decode", t("progress.essentia.fail"), 88, error.message);
   }
@@ -1849,6 +1968,16 @@ async function findAndAnalyzeAudio() {
     setProgress("decode", t("progress.decode.readLocal"), 64, t("progress.decode.readLocalDetail"));
     const uploaded = await uploadAudioFile(file);
     downloadedAudioUrl = uploaded.audioUrl;
+    audioDownloadLog = {
+      sourceType: "upload",
+      success: true,
+      method: uploaded.method || "upload",
+      source: uploaded.source || file.name,
+      fileName: uploaded.fileName || "",
+      audioUrl: uploaded.audioUrl || "",
+      elapsedSeconds: null,
+      error: ""
+    };
     const upName = escapeHtml(file.name);
     const upSaved = escapeHtml(uploaded.fileName);
     let deleted = false;
@@ -1865,7 +1994,24 @@ async function findAndAnalyzeAudio() {
   setProgress("search", t("progress.search.public"), 52, t("progress.search.currentFmt", { title: track.title, artists: track.artists || t("track.unknownArtist") }));
   const data = await downloadTrackAudio(track);
   downloadedAudioUrl = data.audioUrl;
-  setProgress("download", t("progress.download.done"), 66, t("progress.download.doneDetail", { source: data.source }));
+  downloadElapsedSeconds = Number.isFinite(Number(data.elapsedSeconds)) ? Number(data.elapsedSeconds) : null;
+  audioDownloadLog = {
+    sourceType: "download",
+    success: true,
+    method: data.method || "",
+    source: data.source || "",
+    fileName: data.fileName || "",
+    audioUrl: data.audioUrl || "",
+    sourcePlatform: data.sourcePlatform || "",
+    matchScore: data.matchScore,
+    fallbackReason: data.fallbackReason || "",
+    elapsedSeconds: downloadElapsedSeconds,
+    error: ""
+  };
+  setProgress("download", t("progress.download.done"), 66, t("progress.download.doneDetail", {
+    source: data.source,
+    seconds: formatElapsedSeconds(downloadElapsedSeconds)
+  }));
   const dlSource = escapeHtml(data.source);
   const dlName = escapeHtml(data.fileName);
   const dlMethod = data.method;
@@ -1899,6 +2045,11 @@ trackInput.addEventListener("input", () => {
   downloadedAudioUrl = "";
   audioFeatures = null;
   essentiaAnalysis = null;
+  downloadElapsedSeconds = null;
+  essentiaElapsedSeconds = null;
+  audioDownloadLog = null;
+  scoreCompleted = false;
+  analysisStartedAt = "";
   downloadEvidenceBuilder = null;
   activeTrack = null;
   parseEvidenceBuilder = null;
@@ -1912,6 +2063,11 @@ for (const input of formatInputs) {
     downloadedAudioUrl = "";
     audioFeatures = null;
     essentiaAnalysis = null;
+    downloadElapsedSeconds = null;
+    essentiaElapsedSeconds = null;
+    audioDownloadLog = null;
+    scoreCompleted = false;
+    analysisStartedAt = "";
     downloadEvidenceBuilder = null;
     activeTrack = null;
     parseEvidenceBuilder = null;
@@ -1932,6 +2088,9 @@ document.addEventListener("keydown", event => {
 form.addEventListener("submit", async event => {
   event.preventDefault();
   if (document.activeElement?.matches("input")) document.activeElement.blur();
+  let workflowSucceeded = false;
+  let workflowError = "";
+  let alertMessage = "";
   try {
     const track = currentTrack();
     if (isMusicLinkFormat()) {
@@ -1944,6 +2103,11 @@ form.addEventListener("submit", async event => {
     downloadedAudioUrl = "";
     audioFeatures = null;
     essentiaAnalysis = null;
+    downloadElapsedSeconds = null;
+    essentiaElapsedSeconds = null;
+    audioDownloadLog = null;
+    scoreCompleted = false;
+    analysisStartedAt = new Date().toISOString();
     downloadEvidenceBuilder = null;
     activeTrack = null;
     parseEvidenceBuilder = null;
@@ -1959,6 +2123,15 @@ form.addEventListener("submit", async event => {
     try {
       await findAndAnalyzeAudio();
     } catch (downloadError) {
+      if (!audioDownloadLog) {
+        downloadElapsedSeconds = Number.isFinite(Number(downloadError.elapsedSeconds)) ? Number(downloadError.elapsedSeconds) : downloadElapsedSeconds;
+        audioDownloadLog = {
+          sourceType: fileInput.files[0] ? "upload" : "download",
+          success: false,
+          elapsedSeconds: downloadElapsedSeconds,
+          error: downloadError.message
+        };
+      }
       const failedTrack = currentTrack();
       const fTitle = escapeHtml(failedTrack.title);
       const fArtists = escapeHtml(failedTrack.artists || t("track.unknownArtist"));
@@ -1968,12 +2141,20 @@ form.addEventListener("submit", async event => {
     }
     setProgress("score", t("progress.score.fuse"), 90, t("progress.score.fuseDetail"));
     analyzeEvidence();
+    scoreCompleted = true;
     setProgress("score", t("progress.score.done"), 100, t("progress.score.doneDetail"));
+    const nodes = workflowNodesForLog(false, "");
+    workflowSucceeded = nodes.parse && nodes.metadata && nodes.audioDownload && nodes.browserDecode && nodes.essentia && nodes.score;
+    workflowError = workflowSucceeded ? "" : "Workflow did not fully complete";
     revealResults();
   } catch (error) {
+    workflowError = error.message;
     setStatus(t("status.failed"));
     setProgress("score", t("progress.score.fail"), 100, error.message);
-    alert(error.message);
+    alertMessage = error.message;
+  } finally {
+    await sendAnalysisLog(workflowSucceeded, workflowError);
+    if (alertMessage) alert(alertMessage);
   }
 });
 
@@ -1993,6 +2174,9 @@ function applyLanguage() {
   }
   for (const el of document.querySelectorAll("[data-i18n-aria]")) {
     el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  }
+  for (const el of document.querySelectorAll("[data-i18n-alt]")) {
+    el.alt = t(el.dataset.i18nAlt);
   }
   audioState.textContent = t(audioStateKey);
   const chosenFile = fileInput.files[0];
@@ -2026,8 +2210,9 @@ if (langToggle) {
 
 // ---------------------------------------------------------------------------
 // Share card: render the current verdict into a standalone PNG on a <canvas>
-// and trigger a download. Self-contained (no external libs) so it works with
-// the plain static server. The layout mirrors the on-screen verdict card.
+// and show it in a top-level preview so mobile users can long-press to save.
+// Self-contained (no external libs) so it works with the plain static server.
+// The layout mirrors the on-screen verdict card.
 // ---------------------------------------------------------------------------
 const SHARE_CARD_WIDTH = 1200;
 const SHARE_CARD_PAD = 64;
@@ -2258,10 +2443,29 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
   return cursorY;
 }
 
-function shareFileName(verdict) {
-  const title = verdict.track && verdict.track.title ? verdict.track.title : "verdict";
-  const safe = title.replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, "-").slice(0, 40) || "verdict";
-  return `genre-lab-${safe}.png`;
+function revokeSharePreviewUrl() {
+  if (!sharePreviewUrl) return;
+  URL.revokeObjectURL(sharePreviewUrl);
+  sharePreviewUrl = "";
+}
+
+function openSharePreview(url) {
+  if (!sharePreview || !sharePreviewImage) return;
+  revokeSharePreviewUrl();
+  sharePreviewUrl = url;
+  sharePreviewImage.src = url;
+  sharePreview.classList.add("is-open");
+  sharePreview.setAttribute("aria-hidden", "false");
+  sharePreview.querySelector(".share-preview__close")?.focus();
+}
+
+function closeSharePreview() {
+  if (!sharePreview || !sharePreview.classList.contains("is-open")) return;
+  sharePreview.classList.remove("is-open");
+  sharePreview.setAttribute("aria-hidden", "true");
+  if (sharePreviewImage) sharePreviewImage.removeAttribute("src");
+  revokeSharePreviewUrl();
+  shareVerdictBtn?.focus();
 }
 
 async function handleShareVerdict() {
@@ -2279,13 +2483,7 @@ async function handleShareVerdict() {
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("toBlob failed");
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = shareFileName(lastVerdict);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    openSharePreview(url);
     setStatus(t("share.done"));
   } catch (error) {
     setStatus(t("share.error"));
@@ -2299,6 +2497,16 @@ async function handleShareVerdict() {
 if (shareVerdictBtn) {
   shareVerdictBtn.addEventListener("click", handleShareVerdict);
 }
+
+if (sharePreview) {
+  sharePreview.addEventListener("click", event => {
+    if (event.target.matches("[data-share-preview-close]")) closeSharePreview();
+  });
+}
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeSharePreview();
+});
 
 resetProgress();
 applyLanguage();
