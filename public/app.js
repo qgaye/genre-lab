@@ -26,6 +26,14 @@ const evidenceCount = document.querySelector("#evidenceCount");
 const scoreTemplate = document.querySelector("#scoreTemplate");
 const resultBoard = document.querySelector("#resultBoard");
 const verdictCard = document.querySelector(".verdict");
+const styleDialog = document.querySelector("#styleDialog");
+const styleDialogTitle = document.querySelector("#styleDialogTitle");
+const styleDialogKicker = document.querySelector("#styleDialogKicker");
+const styleDialogOverview = document.querySelector("#styleDialogOverview");
+const styleDialogFocus = document.querySelector("#styleDialogFocus");
+const styleDialogHistory = document.querySelector("#styleDialogHistory");
+const styleDialogTrack = document.querySelector("#styleDialogTrack");
+const styleDialogTrackNote = document.querySelector("#styleDialogTrackNote");
 
 let metadata = null;
 let downloadedAudioUrl = "";
@@ -93,6 +101,7 @@ document.addEventListener("focusin", keepFocusedFieldVisible);
 document.addEventListener("focusout", updateViewportMetrics);
 
 const TAXONOMY = window.DISCOGS_TAXONOMY || { genres: [], aliases: {} };
+const STYLE_PROFILES = window.DISCOGS_STYLE_PROFILES || { profiles: [] };
 const GENRES = (TAXONOMY.genres || []).map(genre => ({
   name: genre.name,
   styles: genre.styles || [],
@@ -103,6 +112,8 @@ const DISCOGS_GENRES_BY_KEY = new Map();
 const DISCOGS_STYLES_BY_GENRE = new Map();
 const DISCOGS_STYLE_CANDIDATES = new Map();
 const DISCOGS_ALIASES = TAXONOMY.aliases || {};
+const STYLE_PROFILES_BY_ID = new Map((STYLE_PROFILES.profiles || []).map(profile => [profile.id, profile]));
+let lastStyleInfoTrigger = null;
 
 function setStatus(text, busy = false) {
   statusPill.textContent = text;
@@ -197,6 +208,64 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function profileIdFromDisplayName(name) {
+  const display = String(name || "");
+  for (const genre of TAXONOMY.genres || []) {
+    const prefix = `${genre.name} / `;
+    if (!display.startsWith(prefix)) continue;
+    const style = display.slice(prefix.length);
+    return style ? `${genre.name}---${style}` : "";
+  }
+  return "";
+}
+
+function profileForDisplayName(name) {
+  return STYLE_PROFILES_BY_ID.get(profileIdFromDisplayName(name)) || null;
+}
+
+function createStyleInfoButton(profile, label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "style-info-button";
+  button.textContent = "i";
+  button.title = `查看 ${label} 风格介绍`;
+  button.setAttribute("aria-label", `查看 ${label} 风格介绍`);
+  button.addEventListener("click", event => {
+    event.stopPropagation();
+    openStyleDialog(profile, button);
+  });
+  return button;
+}
+
+function openStyleDialog(profile, trigger) {
+  if (!profile || !styleDialog) return;
+  lastStyleInfoTrigger = trigger || null;
+  styleDialogKicker.textContent = profile.genre ? `${profile.genre} / Discogs400 Style` : "Discogs400 Style";
+  styleDialogTitle.textContent = profile.style || profile.title;
+  styleDialogOverview.textContent = profile.overview || "";
+  styleDialogHistory.textContent = profile.history || "";
+  styleDialogFocus.innerHTML = "";
+  for (const item of profile.styleFocus || []) {
+    const li = document.createElement("li");
+    li.textContent = item;
+    styleDialogFocus.appendChild(li);
+  }
+  const entry = profile.mainstreamEntry || {};
+  styleDialogTrack.textContent = [entry.artist, entry.title].filter(Boolean).join(" - ") || "暂无稳定入门曲";
+  styleDialogTrackNote.textContent = entry.note || "";
+  styleDialog.classList.add("is-open");
+  styleDialog.setAttribute("aria-hidden", "false");
+  styleDialog.querySelector(".style-dialog__close")?.focus();
+}
+
+function closeStyleDialog() {
+  if (!styleDialog || !styleDialog.classList.contains("is-open")) return;
+  styleDialog.classList.remove("is-open");
+  styleDialog.setAttribute("aria-hidden", "true");
+  if (lastStyleInfoTrigger) lastStyleInfoTrigger.focus();
+  lastStyleInfoTrigger = null;
 }
 
 function splitArtists(value) {
@@ -660,7 +729,10 @@ function renderScores(items) {
   scoreCount.textContent = `${items.filter(item => item.score > 0).length} 项`;
   for (const item of items) {
     const node = scoreTemplate.content.firstElementChild.cloneNode(true);
+    const profile = profileForDisplayName(item.name);
+    const nameWrap = node.querySelector(".score-name");
     node.querySelector("strong").textContent = item.name;
+    if (profile) nameWrap.appendChild(createStyleInfoButton(profile, item.name));
     node.querySelector("small").textContent = compactReasonSummary(item.reasons || [], {
       maxSources: 3,
       maxValuesPerSource: 1
@@ -677,7 +749,10 @@ function renderMix(composition) {
   for (const item of composition) {
     const chip = document.createElement("span");
     chip.className = "mix-chip";
-    chip.innerHTML = `${escapeHtml(item.name)} <b>${item.percent}%</b>`;
+    chip.append(document.createTextNode(item.name));
+    const percent = document.createElement("b");
+    percent.textContent = `${item.percent}%`;
+    chip.appendChild(percent);
     genreMix.appendChild(chip);
   }
 }
@@ -1032,6 +1107,14 @@ for (const input of formatInputs) {
     resetProgress();
   });
 }
+
+for (const closeControl of document.querySelectorAll("[data-style-dialog-close]")) {
+  closeControl.addEventListener("click", closeStyleDialog);
+}
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeStyleDialog();
+});
 
 form.addEventListener("submit", async event => {
   event.preventDefault();

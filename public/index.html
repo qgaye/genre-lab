@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab</title>
-    <link rel="stylesheet" href="/styles.css?v=20260714-source-roles">
+    <link rel="stylesheet" href="/styles.css?v=20260714-style-info">
   </head>
   <body>
     <main class="shell">
@@ -115,7 +115,9 @@
     <template id="scoreTemplate">
       <div class="score-row">
         <div>
-          <strong></strong>
+          <span class="score-name">
+            <strong></strong>
+          </span>
           <small></small>
         </div>
         <div class="bar"><span></span></div>
@@ -123,7 +125,31 @@
       </div>
     </template>
 
+    <div class="style-dialog" id="styleDialog" aria-hidden="true">
+      <div class="style-dialog__backdrop" data-style-dialog-close></div>
+      <section class="style-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="styleDialogTitle">
+        <button class="style-dialog__close" type="button" data-style-dialog-close aria-label="关闭风格介绍">×</button>
+        <p class="style-dialog__kicker" id="styleDialogKicker">Discogs400 Style</p>
+        <h2 id="styleDialogTitle"></h2>
+        <p class="style-dialog__overview" id="styleDialogOverview"></p>
+        <div class="style-dialog__section">
+          <h3>风格重点</h3>
+          <ul id="styleDialogFocus"></ul>
+        </div>
+        <div class="style-dialog__section">
+          <h3>发展脉络</h3>
+          <p id="styleDialogHistory"></p>
+        </div>
+        <div class="style-dialog__entry">
+          <span>主流入门音乐</span>
+          <strong id="styleDialogTrack"></strong>
+          <small id="styleDialogTrackNote"></small>
+        </div>
+      </section>
+    </div>
+
     <script src="/discogs-taxonomy.js"></script>
-    <script src="/app.js?v=20260714-source-roles"></script>
+    <script src="/discogs-style-profiles.js"></script>
+    <script src="/app.js?v=20260714-style-info"></script>
   </body>
 </html>
