@@ -24,7 +24,7 @@ const QQ_MUSIC_LINK_HOSTS = new Set(["y.qq.com", "i.y.qq.com"]);
 const SEARCH_RESULT_LIMIT = 5;
 const YTDLP_SEARCH_SOURCES = {
   youtube: { name: "youtube", label: "YouTube", prefix: "ytsearch", priority: 0 },
-  bilibili: { name: "bilibili", label: "Bilibili", prefix: "bilisearch", priority: 1, flatPlaylist: false, limit: 20 },
+  bilibili: { name: "bilibili", label: "Bilibili", prefix: "bilisearch", priority: 1, flatPlaylist: false },
   soundcloud: { name: "soundcloud", label: "SoundCloud", prefix: "scsearch", priority: 1 }
 };
 const CJK_VARIANT_MAP = new Map(Object.entries({
@@ -159,6 +159,14 @@ function cleanYtDlpError(stderr, fallback) {
     ].join(" ");
   }
   return message;
+}
+
+function conciseErrorMessage(error) {
+  return String(error && error.message ? error.message : error)
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .slice(-1)[0] || "未知错误";
 }
 
 function loadEnvFile(filePath) {
@@ -677,6 +685,19 @@ function isAllowedQQMusicLink(url) {
   }
 }
 
+function musicPlatformDownloadSource(value) {
+  const text = cleanTerm(value);
+  const url = extractHttpUrl(text) || text;
+  if (!/^https?:\/\//i.test(url)) return null;
+  if (isAllowedNetEaseLink(url)) {
+    return { url, platform: "netease", label: "网易云" };
+  }
+  if (isAllowedQQMusicLink(url)) {
+    return { url, platform: "qqmusic", label: "QQ音乐" };
+  }
+  return null;
+}
+
 async function resolveQQMusicSongMid(value) {
   const directMid = extractQQMusicSongMid(value);
   if (directMid) return directMid;
@@ -928,6 +949,21 @@ function titleSearchVariants(title) {
   return uniqueNormalized(variants).filter(Boolean);
 }
 
+function plainSearchTerm(value) {
+  return cleanTerm(value)
+    .replace(/['’`´]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function artistTitleSearchQuery(target = {}, fallbackQuery = "") {
+  const artists = Array.isArray(target.artists) ? target.artists.join(" ") : "";
+  const artistText = plainSearchTerm(artists);
+  const titleText = plainSearchTerm(target.title || "");
+  if (artistText && titleText) return `${artistText} - ${titleText}`;
+  return [artistText, titleText].filter(Boolean).join(" ") || fallbackQuery;
+}
+
 function selectSearchSources(query, target = {}) {
   const artists = Array.isArray(target.artists) ? target.artists : [];
   const text = [target.title || "", ...artists, query || ""].join(" ");
@@ -950,9 +986,29 @@ function candidateUrlFromEntry(entry, source) {
 }
 
 function sourceSearchQuery(source, fallbackQuery, target = {}) {
+  if (source.name === "youtube") return artistTitleSearchQuery(target, fallbackQuery);
   if (source.name !== "bilibili") return fallbackQuery;
   const artists = Array.isArray(target.artists) ? target.artists.join(" ") : "";
-  return [target.title || "", artists].map(cleanTerm).filter(Boolean).join(" ") || fallbackQuery;
+  return [target.title || "", artists].map(plainSearchTerm).filter(Boolean).join(" ") || fallbackQuery;
+}
+
+function parseSearchCandidatesPayload(stdout, source) {
+  const data = JSON.parse(stdout);
+  const entries = Array.isArray(data.entries) ? data.entries : [];
+  return entries
+    .filter(Boolean)
+    .map(entry => {
+      const url = candidateUrlFromEntry(entry, source);
+      return {
+        title: entry.title || entry.fulltitle || "",
+        artistText: [entry.uploader, entry.channel].filter(Boolean).join(" "),
+        url,
+        source: source.name,
+        sourceLabel: source.label,
+        sourcePriority: source.priority
+      };
+    })
+    .filter(entry => /^https?:\/\//i.test(entry.url));
 }
 
 function listSearchCandidates(source, query) {
@@ -987,27 +1043,18 @@ function listSearchCandidates(source, query) {
     });
     child.on("close", code => {
       clearTimeout(timer);
-      if (code !== 0) {
-        reject(new Error(stderr.trim() || `yt-dlp 搜索退出码 ${code}`));
-        return;
-      }
       try {
-        const data = JSON.parse(stdout);
-        const entries = Array.isArray(data.entries) ? data.entries : [];
-        resolve(entries
-          .filter(Boolean)
-          .map(entry => {
-            const url = candidateUrlFromEntry(entry, source);
-            return {
-              title: entry.title || entry.fulltitle || "",
-              url,
-              source: source.name,
-              sourceLabel: source.label,
-              sourcePriority: source.priority
-            };
-          })
-          .filter(entry => /^https?:\/\//i.test(entry.url)));
+        const candidates = parseSearchCandidatesPayload(stdout, source);
+        if (candidates.length || code === 0) {
+          resolve(candidates);
+          return;
+        }
+        reject(new Error(stderr.trim() || `yt-dlp 搜索退出码 ${code}`));
       } catch (error) {
+        if (code !== 0) {
+          reject(new Error(stderr.trim() || `yt-dlp 搜索退出码 ${code}`));
+          return;
+        }
         reject(new Error(`无法解析 yt-dlp 搜索结果：${error.message}`));
       }
     });
@@ -1023,6 +1070,7 @@ function searchResultSummary(searchResults) {
 
 function candidateMatchScore(candidate, title, artists) {
   const candidateText = normalizeText(candidate.title);
+  const candidateArtistText = normalizeText(candidate.artistText || "");
   const artistText = normalizeText(artists.join(" "));
   const artistTokens = artistText.split(" ").filter(token => token.length > 1);
   let score = 0;
@@ -1037,9 +1085,9 @@ function candidateMatchScore(candidate, title, artists) {
   });
   score += titleScores.length ? Math.max(...titleScores) : 0;
 
-  if (artistText && candidateText.includes(artistText)) score += 42;
+  if (artistText && (candidateText.includes(artistText) || candidateArtistText.includes(artistText))) score += 42;
   else if (artistTokens.length) {
-    const hits = artistTokens.filter(token => candidateText.includes(token)).length;
+    const hits = artistTokens.filter(token => candidateText.includes(token) || candidateArtistText.includes(token)).length;
     score += Math.round((hits / artistTokens.length) * 28);
   }
 
@@ -1096,26 +1144,51 @@ async function handleDownload(req, res) {
   try {
     const body = await readBody(req);
     const url = String(body.url || "").trim();
+    const manualUrl = extractHttpUrl(url) || url;
+    const platformUrl = String(body.platformUrl || body.sourceUrl || "").trim();
+    const manualPlatformSource = musicPlatformDownloadSource(url);
+    const platformSource = manualPlatformSource || (!/^https?:\/\//i.test(manualUrl) ? musicPlatformDownloadSource(platformUrl) : null);
     const title = cleanTerm(body.title);
     const artists = splitArtists(body.artists);
     const query = String(body.query || [quoteSearchTerm(title), quoteSearchTerm(artists.join(" "))].filter(Boolean).join(" ")).trim();
-    if (!/^https?:\/\//i.test(url) && !query) {
+    if (!/^https?:\/\//i.test(manualUrl) && !platformSource && !query) {
       sendJson(res, 400, { error: "请输入“歌名 - 艺人”，或提供音频/公开视频链接。" });
       return;
     }
 
     let filePath;
     let method;
-    let selectedSource = url || query;
+    let selectedSource = manualUrl || (platformSource && platformSource.url) || query;
     let downloadResult = null;
-    if (isAudioUrl(url)) {
-      const ext = path.extname(new URL(url).pathname).toLowerCase() || ".mp3";
-      filePath = path.join(DOWNLOAD_DIR, safeDownloadName(ext));
-      await downloadDirectAudio(url, filePath);
-      method = "direct";
-    } else if (url) {
-      filePath = await downloadWithYtDlp(url);
-      method = "yt-dlp";
+    let fallbackReason = "";
+    if (/^https?:\/\//i.test(manualUrl) && !manualPlatformSource) {
+      if (isAudioUrl(manualUrl)) {
+        const ext = path.extname(new URL(manualUrl).pathname).toLowerCase() || ".mp3";
+        filePath = path.join(DOWNLOAD_DIR, safeDownloadName(ext));
+        await downloadDirectAudio(manualUrl, filePath);
+        method = "direct";
+      } else {
+        filePath = await downloadWithYtDlp(manualUrl);
+        method = "yt-dlp";
+      }
+    } else if (platformSource) {
+      try {
+        filePath = await downloadWithYtDlp(platformSource.url);
+        method = "yt-dlp-platform";
+        selectedSource = `${platformSource.label}: ${title || platformSource.url}`;
+      } catch (error) {
+        fallbackReason = `${platformSource.label}下载失败：${conciseErrorMessage(error)}`;
+        try {
+          downloadResult = await downloadSearchAudio(query, { title, artists });
+        } catch (searchError) {
+          throw new Error(`${fallbackReason}；回退搜索也失败：${searchError.message}`);
+        }
+        filePath = downloadResult.filePath;
+        method = "yt-dlp-search-fallback";
+        selectedSource = downloadResult.candidate.title
+          ? `${downloadResult.candidate.sourceLabel}: ${downloadResult.candidate.title}`
+          : query;
+      }
     } else {
       downloadResult = await downloadSearchAudio(query, { title, artists });
       filePath = downloadResult.filePath;
@@ -1128,8 +1201,11 @@ async function handleDownload(req, res) {
     sendJson(res, 200, {
       method,
       source: selectedSource,
+      fallbackReason,
       matchScore: downloadResult && downloadResult.candidate ? downloadResult.candidate.matchScore : null,
-      sourcePlatform: downloadResult && downloadResult.candidate ? downloadResult.candidate.source : null,
+      sourcePlatform: downloadResult && downloadResult.candidate
+        ? downloadResult.candidate.source
+        : (method === "yt-dlp-platform" && platformSource ? platformSource.platform : null),
       audioUrl: `/downloads/${path.basename(filePath)}`,
       fileName: path.basename(filePath)
     });
@@ -1315,6 +1391,8 @@ module.exports = {
   extractHttpUrl,
   extractNetEaseSongId,
   extractQQMusicSongMid,
+  musicPlatformDownloadSource,
+  parseSearchCandidatesPayload,
   rankSearchCandidates,
   resolveNetEaseSongId,
   resolveQQMusicSongMid,

@@ -943,7 +943,8 @@ async function resolvePlatformSong({ raw, endpoint, orientation, platform, idKey
     raw,
     url: raw,
     orientation,
-    sourceId: data[idKey] || data.id
+    sourceId: data[idKey] || data.id,
+    sourceUrl: data.sourceUrl || raw
   };
   if (!albumInput.value && data.album) albumInput.value = data.album;
   parseEvidence = `${platform}链接解析为 <strong>${escapeHtml(data.title)}</strong> / <strong>${escapeHtml(data.artists.join(" / "))}</strong>${data.album ? `，专辑 <strong>${escapeHtml(data.album)}</strong>` : ""}。`;
@@ -955,6 +956,8 @@ async function resolvePlatformSong({ raw, endpoint, orientation, platform, idKey
 async function downloadTrackAudio(track) {
   return postJson("/api/download", {
     url: urlInput.value.trim(),
+    platformUrl: isMusicLinkFormat(track.orientation) ? (track.sourceUrl || track.url || track.raw) : "",
+    platform: track.orientation || "",
     title: track.title,
     artists: track.artists,
     query: [`"${track.title}"`, track.artists ? `"${track.artists}"` : ""].filter(Boolean).join(" ")
@@ -985,8 +988,12 @@ async function findAndAnalyzeAudio() {
   setProgress("download", "音频下载完成", 66, `来源：${data.source}`);
   const sourceText = data.method === "yt-dlp-search"
     ? `实时搜索公开音频：${escapeHtml(data.source)}${data.matchScore != null ? `，标题匹配分 ${data.matchScore}` : ""}`
+    : data.method === "yt-dlp-platform"
+      ? `优先使用平台来源：${escapeHtml(data.source)}`
+      : data.method === "yt-dlp-search-fallback"
+        ? `平台来源不可用，已回退搜索公开音频：${escapeHtml(data.source)}${data.matchScore != null ? `，标题匹配分 ${data.matchScore}` : ""}`
     : `使用指定音频来源：${escapeHtml(data.source)}`;
-  downloadEvidence = `${sourceText}；已下载为 ${escapeHtml(data.fileName)} 并解码分析。`;
+  downloadEvidence = `${sourceText}${data.fallbackReason ? `（${escapeHtml(data.fallbackReason)}）` : ""}；已下载为 ${escapeHtml(data.fileName)} 并解码分析。`;
   await analyzeAudio(downloadedAudioUrl);
   const essentia = await analyzeEssentia(data.fileName);
   if (essentia && essentia.deletedAudio) {
