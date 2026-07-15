@@ -4,38 +4,41 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 歌单曲风分析</title>
-    <link rel="stylesheet" href="/styles.css?v=20260715-other-genre2">
+    <link rel="stylesheet" href="/styles.css?v=20260715-playlist-grid">
   </head>
   <body>
     <main class="shell shell-playlist">
-      <section class="console" aria-label="歌单曲风分析工作台">
+      <section class="console" aria-label="歌单曲风分析工作台" data-i18n-aria="console.aria">
         <header class="mast">
           <div>
             <p class="kicker">Genre Lab</p>
-            <h1>歌单曲风分析</h1>
+            <h1 data-i18n="pl.title">歌单曲风分析</h1>
           </div>
           <div class="mast-actions">
-            <a class="lang-toggle" href="/index.html">单曲</a>
-            <div class="status-pill" id="statusPill">等待输入</div>
+            <div class="mast-buttons">
+              <a class="lang-toggle" href="/index.html" data-i18n="pl.nav.single">单曲</a>
+              <button type="button" class="lang-toggle" id="langToggle" data-i18n="lang.toggle">EN</button>
+            </div>
+            <div class="status-pill" id="statusPill" data-i18n="pl.status.waiting">等待输入</div>
           </div>
         </header>
 
         <form class="input-grid" id="playlistForm">
           <label class="query-field model-field">
-            <span>曲风模型</span>
+            <span data-i18n="field.model">曲风模型</span>
             <select id="modelSelect"></select>
           </label>
           <label class="query-field">
-            <span>网易云歌单链接</span>
-            <input id="playlistInput" autocomplete="off" placeholder="例如：https://music.163.com/playlist?id=13856318070">
+            <span data-i18n="pl.field.link">网易云歌单链接</span>
+            <input id="playlistInput" autocomplete="off" placeholder="例如：https://music.163.com/playlist?id=13856318070" data-i18n-ph="pl.field.linkPlaceholder">
           </label>
-          <div class="parsed-line" id="parsedLine">粘贴网易云歌单链接，将遍历每首歌进行 Essentia 音频分析并查询 iTunes / Discogs / Last.fm 曲风</div>
+          <div class="parsed-line" id="parsedLine" data-i18n="pl.parsed.default">粘贴网易云歌单链接，将遍历每首歌进行 Essentia 音频分析并查询 iTunes / Discogs / Last.fm 曲风</div>
           <div class="actions">
-            <button type="submit" class="primary" id="analyzeBtn">分析歌单</button>
+            <button type="submit" class="primary" id="analyzeBtn" data-i18n="pl.action.analyze">分析歌单</button>
           </div>
           <div class="progress-card" id="progressCard">
             <div class="progress-top">
-              <span id="progressLabel">准备就绪</span>
+              <span id="progressLabel" data-i18n="pl.progress.ready">准备就绪</span>
               <b id="progressPercent">0%</b>
             </div>
             <div class="progress-track"><span id="progressFill"></span></div>
@@ -47,16 +50,16 @@
       <section class="result-board result-board-playlist" id="resultBoard" aria-live="polite">
         <article class="verdict">
           <div class="verdict-top">
-            <p>歌单概览</p>
+            <p data-i18n="pl.overview">歌单概览</p>
           </div>
-          <p id="playlistMeta" class="playlist-meta">粘贴一个网易云歌单链接开始逐曲分析。</p>
+          <p id="playlistMeta" class="playlist-meta" data-i18n="pl.overview.empty">粘贴一个网易云歌单链接开始逐曲分析。</p>
           <div class="genre-2l" id="genreTwoLevel" hidden>
-            <div class="view-toggle" id="viewToggle" role="tablist" aria-label="曲风视图切换">
-              <button type="button" class="view-toggle-btn" data-view="sunburst" role="tab" aria-selected="false">旭日图</button>
-              <button type="button" class="view-toggle-btn is-active" data-view="mosaic" role="tab" aria-selected="true">占比矩阵</button>
+            <div class="view-toggle" id="viewToggle" role="tablist" aria-label="曲风视图切换" data-i18n-aria="pl.view.aria">
+              <button type="button" class="view-toggle-btn" data-view="sunburst" role="tab" aria-selected="false" data-i18n="pl.view.sunburst">旭日图</button>
+              <button type="button" class="view-toggle-btn is-active" data-view="mosaic" role="tab" aria-selected="true" data-i18n="pl.view.mosaic">占比矩阵</button>
             </div>
             <figure class="genre-sunburst" id="genreSunburst" hidden>
-              <figcaption>曲风构成 · 内环流派 / 外环子风格</figcaption>
+              <figcaption data-i18n="pl.sunburst.caption">曲风构成 · 内环流派 / 外环子风格</figcaption>
               <div class="sunburst-layout">
                 <div class="sunburst-stage">
                   <svg viewBox="0 0 224 224" id="sunburstSvg" aria-hidden="true"></svg>
@@ -66,7 +69,13 @@
               </div>
             </figure>
             <figure class="genre-mosaic" id="genreMosaic">
-              <figcaption>占比矩阵 · 面积即占比 / 同色同流派</figcaption>
+              <figcaption class="mosaic-caption">
+                <span data-i18n="pl.mosaic.caption">占比矩阵 · 面积即占比 / 同色同流派</span>
+                <button type="button" id="shareMosaic" class="verdict-share" title="生成占比矩阵图片并预览" data-i18n-title="pl.share.title" disabled>
+                  <span class="verdict-share-icon" aria-hidden="true">↗</span>
+                  <span class="verdict-share-label" data-i18n="pl.share.button">分享</span>
+                </button>
+              </figcaption>
               <div class="mosaic-stage" id="mosaicStage"></div>
             </figure>
           </div>
@@ -74,7 +83,7 @@
 
         <article class="panel playlist-panel">
           <div class="panel-head">
-            <h3>逐曲曲风占比</h3>
+            <h3 data-i18n="pl.tracks.title">逐曲曲风占比</h3>
             <span id="trackCount">0 首</span>
           </div>
           <div class="track-list" id="trackList"></div>
@@ -98,8 +107,25 @@
       </div>
     </template>
 
+    <div class="share-preview" id="sharePreview" aria-hidden="true">
+      <div class="share-preview__backdrop" data-share-preview-close></div>
+      <section class="share-preview__panel" role="dialog" aria-modal="true" aria-labelledby="sharePreviewTitle" aria-describedby="sharePreviewHint">
+        <div class="share-preview__top">
+          <div>
+            <p class="share-preview__kicker">Genre Lab</p>
+            <h2 id="sharePreviewTitle" data-i18n="pl.preview.title">占比矩阵已生成</h2>
+          </div>
+          <button class="share-preview__close" type="button" data-share-preview-close aria-label="关闭占比矩阵预览" data-i18n-aria="pl.preview.close">×</button>
+        </div>
+        <div class="share-preview__image-wrap">
+          <img id="sharePreviewImage" alt="Genre Lab 占比矩阵图片" data-i18n-alt="pl.preview.alt">
+        </div>
+        <p class="share-preview__hint" id="sharePreviewHint" data-i18n="pl.preview.hint">长按图片，选择“保存图片”或“添加到照片”。</p>
+      </section>
+    </div>
+
     <script src="/discogs-taxonomy.js"></script>
     <script src="/genre-core.js"></script>
-    <script src="/playlist.js?v=20260715-other-genre2"></script>
+    <script src="/playlist.js?v=20260715-playlist-mosaicfs"></script>
   </body>
 </html>

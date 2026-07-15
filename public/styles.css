@@ -104,19 +104,37 @@ h1 {
 
 .status-pill {
   min-width: 92px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  color: var(--accent);
+  padding: 8px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
   text-align: center;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .mast-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mast-buttons {
+  display: flex;
+  align-items: stretch;
   gap: 10px;
+}
+
+.mast-buttons .lang-toggle {
+  flex: 1 1 0;
+  min-width: 72px;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .lang-toggle {
@@ -1169,6 +1187,13 @@ a.lang-toggle {
   text-transform: uppercase;
 }
 
+.mosaic-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 /* Sunburst: inner ring = genre, outer ring = style */
 .sunburst-layout {
   display: flex;
@@ -1392,14 +1417,15 @@ a.lang-toggle {
 
 .track-list {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
   margin-top: 18px;
 }
 
 .track-card {
   border: 1px solid rgba(244, 240, 232, 0.14);
   background: rgba(255, 255, 255, 0.035);
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .track-card-head {
@@ -1429,7 +1455,7 @@ a.lang-toggle {
 
 .track-card-name strong {
   display: block;
-  font-size: 15px;
+  font-size: 14px;
   overflow-wrap: anywhere;
 }
 

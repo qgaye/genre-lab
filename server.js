@@ -984,11 +984,23 @@ async function handleNetEasePlaylist(req, res) {
       sendJson(res, 404, { error: `网易云没有返回歌单 id ${id} 的曲目信息。` });
       return;
     }
-    const tracks = playlist.tracks.map(track => ({
+    // The v6 playlist/detail endpoint only inlines the first handful of tracks
+    // in `playlist.tracks`, but it lists every track's id in
+    // `playlist.trackIds`. Fetch the full song details by id so the whole
+    // playlist is available, not just the preview slice.
+    let rawTracks = playlist.tracks;
+    const trackIds = Array.isArray(playlist.trackIds)
+      ? playlist.trackIds.map(item => String(item && item.id ? item.id : "")).filter(Boolean)
+      : [];
+    if (trackIds.length > rawTracks.length) {
+      const fetched = await fetchNetEaseSongsByIds(trackIds);
+      if (fetched.length) rawTracks = fetched;
+    }
+    const tracks = rawTracks.map(track => ({
       id: String(track.id || ""),
       title: track.name || "",
-      artists: (track.ar || []).map(artist => artist.name).filter(Boolean),
-      album: track.al && track.al.name ? track.al.name : "",
+      artists: ((track.ar || track.artists) || []).map(artist => artist.name).filter(Boolean),
+      album: (track.al && track.al.name) || (track.album && track.album.name) || "",
       sourceUrl: `https://music.163.com/song?id=${track.id}`
     })).filter(track => track.title);
     sendJson(res, 200, {
@@ -1003,6 +1015,26 @@ async function handleNetEasePlaylist(req, res) {
   } catch (error) {
     sendJson(res, 500, { error: error.message });
   }
+}
+
+// Fetch full song metadata for a list of NetEase track ids. The public
+// song/detail endpoint accepts a JSON id array in the query string but caps the
+// batch size, so ids are chunked and the results concatenated in order.
+async function fetchNetEaseSongsByIds(ids) {
+  const BATCH = 100;
+  const byId = new Map();
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const chunk = ids.slice(i, i + BATCH);
+    const query = encodeURIComponent(JSON.stringify(chunk.map(id => ({ id }))));
+    const data = await fetchJson(`https://music.163.com/api/v3/song/detail?c=${query}`, {
+      "referer": "https://music.163.com/"
+    });
+    for (const song of (data && data.songs) || []) {
+      if (song && song.id != null) byId.set(String(song.id), song);
+    }
+  }
+  // Preserve the playlist's original ordering.
+  return ids.map(id => byId.get(id)).filter(Boolean);
 }
 
 async function handleQQMusicSong(req, res) {
