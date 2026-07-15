@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Genre Lab · 歌单曲风分析</title>
+    <link rel="stylesheet" href="/styles.css?v=20260715-sun-legend">
+  </head>
+  <body>
+    <main class="shell shell-playlist">
+      <section class="console" aria-label="歌单曲风分析工作台">
+        <header class="mast">
+          <div>
+            <p class="kicker">Genre Lab</p>
+            <h1>歌单曲风分析</h1>
+          </div>
+          <div class="mast-actions">
+            <a class="lang-toggle" href="/index.html">单曲</a>
+            <div class="status-pill" id="statusPill">等待输入</div>
+          </div>
+        </header>
+
+        <form class="input-grid" id="playlistForm">
+          <label class="query-field model-field">
+            <span>曲风模型</span>
+            <select id="modelSelect"></select>
+          </label>
+          <label class="query-field">
+            <span>网易云歌单链接</span>
+            <input id="playlistInput" autocomplete="off" placeholder="例如：https://music.163.com/playlist?id=13856318070">
+          </label>
+          <div class="parsed-line" id="parsedLine">粘贴网易云歌单链接，将遍历每首歌进行 Essentia 音频分析并查询 iTunes / Discogs / Last.fm 曲风</div>
+          <div class="actions">
+            <button type="submit" class="primary" id="analyzeBtn">分析歌单</button>
+          </div>
+          <div class="progress-card" id="progressCard">
+            <div class="progress-top">
+              <span id="progressLabel">准备就绪</span>
+              <b id="progressPercent">0%</b>
+            </div>
+            <div class="progress-track"><span id="progressFill"></span></div>
+            <ol class="progress-log" id="progressLog"></ol>
+          </div>
+        </form>
+      </section>
+
+      <section class="result-board result-board-playlist" id="resultBoard" aria-live="polite">
+        <article class="verdict">
+          <div class="verdict-top">
+            <p>歌单概览</p>
+          </div>
+          <p id="playlistMeta" class="playlist-meta">粘贴一个网易云歌单链接开始逐曲分析。</p>
+          <div class="genre-2l" id="genreTwoLevel" hidden>
+            <div class="view-toggle" id="viewToggle" role="tablist" aria-label="曲风视图切换">
+              <button type="button" class="view-toggle-btn" data-view="sunburst" role="tab" aria-selected="false">旭日图</button>
+              <button type="button" class="view-toggle-btn is-active" data-view="mosaic" role="tab" aria-selected="true">占比矩阵</button>
+            </div>
+            <figure class="genre-sunburst" id="genreSunburst" hidden>
+              <figcaption>曲风构成 · 内环流派 / 外环子风格</figcaption>
+              <div class="sunburst-layout">
+                <div class="sunburst-stage">
+                  <svg viewBox="0 0 224 224" id="sunburstSvg" aria-hidden="true"></svg>
+                  <div class="sunburst-center" id="sunburstCenter"></div>
+                </div>
+                <div class="sunburst-legend" id="sunburstLegend"></div>
+              </div>
+            </figure>
+            <figure class="genre-mosaic" id="genreMosaic">
+              <figcaption>占比矩阵 · 面积即占比 / 同色同流派</figcaption>
+              <div class="mosaic-stage" id="mosaicStage"></div>
+            </figure>
+          </div>
+        </article>
+
+        <article class="panel playlist-panel">
+          <div class="panel-head">
+            <h3>逐曲曲风占比</h3>
+            <span id="trackCount">0 首</span>
+          </div>
+          <div class="track-list" id="trackList"></div>
+        </article>
+      </section>
+    </main>
+
+    <template id="trackCardTemplate">
+      <div class="track-card">
+        <div class="track-card-head">
+          <div class="track-card-title">
+            <span class="track-index"></span>
+            <div class="track-card-name">
+              <strong></strong>
+              <small></small>
+            </div>
+          </div>
+          <span class="track-status">排队中</span>
+        </div>
+        <div class="track-card-body"></div>
+      </div>
+    </template>
+
+    <script src="/discogs-taxonomy.js"></script>
+    <script src="/genre-core.js"></script>
+    <script src="/playlist.js?v=20260715-sun-legend"></script>
+  </body>
+</html>
