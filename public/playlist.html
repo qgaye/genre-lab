@@ -107,6 +107,29 @@
       </div>
     </template>
 
+    <div class="style-dialog" id="styleDialog" aria-hidden="true">
+      <div class="style-dialog__backdrop" data-style-dialog-close></div>
+      <section class="style-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="styleDialogTitle">
+        <button class="style-dialog__close" type="button" data-style-dialog-close aria-label="关闭风格介绍" data-i18n-aria="dialog.close">×</button>
+        <p class="style-dialog__kicker" id="styleDialogKicker" data-i18n="dialog.kicker">Discogs Style</p>
+        <h2 id="styleDialogTitle"></h2>
+        <p class="style-dialog__overview" id="styleDialogOverview"></p>
+        <div class="style-dialog__section">
+          <h3 data-i18n="dialog.focus">风格重点</h3>
+          <ul id="styleDialogFocus"></ul>
+        </div>
+        <div class="style-dialog__section">
+          <h3 data-i18n="dialog.history">发展脉络</h3>
+          <p id="styleDialogHistory"></p>
+        </div>
+        <div class="style-dialog__entry">
+          <span data-i18n="dialog.entry">主流入门音乐</span>
+          <strong id="styleDialogTrack"></strong>
+          <small id="styleDialogTrackNote"></small>
+        </div>
+      </section>
+    </div>
+
     <div class="share-preview" id="sharePreview" aria-hidden="true">
       <div class="share-preview__backdrop" data-share-preview-close></div>
       <section class="share-preview__panel" role="dialog" aria-modal="true" aria-labelledby="sharePreviewTitle" aria-describedby="sharePreviewHint">
@@ -125,7 +148,8 @@
     </div>
 
     <script src="/discogs-taxonomy.js"></script>
+    <script src="/discogs-style-profiles.js"></script>
     <script src="/genre-core.js"></script>
-    <script src="/playlist.js?v=20260715-playlist-mosaicfs"></script>
+    <script src="/playlist.js?v=20260715-genre-dialog"></script>
   </body>
 </html>

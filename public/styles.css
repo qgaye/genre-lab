@@ -1352,6 +1352,7 @@ a.lang-toggle {
   align-items: flex-start;
   gap: 6px;
   color: #10120f;
+  cursor: pointer;
   transition: filter 160ms ease;
 }
 

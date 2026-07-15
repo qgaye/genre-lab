@@ -29,6 +29,14 @@ const shareMosaicBtn = document.querySelector("#shareMosaic");
 const sharePreview = document.querySelector("#sharePreview");
 const sharePreviewImage = document.querySelector("#sharePreviewImage");
 const langToggle = document.querySelector("#langToggle");
+const styleDialog = document.querySelector("#styleDialog");
+const styleDialogKicker = document.querySelector("#styleDialogKicker");
+const styleDialogTitle = document.querySelector("#styleDialogTitle");
+const styleDialogOverview = document.querySelector("#styleDialogOverview");
+const styleDialogFocus = document.querySelector("#styleDialogFocus");
+const styleDialogHistory = document.querySelector("#styleDialogHistory");
+const styleDialogTrack = document.querySelector("#styleDialogTrack");
+const styleDialogTrackNote = document.querySelector("#styleDialogTrackNote");
 
 if (new URLSearchParams(window.location.search).get("showModel") === "1") {
   document.documentElement.classList.add("show-model-selector");
@@ -138,7 +146,14 @@ const I18N = {
     "pl.overview.failed": "分析失败：{err}",
     "pl.log.error": "错误：{err}",
     "pl.card.footer": "由 Genre Lab · 歌单曲风分析 生成",
-    "pl.card.headline": "我的音乐风格"
+    "pl.card.headline": "我的音乐风格",
+    "dialog.kicker": "Discogs Style",
+    "dialog.kickerGenre": "{genre} / Discogs Style",
+    "dialog.focus": "风格重点",
+    "dialog.history": "发展脉络",
+    "dialog.entry": "主流入门音乐",
+    "dialog.close": "关闭风格介绍",
+    "dialog.noEntry": "暂无稳定入门曲"
   },
   en: {
     "lang.toggle": "中",
@@ -219,7 +234,14 @@ const I18N = {
     "pl.overview.failed": "Analysis failed: {err}",
     "pl.log.error": "Error: {err}",
     "pl.card.footer": "Made with Genre Lab · Playlist Genre Analysis",
-    "pl.card.headline": "My Music Taste"
+    "pl.card.headline": "My Music Taste",
+    "dialog.kicker": "Discogs Style",
+    "dialog.kickerGenre": "{genre} / Discogs Style",
+    "dialog.focus": "Style focus",
+    "dialog.history": "History",
+    "dialog.entry": "Popular entry track",
+    "dialog.close": "Close style intro",
+    "dialog.noEntry": "No stable entry track"
   }
 };
 
@@ -396,6 +418,64 @@ function splitGenreStyle(name) {
   return { genre: text.slice(0, idx), style: text.slice(idx + 3) };
 }
 
+// ---------------------------------------------------------------------------
+// Style intro dialog: reuse the shared Discogs style profiles (same data as the
+// single-track page) so clicking a mosaic/sunburst segment shows the same
+// genre/style write-up. Profiles are keyed by the English "Genre---Style" id.
+// ---------------------------------------------------------------------------
+function styleProfilesById() {
+  const profiles = (window.DISCOGS_STYLE_PROFILES && window.DISCOGS_STYLE_PROFILES.profiles) || [];
+  const map = new Map();
+  for (const profile of profiles) map.set(profile.id, profile);
+  return map;
+}
+
+// Look up a style profile by its English genre + style names. The folded
+// "其他" bucket has no profile of its own, but its child styles keep their
+// original genre so they still resolve.
+function profileFor(genreName, styleName) {
+  if (!genreName || !styleName) return null;
+  return styleProfilesById().get(`${genreName}---${styleName}`) || null;
+}
+
+let lastStyleInfoTrigger = null;
+
+function openStyleDialog(profile, trigger) {
+  if (!profile || !styleDialog) return;
+  lastStyleInfoTrigger = trigger || null;
+  styleDialogKicker.textContent = profile.genre
+    ? t("dialog.kickerGenre", { genre: localizeToken(profile.genre, "genre") })
+    : t("dialog.kicker");
+  styleDialogTitle.textContent = localizeToken(profile.style || profile.title, "style");
+  styleDialogOverview.textContent = profile.overview || "";
+  styleDialogHistory.textContent = profile.history || "";
+  styleDialogFocus.innerHTML = "";
+  for (const item of profile.styleFocus || []) {
+    const li = document.createElement("li");
+    li.textContent = item;
+    styleDialogFocus.appendChild(li);
+  }
+  const entry = profile.mainstreamEntry || {};
+  styleDialogTrack.textContent = [entry.artist, entry.title].filter(Boolean).join(" - ") || t("dialog.noEntry");
+  styleDialogTrackNote.textContent = entry.note || "";
+  styleDialog.classList.add("is-open");
+  styleDialog.setAttribute("aria-hidden", "false");
+  styleDialog.querySelector(".style-dialog__close")?.focus();
+}
+
+function closeStyleDialog() {
+  if (!styleDialog || !styleDialog.classList.contains("is-open")) return;
+  styleDialog.classList.remove("is-open");
+  styleDialog.setAttribute("aria-hidden", "true");
+  if (lastStyleInfoTrigger && typeof lastStyleInfoTrigger.focus === "function") lastStyleInfoTrigger.focus();
+  lastStyleInfoTrigger = null;
+}
+
+for (const closeControl of document.querySelectorAll("[data-style-dialog-close]")) {
+  closeControl.addEventListener("click", closeStyleDialog);
+}
+
+
 // Localize a single genre or style token via the taxonomy translations. In
 // English mode the raw taxonomy token is already English, so return it as-is.
 function localizeToken(token, kind) {
@@ -435,6 +515,7 @@ function buildTwoLevel(compositions) {
       styles: [...g.styles.entries()]
         .map(([style, sum]) => ({
           name: style,
+          genre: g.name,
           label: localizeToken(style, "style"),
           percent: sum / grand * 100
         }))
@@ -567,6 +648,8 @@ function renderSunburst(genres) {
       sPath.setAttribute("class", "sun-style");
       sPath.dataset.title = style.label;
       sPath.dataset.desc = `${genre.label} · ${Math.round(style.percent)}%`;
+      sPath.dataset.genre = style.genre || genre.name;
+      sPath.dataset.style = style.name;
       const sTitle = document.createElementNS(NS, "title");
       sTitle.textContent = `${genre.label} / ${style.label} ${Math.round(style.percent)}%`;
       sPath.appendChild(sTitle);
@@ -640,6 +723,13 @@ sunburstSvg.addEventListener("mouseout", event => {
     sunburstSvg.classList.remove("is-hovering");
     setSunburstCenter(sunburstDefault.title, sunburstDefault.desc);
   }
+});
+// Click a style slice to open its genre/style intro (same as the mosaic tiles).
+sunburstSvg.addEventListener("click", event => {
+  const seg = event.target.closest(".sun-style");
+  if (!seg) return;
+  const profile = profileFor(seg.dataset.genre, seg.dataset.style);
+  if (profile) openStyleDialog(profile, seg);
 });
 
 // Mosaic (treemap): every tile's AREA is proportional to its share, so a 4%
@@ -786,6 +876,8 @@ function layoutMosaicTree() {
       block.style.background = genre.color;
       block.style.opacity = rank === 0 ? "1" : String(Math.max(0.45, 1 - rank * 0.22));
       block.title = `${genre.label} / ${style.label} ${Math.round(style.percent)}%`;
+      block.dataset.genre = style.genre || genre.name;
+      block.dataset.style = style.name;
       const fs = mosaicFontSizes(bw, bh);
 
       // A tall, narrow block can't fit a horizontal "name  %" row, so switch to
@@ -839,6 +931,14 @@ window.addEventListener("resize", () => {
     mosaicResizeQueued = false;
     layoutMosaicTree();
   });
+});
+
+// Click a mosaic tile to open its genre/style intro (same as the sunburst).
+mosaicStage.addEventListener("click", event => {
+  const block = event.target.closest(".mosaic-block");
+  if (!block) return;
+  const profile = profileFor(block.dataset.genre, block.dataset.style);
+  if (profile) openStyleDialog(profile, block);
 });
 
 // ---------------------------------------------------------------------------
@@ -1284,7 +1384,10 @@ if (sharePreview) {
 }
 
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape") closeSharePreview();
+  if (event.key === "Escape") {
+    closeSharePreview();
+    closeStyleDialog();
+  }
 });
 
 // ---------------------------------------------------------------------------
