@@ -928,6 +928,115 @@ async function handleNetEaseSong(req, res) {
   }
 }
 
+function extractNetEasePlaylistId(value) {
+  const text = cleanTerm(value);
+  // A song link (e.g. /song?id=123) also carries an "id=", so reject it here
+  // instead of silently treating a single track as a playlist.
+  if (/\/song[/?#]/i.test(text) || /\/song$/i.test(text)) return "";
+  const idMatch = text.match(/[?&#].*?\bid=(\d+)/i)
+    || text.match(/\/playlist\/(\d+)/i)
+    || text.match(/^\d+$/);
+  return idMatch ? (idMatch[1] || idMatch[0]) : "";
+}
+
+async function resolveNetEasePlaylistId(value) {
+  const directId = extractNetEasePlaylistId(value);
+  if (directId) return directId;
+
+  let url = extractHttpUrl(value);
+  if (!url || !isAllowedNetEaseLink(url)) return "";
+
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const id = extractNetEasePlaylistId(url);
+    if (id) return id;
+
+    const result = await fetchRedirectLocation(url);
+    if (result.statusCode < 300 || result.statusCode >= 400 || !result.location) {
+      return "";
+    }
+    if (!isAllowedNetEaseLink(result.location)) {
+      return "";
+    }
+    url = result.location;
+  }
+  return "";
+}
+
+async function handleNetEasePlaylist(req, res) {
+  try {
+    const body = await readBody(req);
+    const raw = body.url || body.id || "";
+    const id = await resolveNetEasePlaylistId(raw);
+    if (!id) {
+      const isSongLink = /\/song[/?#]/i.test(cleanTerm(raw)) || /\/song$/i.test(cleanTerm(raw));
+      sendJson(res, 400, {
+        error: isSongLink
+          ? "这是一个单曲链接，不是歌单链接。请粘贴网易云歌单（/playlist）链接。"
+          : "没有在网易云链接中找到歌单 id。"
+      });
+      return;
+    }
+    const data = await fetchJson(`https://music.163.com/api/v6/playlist/detail?id=${encodeURIComponent(id)}`, {
+      "referer": "https://music.163.com/"
+    });
+    const playlist = data && data.playlist;
+    if (!playlist || !Array.isArray(playlist.tracks)) {
+      sendJson(res, 404, { error: `网易云没有返回歌单 id ${id} 的曲目信息。` });
+      return;
+    }
+    // The v6 playlist/detail endpoint only inlines the first handful of tracks
+    // in `playlist.tracks`, but it lists every track's id in
+    // `playlist.trackIds`. Fetch the full song details by id so the whole
+    // playlist is available, not just the preview slice.
+    let rawTracks = playlist.tracks;
+    const trackIds = Array.isArray(playlist.trackIds)
+      ? playlist.trackIds.map(item => String(item && item.id ? item.id : "")).filter(Boolean)
+      : [];
+    if (trackIds.length > rawTracks.length) {
+      const fetched = await fetchNetEaseSongsByIds(trackIds);
+      if (fetched.length) rawTracks = fetched;
+    }
+    const tracks = rawTracks.map(track => ({
+      id: String(track.id || ""),
+      title: track.name || "",
+      artists: ((track.ar || track.artists) || []).map(artist => artist.name).filter(Boolean),
+      album: (track.al && track.al.name) || (track.album && track.album.name) || "",
+      sourceUrl: `https://music.163.com/song?id=${track.id}`
+    })).filter(track => track.title);
+    sendJson(res, 200, {
+      id: String(playlist.id || id),
+      name: playlist.name || "",
+      coverImgUrl: playlist.coverImgUrl || "",
+      trackCount: playlist.trackCount || tracks.length,
+      creator: playlist.creator && playlist.creator.nickname ? playlist.creator.nickname : "",
+      sourceUrl: `https://music.163.com/playlist?id=${id}`,
+      tracks
+    });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
+// Fetch full song metadata for a list of NetEase track ids. The public
+// song/detail endpoint accepts a JSON id array in the query string but caps the
+// batch size, so ids are chunked and the results concatenated in order.
+async function fetchNetEaseSongsByIds(ids) {
+  const BATCH = 100;
+  const byId = new Map();
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const chunk = ids.slice(i, i + BATCH);
+    const query = encodeURIComponent(JSON.stringify(chunk.map(id => ({ id }))));
+    const data = await fetchJson(`https://music.163.com/api/v3/song/detail?c=${query}`, {
+      "referer": "https://music.163.com/"
+    });
+    for (const song of (data && data.songs) || []) {
+      if (song && song.id != null) byId.set(String(song.id), song);
+    }
+  }
+  // Preserve the playlist's original ordering.
+  return ids.map(id => byId.get(id)).filter(Boolean);
+}
+
 async function handleQQMusicSong(req, res) {
   try {
     const body = await readBody(req);
@@ -1652,6 +1761,10 @@ const server = http.createServer((req, res) => {
     handleNetEaseSong(req, res);
     return;
   }
+  if (req.method === "POST" && req.url === "/api/netease-playlist") {
+    handleNetEasePlaylist(req, res);
+    return;
+  }
   if (req.method === "POST" && req.url === "/api/qq-song") {
     handleQQMusicSong(req, res);
     return;
@@ -1694,12 +1807,14 @@ module.exports = {
   containsChineseText,
   extractHttpUrl,
   extractNetEaseSongId,
+  extractNetEasePlaylistId,
   extractQQMusicSongMid,
   extractSpotifyTrackId,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
   resolveNetEaseSongId,
+  resolveNetEasePlaylistId,
   resolveQQMusicSongMid,
   resolveSpotifyTrackId,
   selectSearchSources,

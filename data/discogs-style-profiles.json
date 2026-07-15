@@ -1075,16 +1075,16 @@
       "genre": "Electronic",
       "style": "Acid Jazz",
       "title": "Electronic / Acid Jazz",
-      "overview": "Acid Jazz 是 1980 年代末伦敦兴起、融合爵士、放克、灵魂与 DJ/舞池文化的风格，在电子语境下它连接了 club jazz 与后来的 nu jazz。声音强调真实乐队律动、Rhodes 电钢、放克贝斯与摇摆 groove，BPM 常在 100–120。辨认关键：live 感的爵士放克 groove，带俱乐部取向。",
+      "overview": "Acid Jazz 是 1980 年代末伦敦兴起、融合爵士、Funk、灵魂与 DJ/舞池文化的风格，在电子语境下它连接了 club jazz 与后来的 nu jazz。声音强调真实乐队律动、Rhodes 电钢、Funk贝斯与摇摆 groove，BPM 常在 100–120。辨认关键：live 感的爵士Funk groove，带俱乐部取向。",
       "styleFocus": [
-        "爵士/放克/灵魂融合的乐队 groove",
-        "Rhodes 电钢、放克贝斯、铜管",
+        "爵士/Funk/灵魂融合的乐队 groove",
+        "Rhodes 电钢、Funk贝斯、铜管",
         "BPM 约 100–120，舞池取向",
         "采样与真乐队结合"
       ],
       "history": "由伦敦 DJ Gilles Peterson 与 Eddie Piller 命名，Talkin' Loud、Acid Jazz 厂牌推动，Jamiroquai、Brand New Heavies、Incognito 为代表。",
       "listenFor": [
-        "先抓摇摆的放克 groove 与真实乐器感。",
+        "先抓摇摆的Funk groove 与真实乐器感。",
         "再听 Rhodes 与铜管营造的复古灵魂色彩。",
         "注意它比 Future Jazz 更 live、更少电子处理。"
       ],
@@ -1092,7 +1092,7 @@
         "artist": "Jamiroquai",
         "title": "Cosmic Girl",
         "role": "主流入门曲",
-        "note": "放克 groove 与灵魂 vocal 的典型 Acid Jazz 舞池取向。"
+        "note": "Funk groove 与灵魂 vocal 的典型 Acid Jazz 舞池取向。"
       }
     },
     {
@@ -1225,11 +1225,11 @@
       "genre": "Electronic",
       "style": "Big Beat",
       "title": "Electronic / Big Beat",
-      "overview": "Big Beat 是 1990 年代英国兴起的高能舞曲，把 breakbeat、放克/摇滚采样、失真贝斯与 acid 音色融合成夸张、party 化的声音，BPM 常在 110–140。它由 Skint、Wall of Sound 厂牌与 Brighton 场景推动。辨认关键：厚重的 breakbeat、脏失真与摇滚式的能量爆发。",
+      "overview": "Big Beat 是 1990 年代英国兴起的高能舞曲，把 breakbeat、Funk/摇滚采样、失真贝斯与 acid 音色融合成夸张、party 化的声音，BPM 常在 110–140。它由 Skint、Wall of Sound 厂牌与 Brighton 场景推动。辨认关键：厚重的 breakbeat、脏失真与摇滚式的能量爆发。",
       "styleFocus": [
         "厚重 breakbeat，约 110–140 BPM",
         "失真贝斯与 acid 音色",
-        "放克/摇滚/hip hop 采样",
+        "Funk/摇滚/hip hop 采样",
         "夸张、party、大场面取向"
       ],
       "history": "1990 年代中后期英国场景，The Chemical Brothers、Fatboy Slim、The Prodigy 为代表，Skint、Wall of Sound 厂牌推动其进入主流。",
@@ -1350,24 +1350,24 @@
       "genre": "Electronic",
       "style": "Broken Beat",
       "title": "Electronic / Broken Beat",
-      "overview": "Broken Beat（Bruk）是 1990 年代末伦敦西区兴起的融合风格，把 house、jazz、放克、灵魂嫁接到人为“打碎”的切分节奏上，BPM 约 120–130。辨认关键：那种失衡、错拍、带 swing 的鼓 groove 与爵士放克和声。",
+      "overview": "Broken Beat（Bruk）是 1990 年代末伦敦西区兴起的融合风格，把 house、jazz、Funk、灵魂嫁接到人为“打碎”的切分节奏上，BPM 约 120–130。辨认关键：那种失衡、错拍、带 swing 的鼓 groove 与爵士Funk和声。",
       "styleFocus": [
         "人为切分/错位的 broken 鼓 groove",
         "约 120–130 BPM，重 swing",
-        "爵士、放克、灵魂和声",
+        "爵士、Funk、灵魂和声",
         "深沉贝斯与合成层次"
       ],
       "history": "1990 年代末伦敦西区 co-op 场景，4hero、Bugz in the Attic、IG Culture、Kaidi Tatham 等为核心，与 Nu Jazz、UK Garage 相邻。",
       "listenFor": [
         "先抓错位、失衡的切分鼓 groove。",
-        "再听爵士放克和声的温度。",
+        "再听爵士Funk和声的温度。",
         "注意它比 House 更不规整、比 Nu Jazz 更强律动。"
       ],
       "mainstreamEntry": {
         "artist": "Bugz in the Attic",
         "title": "Booty La La",
         "role": "主流入门曲",
-        "note": "Broken Beat 错位 groove 与放克色彩的代表。"
+        "note": "Broken Beat 错位 groove 与Funk色彩的代表。"
       }
     },
     {
@@ -1550,11 +1550,11 @@
       "genre": "Electronic",
       "style": "Disco",
       "title": "Electronic / Disco",
-      "overview": "在电子语境下，Disco 是 1970 年代兴起于纽约夜店的四踩舞曲，以稳定的 four-on-the-floor 底鼓、开合 hi-hat、弦乐、放克贝斯与灵魂 vocal 为标志，是几乎所有 house/techno 律动的源头。辨认关键：那个推动舞池的四踩 kick、切分贝斯与华丽弦乐编排。",
+      "overview": "在电子语境下，Disco 是 1970 年代兴起于纽约夜店的四踩舞曲，以稳定的 four-on-the-floor 底鼓、开合 hi-hat、弦乐、Funk贝斯与灵魂 vocal 为标志，是几乎所有 house/techno 律动的源头。辨认关键：那个推动舞池的四踩 kick、切分贝斯与华丽弦乐编排。",
       "styleFocus": [
         "four-on-the-floor 底鼓，约 110–130 BPM",
         "开合 hi-hat 的切分律动",
-        "放克贝斯与华丽弦乐/铜管",
+        "Funk贝斯与华丽弦乐/铜管",
         "灵魂 vocal 与舞池取向"
       ],
       "history": "1970 年代纽约（Loft、Paradise Garage）夜店文化，Giorgio Moroder 的电子 disco（《I Feel Love》）直接催生了 house 与 Italo-Disco。",
@@ -1850,12 +1850,12 @@
       "genre": "Electronic",
       "style": "Electro",
       "title": "Electronic / Electro",
-      "overview": "在电子语境下，Electro（Electro-Funk）是 1980 年代初兴起的机器舞曲，以 TR-808 鼓机的硬朗切分节拍、机械感 vocoder 人声与放克贝斯为核心，BPM 约 110–130。辨认关键：那种 808 驱动的、带机器人味的切分 breakbeat，区别于四踩 house。",
+      "overview": "在电子语境下，Electro（Electro-Funk）是 1980 年代初兴起的机器舞曲，以 TR-808 鼓机的硬朗切分节拍、机械感 vocoder 人声与Funk贝斯为核心，BPM 约 110–130。辨认关键：那种 808 驱动的、带机器人味的切分 breakbeat，区别于四踩 house。",
       "styleFocus": [
         "TR-808 驱动的切分节拍",
         "约 110–130 BPM，非四踩",
         "vocoder/talkbox 机械人声",
-        "太空、机器人、放克美学"
+        "太空、机器人、Funk美学"
       ],
       "history": "1982 年 Afrika Bambaataa《Planet Rock》受 Kraftwerk 影响奠定，Detroit 与 Miami 场景延续，1990s Drexciya 等复兴其 electro 一脉。",
       "listenFor": [
@@ -1867,7 +1867,7 @@
         "artist": "Afrika Bambaataa & The Soulsonic Force",
         "title": "Planet Rock",
         "role": "主流入门曲",
-        "note": "Electro 的奠基之作，808 节拍与太空放克的原型。"
+        "note": "Electro 的奠基之作，808 节拍与太空Funk的原型。"
       }
     },
     {
@@ -2900,7 +2900,7 @@
       "genre": "Electronic",
       "style": "Jazzdance",
       "title": "Electronic / Jazzdance",
-      "overview": "Jazzdance 是舞池取向的爵士融合风格，约 100–130 BPM，把 jazz-funk、fusion、latin jazz 的律动与 club/DJ 文化结合，供舞者随之起舞。辨认关键：摇摆的爵士放克 groove、真实乐器 solo 与舞池能量。",
+      "overview": "Jazzdance 是舞池取向的爵士融合风格，约 100–130 BPM，把 jazz-funk、fusion、latin jazz 的律动与 club/DJ 文化结合，供舞者随之起舞。辨认关键：摇摆的爵士Funk groove、真实乐器 solo 与舞池能量。",
       "styleFocus": [
         "约 100–130 BPM 舞池 groove",
         "jazz-funk/fusion/latin 律动",
@@ -2909,7 +2909,7 @@
       ],
       "history": "1980 年代英国 DJ（如 Gilles Peterson、Paul Murphy）与 rare groove/acid jazz 场景推动，把老爵士唱片重新用于舞池。",
       "listenFor": [
-        "先抓摇摆的爵士放克 groove。",
+        "先抓摇摆的爵士Funk groove。",
         "再听真实乐器 solo 与律动。",
         "注意它是舞池取向，区别于纯聆听爵士。"
       ],
@@ -3350,16 +3350,16 @@
       "genre": "Electronic",
       "style": "Nu-Disco",
       "title": "Electronic / Nu-Disco",
-      "overview": "Nu-Disco 是 2000 年代兴起的复古 disco 复兴风格，约 110–125 BPM，以温暖模拟合成器、放克贝斯、四踩律动与 disco/Italo 音色重现为标志。辨认关键：那种复古却精致的 disco 律动、放克贝斯与阳光温暖的合成器。",
+      "overview": "Nu-Disco 是 2000 年代兴起的复古 disco 复兴风格，约 110–125 BPM，以温暖模拟合成器、Funk贝斯、四踩律动与 disco/Italo 音色重现为标志。辨认关键：那种复古却精致的 disco 律动、Funk贝斯与阳光温暖的合成器。",
       "styleFocus": [
         "约 110–125 BPM 四踩",
-        "温暖模拟合成器与放克贝斯",
+        "温暖模拟合成器与Funk贝斯",
         "disco/Italo 音色重现",
         "阳光、复古、精致制作"
       ],
       "history": "2000 年代从 French touch 与 disco 复兴发展，Lindstrøm、Todd Terje、Aeroplane、Metronomy 周边推动，Permanent Vacation 等厂牌承载。",
       "listenFor": [
-        "先抓复古温暖的合成器与放克贝斯。",
+        "先抓复古温暖的合成器与Funk贝斯。",
         "再听精致的 disco 四踩律动。",
         "注意它比 Disco 更现代精致、比 French House 少切碎采样。"
       ],
@@ -4975,14 +4975,14 @@
       "genre": "Folk, World, & Country",
       "style": "Mbalax",
       "title": "Folk, World, & Country / Mbalax",
-      "overview": "Mbalax（姆巴拉）是塞内加尔的国民流行舞曲，1970 年代把沃洛夫族的 sabar 鼓传统与古巴音乐、放克、爵士融合。其标志是 sabar 鼓那种爆发性、切分复杂的节奏和高亢的沃洛夫语演唱。辨认它靠 sabar 鼓密集炸裂的节奏突进与 tama（说话鼓）的音高变化。",
+      "overview": "Mbalax（姆巴拉）是塞内加尔的国民流行舞曲，1970 年代把沃洛夫族的 sabar 鼓传统与古巴音乐、Funk、爵士融合。其标志是 sabar 鼓那种爆发性、切分复杂的节奏和高亢的沃洛夫语演唱。辨认它靠 sabar 鼓密集炸裂的节奏突进与 tama（说话鼓）的音高变化。",
       "styleFocus": [
         "sabar 鼓群爆发性、复杂切分的节奏",
         "tama（说话鼓）的音高滑动",
-        "融合古巴/放克的电声乐队",
+        "融合古巴/Funk的电声乐队",
         "高亢、装饰繁复的沃洛夫语演唱"
       ],
-      "history": "1970 年代由 Youssou N'Dour 等在达喀尔把本地 sabar 节奏与古巴 son、放克融合，Youssou N'Dour 更凭《7 Seconds》等把 mbalax 带向国际。",
+      "history": "1970 年代由 Youssou N'Dour 等在达喀尔把本地 sabar 节奏与古巴 son、Funk融合，Youssou N'Dour 更凭《7 Seconds》等把 mbalax 带向国际。",
       "listenFor": [
         "先抓 sabar 鼓群那股爆发、密集的节奏突进。",
         "再听 tama 说话鼓的音高变化。",
@@ -5325,12 +5325,12 @@
       "genre": "Folk, World, & Country",
       "style": "Raï",
       "title": "Folk, World, & Country / Raï",
-      "overview": "Raï（拉伊）是阿尔及利亚西部奥兰（Oran）的流行乐种，20 世纪初源自贝都因牧歌，20 世纪 80 年代电气化后融合放克、雷鬼、流行成为国际化的 pop-raï。其标志是直白的社会/爱情歌词、带阿拉伯装饰的演唱与电子合成器、鼓机律动。辨认它靠 “ya-rayah” 式的阿拉伯滑音演唱与现代舞曲编排的结合。",
+      "overview": "Raï（拉伊）是阿尔及利亚西部奥兰（Oran）的流行乐种，20 世纪初源自贝都因牧歌，20 世纪 80 年代电气化后融合Funk、雷鬼、流行成为国际化的 pop-raï。其标志是直白的社会/爱情歌词、带阿拉伯装饰的演唱与电子合成器、鼓机律动。辨认它靠 “ya-rayah” 式的阿拉伯滑音演唱与现代舞曲编排的结合。",
       "styleFocus": [
         "阿拉伯装饰滑音的高亢演唱",
         "早期 gasba（芦笛）、guellal 鼓，后期合成器与鼓机",
         "直白涉及爱情、酒、社会的歌词",
-        "融合放克、雷鬼、流行的舞曲律动"
+        "融合Funk、雷鬼、流行的舞曲律动"
       ],
       "history": "源自奥兰的 bedoui 传统与女歌手 cheikha，1980 年代经 Cheb Khaled、Cheb Mami 等 “cheb（青年）” 歌手电气化，Khaled 的《Didi》使 raï 走向世界。",
       "listenFor": [
@@ -5557,7 +5557,7 @@
         "安的列斯克里奥尔语演唱",
         "衍生出慢速抒情的 zouk love"
       ],
-      "history": "1979 年由 Kassav' 在瓜德罗普/马提尼克创立，融合本地 gwoka、compas 与放克、迪斯科，1980 年代风靡加勒比、非洲与欧洲。",
+      "history": "1979 年由 Kassav' 在瓜德罗普/马提尼克创立，融合本地 gwoka、compas 与Funk、迪斯科，1980 年代风靡加勒比、非洲与欧洲。",
       "listenFor": [
         "先抓合成器与电子鼓带动的欢快律动。",
         "再听明亮的键盘与铜管编曲。",
@@ -5600,7 +5600,7 @@
       "genre": "Funk / Soul",
       "style": "Afrobeat",
       "title": "Funk / Soul / Afrobeat",
-      "overview": "Afrobeat 是 1960 年代末在尼日利亚拉各斯由 Fela Kuti 与鼓手 Tony Allen 熔铸而成的风格，把美国 James Brown 式放克的紧咬 groove 与约鲁巴打击乐、Highlife 及爵士管乐嫁接在一起。辨认它的关键是：十几分钟以上的超长曲式、多层交织的打击乐与吉他 tele-guitar 反复动机，以及在一两个和弦上不断堆叠、几乎不解决的催眠式律动。",
+      "overview": "Afrobeat 是 1960 年代末在尼日利亚拉各斯由 Fela Kuti 与鼓手 Tony Allen 熔铸而成的风格，把美国 James Brown 式Funk的紧咬 groove 与约鲁巴打击乐、Highlife 及爵士管乐嫁接在一起。辨认它的关键是：十几分钟以上的超长曲式、多层交织的打击乐与吉他 tele-guitar 反复动机，以及在一两个和弦上不断堆叠、几乎不解决的催眠式律动。",
       "styleFocus": [
         "超长曲式，常 10 分钟以上，前段器乐铺陈后段人声呼应",
         "Tony Allen 式复合切分鼓组，叠加 shekere、conga、clave",
@@ -5626,7 +5626,7 @@
       "genre": "Funk / Soul",
       "style": "Bayou Funk",
       "title": "Funk / Soul / Bayou Funk",
-      "overview": "Bayou Funk（又称 swamp funk）是 1960 年代末发源于路易斯安那新奥尔良的放克支流，以 The Meters 为核心，把当地 second line 游行鼓律、Professor Longhair 的 rumba-boogie 钢琴传统与精简放克结合。辨认它的关键是：慵懒拖后的 pocket、留白极多的乐器编配，以及那股闷热潮湿、松弛不赶拍的南方律动。",
+      "overview": "Bayou Funk（又称 swamp funk）是 1960 年代末发源于路易斯安那新奥尔良的Funk支流，以 The Meters 为核心，把当地 second line 游行鼓律、Professor Longhair 的 rumba-boogie 钢琴传统与精简Funk结合。辨认它的关键是：慵懒拖后的 pocket、留白极多的乐器编配，以及那股闷热潮湿、松弛不赶拍的南方律动。",
       "styleFocus": [
         "Zigaboo Modeliste 式 second line 切分鼓，强调 pocket 与拖拍",
         "极简留白编配，乐器各占空间、不填满",
@@ -5634,7 +5634,7 @@
         "中速慵懒 groove，约 90–105 BPM，闷热松弛",
         "新奥尔良 rumba/rhumba-boogie 节奏底色"
       ],
-      "history": "The Meters 于 1960 年代末在新奥尔良成军，既发行自己的器乐放克，也作为 Allen Toussaint 麾下的录音室班底为无数 R&B 唱片伴奏，奠定了 swamp funk 的松弛美学，日后被大量 hip-hop 采样。",
+      "history": "The Meters 于 1960 年代末在新奥尔良成军，既发行自己的器乐Funk，也作为 Allen Toussaint 麾下的录音室班底为无数 R&B 唱片伴奏，奠定了 swamp funk 的松弛美学，日后被大量 hip-hop 采样。",
       "listenFor": [
         "先抓鼓与贝斯之间那种故意拖后的 pocket",
         "再听吉他与键盘如何用短促 riff 互相让位",
@@ -5652,13 +5652,13 @@
       "genre": "Funk / Soul",
       "style": "Boogie",
       "title": "Funk / Soul / Boogie",
-      "overview": "Boogie 是 1979 年前后从 disco 退潮中演化出的 post-disco 电子放克，主要成型于纽约与洛杉矶。辨认它的关键是：合成器 bassline 与鼓机（LinnDrum、Roland）取代了 disco 的弦乐与真鼓，节奏比 disco 略慢、更强调 funky 的切分律动，营造出光滑闪亮的 early-80s 都市质感。",
+      "overview": "Boogie 是 1979 年前后从 disco 退潮中演化出的 post-disco 电子Funk，主要成型于纽约与洛杉矶。辨认它的关键是：合成器 bassline 与鼓机（LinnDrum、Roland）取代了 disco 的弦乐与真鼓，节奏比 disco 略慢、更强调 funky 的切分律动，营造出光滑闪亮的 early-80s 都市质感。",
       "styleFocus": [
         "合成 bassline（Moog/synth slap）驱动 groove",
         "鼓机节拍，约 110–120 BPM，比 disco 稍收敛",
         "闪亮的 synth pad、电钢与 talkbox/vocoder 点缀",
         "少弦乐、多合成器，制作光洁",
-        "放克化切分而非纯四踩推进"
+        "Funk化切分而非纯四踩推进"
       ],
       "history": "随着 1979 年 disco 的商业退潮，制作人转向更精简的电子编制，Boogie 在 1980–1985 年间盛行，代表有 Vaughan Mason、Kashif、D-Train 等，并成为日后 house 与当代 funk 复兴的重要养分。",
       "listenFor": [
@@ -5670,7 +5670,7 @@
         "artist": "Rick James",
         "title": "Give It to Me Baby",
         "role": "主流入门曲",
-        "note": "1981 年金曲，合成放克 bassline 与鼓机律动是 Boogie 声音的典型样本。"
+        "note": "1981 年金曲，合成Funk bassline 与鼓机律动是 Boogie 声音的典型样本。"
       }
     },
     {
@@ -5678,7 +5678,7 @@
       "genre": "Funk / Soul",
       "style": "Contemporary R&B",
       "title": "Funk / Soul / Contemporary R&B",
-      "overview": "Contemporary R&B 是 1980 年代末以来主导流行榜的当代节奏布鲁斯，融合灵魂唱腔、放克与 hip-hop 制作。辨认它的关键是：程序化的鼓机/采样节拍、层叠的和声人声与大量 melisma 转音，以及打磨光洁、以人声为绝对中心的都市流行制作。",
+      "overview": "Contemporary R&B 是 1980 年代末以来主导流行榜的当代节奏布鲁斯，融合灵魂唱腔、Funk与 hip-hop 制作。辨认它的关键是：程序化的鼓机/采样节拍、层叠的和声人声与大量 melisma 转音，以及打磨光洁、以人声为绝对中心的都市流行制作。",
       "styleFocus": [
         "鼓机/采样节拍，808 低频与 hip-hop 化律动",
         "层叠 harmony 人声与密集 melisma 转音",
@@ -5730,17 +5730,17 @@
       "genre": "Funk / Soul",
       "style": "Free Funk",
       "title": "Funk / Soul / Free Funk",
-      "overview": "Free Funk（又称 harmolodic funk）是 1970 年代由 Ornette Coleman 及其 Prime Time 乐队开创的先锋放克，把自由爵士的集体即兴与放克的电声 groove 熔于一炉。辨认它的关键是：稳固的放克节奏底座之上，多把电吉他、贝斯同时进行 harmolodic 式无固定调性即兴，形成密集、不协和却富律动的织体。",
+      "overview": "Free Funk（又称 harmolodic funk）是 1970 年代由 Ornette Coleman 及其 Prime Time 乐队开创的先锋Funk，把自由爵士的集体即兴与Funk的电声 groove 熔于一炉。辨认它的关键是：稳固的Funk节奏底座之上，多把电吉他、贝斯同时进行 harmolodic 式无固定调性即兴，形成密集、不协和却富律动的织体。",
       "styleFocus": [
         "harmolodics 理论：旋律、和声、节奏地位平等，无固定调中心",
-        "放克 groove 底座上叠加自由即兴",
+        "Funk groove 底座上叠加自由即兴",
         "双电吉他/双贝斯/双鼓的密集复调织体",
         "不协和、多线条并行的集体即兴",
-        "萨克斯即兴穿梭于电声放克之间"
+        "萨克斯即兴穿梭于电声Funk之间"
       ],
-      "history": "Ornette Coleman 在 1975 年组建电声乐队 Prime Time，以《Dancing in Your Head》等专辑实践 harmolodic 理念，James Blood Ulmer、Ronald Shannon Jackson 等门徒将其进一步发展，成为爵士与放克交汇的先锋流派。",
+      "history": "Ornette Coleman 在 1975 年组建电声乐队 Prime Time，以《Dancing in Your Head》等专辑实践 harmolodic 理念，James Blood Ulmer、Ronald Shannon Jackson 等门徒将其进一步发展，成为爵士与Funk交汇的先锋流派。",
       "listenFor": [
-        "先抓底层稳固的放克节奏",
+        "先抓底层稳固的Funk节奏",
         "再听多把吉他/贝斯并行的不协和即兴线条",
         "注意萨克斯如何在电声织体中自由穿梭"
       ],
@@ -5748,7 +5748,7 @@
         "artist": "Ornette Coleman",
         "title": "Theme from a Symphony (Variation One)",
         "role": "主流入门曲",
-        "note": "出自 1977 年《Dancing in Your Head》，Prime Time 的 harmolodic 放克在此定型。"
+        "note": "出自 1977 年《Dancing in Your Head》，Prime Time 的 harmolodic Funk在此定型。"
       }
     },
     {
@@ -5764,7 +5764,7 @@
         "常在一两个和弦上循环，vamp 为主",
         "全员当打击乐器使用的紧密 groove，约 100–115 BPM"
       ],
-      "history": "James Brown 在 1965 年《Papa's Got a Brand New Bag》《Cold Sweat》确立了以节奏为中心的放克语汇，Sly & the Family Stone、Kool & the Gang 等随后拓展，为日后的 disco、hip-hop 提供了节奏地基。",
+      "history": "James Brown 在 1965 年《Papa's Got a Brand New Bag》《Cold Sweat》确立了以节奏为中心的Funk语汇，Sly & the Family Stone、Kool & the Gang 等随后拓展，为日后的 disco、hip-hop 提供了节奏地基。",
       "listenFor": [
         "先抓每小节第一拍那个重重的\"the One\"",
         "再听贝斯与吉他如何切分咬合",
@@ -5782,12 +5782,12 @@
       "genre": "Funk / Soul",
       "style": "Gogo",
       "title": "Funk / Soul / Gogo",
-      "overview": "Go-go 是 1970 年代中后期发源于华盛顿特区的地域性放克，由 Chuck Brown 开创。辨认它的关键是：以 conga、cowbell、timbale 等打击乐搭出的\"pocket beat\"招牌摇摆律动，各曲之间不停顿、连成一场持续数十分钟的现场 groove，并大量运用主持人与观众的 call-and-response 互动。",
+      "overview": "Go-go 是 1970 年代中后期发源于华盛顿特区的地域性Funk，由 Chuck Brown 开创。辨认它的关键是：以 conga、cowbell、timbale 等打击乐搭出的\"pocket beat\"招牌摇摆律动，各曲之间不停顿、连成一场持续数十分钟的现场 groove，并大量运用主持人与观众的 call-and-response 互动。",
       "styleFocus": [
         "招牌\"pocket beat\"：conga、cowbell、rototom 搭出的摇摆节奏",
         "曲与曲之间不停顿的连续现场律动",
         "主持人（MC）与观众的 call-and-response",
-        "放克铜管与 organ 铺底",
+        "Funk铜管与 organ 铺底",
         "以现场感和打击乐为绝对核心，约 90–110 BPM"
       ],
       "history": "Chuck Brown & the Soul Searchers 在 1970 年代末以《Bustin' Loose》确立 go-go 形态，1980 年代经 Trouble Funk、E.U.、Rare Essence 等发展成 D.C. 的本土文化标志，始终以现场演出为生命线。",
@@ -5834,11 +5834,11 @@
       "genre": "Funk / Soul",
       "style": "Minneapolis Sound",
       "title": "Funk / Soul / Minneapolis Sound",
-      "overview": "Minneapolis Sound 是 1980 年代由 Prince 在明尼阿波利斯主导定型的放克—流行—新浪潮混血。辨认它的关键是：以合成器（尤其 Oberheim）取代传统铜管、LinnDrum 鼓机的干脆 backbeat、放克 groove 与摇滚吉他并置，加上大量 synth stab 与冷冽而性感的都市未来感。",
+      "overview": "Minneapolis Sound 是 1980 年代由 Prince 在明尼阿波利斯主导定型的Funk—流行—新浪潮混血。辨认它的关键是：以合成器（尤其 Oberheim）取代传统铜管、LinnDrum 鼓机的干脆 backbeat、Funk groove 与摇滚吉他并置，加上大量 synth stab 与冷冽而性感的都市未来感。",
       "styleFocus": [
         "合成器替代铜管，Oberheim synth stab 为标志",
         "LinnDrum 鼓机（LM-1）的干脆节拍与 gated 混响",
-        "放克贝斯 groove 与摇滚吉他并置",
+        "Funk贝斯 groove 与摇滚吉他并置",
         "new wave 影响下的冷冽合成音色",
         "Prince 式跨越性别与音域的多变唱法"
       ],
@@ -5846,13 +5846,13 @@
       "listenFor": [
         "先抓 LinnDrum 干脆的鼓机 backbeat",
         "再听合成器 stab 如何顶替铜管",
-        "注意放克与摇滚吉他并置的张力"
+        "注意Funk与摇滚吉他并置的张力"
       ],
       "mainstreamEntry": {
         "artist": "Prince",
         "title": "1999",
         "role": "主流入门曲",
-        "note": "1982 年标志曲，synth stab、鼓机与放克 groove 集于一身，Minneapolis Sound 的范本。"
+        "note": "1982 年标志曲，synth stab、鼓机与Funk groove 集于一身，Minneapolis Sound 的范本。"
       }
     },
     {
@@ -5912,7 +5912,7 @@
       "genre": "Funk / Soul",
       "style": "P.Funk",
       "title": "Funk / Soul / P.Funk",
-      "overview": "P.Funk 是 George Clinton 领衔的 Parliament-Funkadelic 帝国在 1970 年代打造的\"太空放克\"，以\"one nation under a groove\"为旗号。辨认它的关键是：Bootsy Collins 的弹跳 space bass、层层堆叠的合成器与铜管、科幻概念叙事（Mothership、Dr. Funkenstein），以及规模宏大、迷幻放荡的舞台与曲式。",
+      "overview": "P.Funk 是 George Clinton 领衔的 Parliament-Funkadelic 帝国在 1970 年代打造的\"太空Funk\"，以\"one nation under a groove\"为旗号。辨认它的关键是：Bootsy Collins 的弹跳 space bass、层层堆叠的合成器与铜管、科幻概念叙事（Mothership、Dr. Funkenstein），以及规模宏大、迷幻放荡的舞台与曲式。",
       "styleFocus": [
         "Bootsy Collins 式弹跳 space bass 与 effects",
         "厚重多层的合成器（Bernie Worrell）与铜管墙",
@@ -5930,7 +5930,7 @@
         "artist": "Parliament",
         "title": "Flash Light",
         "role": "主流入门曲",
-        "note": "1977 年名曲，Bernie Worrell 的合成 bassline 与太空放克美学的集中体现。"
+        "note": "1977 年名曲，Bernie Worrell 的合成 bassline 与太空Funk美学的集中体现。"
       }
     },
     {
@@ -5943,10 +5943,10 @@
         "wah-wah、fuzz 与效果器处理的迷幻吉他",
         "延展即兴与氛围化编曲，脱离传统三分钟单曲",
         "多声部 call-and-response 与群体主唱",
-        "放克 groove 与迷幻音色并存",
+        "Funk groove 与迷幻音色并存",
         "社会意识主题与实验性录音室制作"
       ],
-      "history": "Sly & the Family Stone《Stand!》(1969)、Temptations 在 Norman Whitfield 主导下的《Cloud Nine》《Papa Was a Rollin' Stone》，以及早期 Funkadelic，把迷幻摇滚的音色与灵魂乐、放克结合，直接催生了后来的 P.Funk。",
+      "history": "Sly & the Family Stone《Stand!》(1969)、Temptations 在 Norman Whitfield 主导下的《Cloud Nine》《Papa Was a Rollin' Stone》，以及早期 Funkadelic，把迷幻摇滚的音色与灵魂乐、Funk结合，直接催生了后来的 P.Funk。",
       "listenFor": [
         "先抓 wah/fuzz 处理的迷幻吉他音色",
         "再听延展的即兴与氛围铺陈",
@@ -5956,7 +5956,7 @@
         "artist": "Sly & the Family Stone",
         "title": "Everyday People",
         "role": "主流入门曲",
-        "note": "1968 年经典，融合放克 groove 与迷幻灵魂美学，入门 psychedelic soul 的直接选择。"
+        "note": "1968 年经典，融合Funk groove 与迷幻灵魂美学，入门 psychedelic soul 的直接选择。"
       }
     },
     {
@@ -5964,10 +5964,10 @@
       "genre": "Funk / Soul",
       "style": "Rhythm & Blues",
       "title": "Funk / Soul / Rhythm & Blues",
-      "overview": "此处的 Rhythm & Blues 指灵魂乐脉络中演变出的现代 R&B——从 1960 年代 soul 逐步过渡、经 1970 年代 Philly soul 与 quiet storm、再到当代的都市节奏布鲁斯。辨认它的关键是：以灵魂唱腔为核心、放克与流行制作为底，强调情感表现的 groove 化演唱，而非 Blues 大类下那种早期 jump/电吉他节奏布鲁斯。",
+      "overview": "此处的 Rhythm & Blues 指灵魂乐脉络中演变出的现代 R&B——从 1960 年代 soul 逐步过渡、经 1970 年代 Philly soul 与 quiet storm、再到当代的都市节奏布鲁斯。辨认它的关键是：以灵魂唱腔为核心、Funk与流行制作为底，强调情感表现的 groove 化演唱，而非 Blues 大类下那种早期 jump/电吉他节奏布鲁斯。",
       "styleFocus": [
         "以灵魂唱腔为绝对核心的情感表达",
-        "放克 groove 与流行化制作底座",
+        "Funk groove 与流行化制作底座",
         "丰满和声人声与弦乐/键盘铺底",
         "中慢速 ballad 与 mid-tempo groove 并重",
         "从 soul 经 Philly soul、quiet storm 到当代的连续演变"
@@ -5975,7 +5975,7 @@
       "history": "在 soul 于 1960 年代成熟后，R&B 这一标签随灵魂乐持续演变——1970 年代经 Gamble & Huff 的 Philadelphia soul、Smokey Robinson 式 quiet storm，到 1980 年代末与 hip-hop 融合，最终成为今日 Contemporary R&B 的统称。",
       "listenFor": [
         "先抓主唱的灵魂化情感表达",
-        "再听放克 groove 与流行制作的底座",
+        "再听Funk groove 与流行制作的底座",
         "注意和声与弦乐如何烘托旋律"
       ],
       "mainstreamEntry": {
@@ -6895,17 +6895,17 @@
       "genre": "Jazz",
       "style": "Afrobeat",
       "title": "Jazz / Afrobeat",
-      "overview": "Afrobeat 由尼日利亚的 Fela Kuti 在 1960 年代末至 70 年代创立，把约鲁巴节奏、highlife、放克与爵士的铜管编制和即兴精神熔于一炉。在爵士语境中它常被视为一种长篇 groove 音乐：十几分钟的循环之上叠加爵士化的萨克斯独奏与铜管 riff。辨认它靠密集交织的复合节奏与政治化的呼应式演唱。",
+      "overview": "Afrobeat 由尼日利亚的 Fela Kuti 在 1960 年代末至 70 年代创立，把约鲁巴节奏、highlife、Funk与爵士的铜管编制和即兴精神熔于一炉。在爵士语境中它常被视为一种长篇 groove 音乐：十几分钟的循环之上叠加爵士化的萨克斯独奏与铜管 riff。辨认它靠密集交织的复合节奏与政治化的呼应式演唱。",
       "styleFocus": [
         "长篇循环 groove（单曲常达 10–20 分钟）",
         "密集的打击乐与 tenor guitar 交织复节奏",
-        "放克贝斯与 James Brown 式紧凑鼓点",
+        "Funk贝斯与 James Brown 式紧凑鼓点",
         "爵士铜管 riff 段与萨克斯即兴（Fela 本人吹奏）",
         "call-and-response 群唱与 pidgin 英语歌词"
       ],
-      "history": "Fela Kuti 与鼓手 Tony Allen 在拉各斯的 Afrika Shrine 确立了这一风格，Tony Allen 的鼓法尤其被后世爵士与放克乐手推崇，直接影响了后来的世界爵士与 nu-jazz。",
+      "history": "Fela Kuti 与鼓手 Tony Allen 在拉各斯的 Afrika Shrine 确立了这一风格，Tony Allen 的鼓法尤其被后世爵士与Funk乐手推崇，直接影响了后来的世界爵士与 nu-jazz。",
       "listenFor": [
-        "先抓 Tony Allen 式的复合鼓点与放克贝斯",
+        "先抓 Tony Allen 式的复合鼓点与Funk贝斯",
         "再听铜管 riff 如何铺垫萨克斯独奏",
         "注意群唱与主唱的呼应结构"
       ],
@@ -7051,7 +7051,7 @@
       "genre": "Jazz",
       "style": "Contemporary Jazz",
       "title": "Jazz / Contemporary Jazz",
-      "overview": "Contemporary Jazz 泛指 1980 年代以来延续原声爵士传统、同时吸收现代制作与跨风格元素的当代主流爵士。它保留即兴与复杂和声，音响更清晰、编曲更精致，常融入放克、世界音乐与流行的色彩。辨认它靠现代录音质感与在传统语汇上的开放拓展。",
+      "overview": "Contemporary Jazz 泛指 1980 年代以来延续原声爵士传统、同时吸收现代制作与跨风格元素的当代主流爵士。它保留即兴与复杂和声，音响更清晰、编曲更精致，常融入Funk、世界音乐与流行的色彩。辨认它靠现代录音质感与在传统语汇上的开放拓展。",
       "styleFocus": [
         "原声乐器为主，现代录音质感",
         "延续复杂和声与即兴，兼收跨风格元素",
@@ -7207,10 +7207,10 @@
       "genre": "Jazz",
       "style": "Fusion",
       "title": "Jazz / Fusion",
-      "overview": "Fusion（Jazz Fusion）于 1960 年代末兴起，把爵士即兴与摇滚/放克的电声乐器、节奏和音量结合。它使用电吉他、电钢琴、合成器与摇滚鼓组，强调 groove 与复杂节拍。辨认它靠电声音色、放克/摇滚律动与高技巧的器乐即兴。",
+      "overview": "Fusion（Jazz Fusion）于 1960 年代末兴起，把爵士即兴与摇滚/Funk的电声乐器、节奏和音量结合。它使用电吉他、电钢琴、合成器与摇滚鼓组，强调 groove 与复杂节拍。辨认它靠电声音色、Funk/摇滚律动与高技巧的器乐即兴。",
       "styleFocus": [
         "电声乐器：电钢琴、合成器、电吉他、电贝斯",
-        "摇滚/放克律动与复杂拍号",
+        "摇滚/Funk律动与复杂拍号",
         "长篇器乐即兴与高超技巧",
         "多段落编曲、动态起伏大",
         "音量与音色处理向摇滚靠拢"
@@ -7218,7 +7218,7 @@
       "history": "Miles Davis 的《Bitches Brew》(1970) 打开局面，随后 Weather Report、Mahavishnu Orchestra、Return to Forever 将 fusion 发展为 70 年代最具影响力的爵士分支。",
       "listenFor": [
         "先抓电钢琴/合成器的音色",
-        "再听放克或摇滚化的 groove",
+        "再听Funk或摇滚化的 groove",
         "注意器乐独奏的技巧与段落变化"
       ],
       "mainstreamEntry": {
@@ -7285,17 +7285,17 @@
       "genre": "Jazz",
       "style": "Jazz-Funk",
       "title": "Jazz / Jazz-Funk",
-      "overview": "Jazz-Funk 兴起于 1970 年代，把爵士的和声与即兴嫁接到放克的紧凑 groove 与电声之上，强调可舞的律动与 riff。它比 fusion 更贴地气、更以 groove 为中心。辨认它靠切分的放克贝斯线、clavinet/电钢琴 riff 与稳固的 backbeat。",
+      "overview": "Jazz-Funk 兴起于 1970 年代，把爵士的和声与即兴嫁接到Funk的紧凑 groove 与电声之上，强调可舞的律动与 riff。它比 fusion 更贴地气、更以 groove 为中心。辨认它靠切分的Funk贝斯线、clavinet/电钢琴 riff 与稳固的 backbeat。",
       "styleFocus": [
-        "切分放克贝斯线与稳固 backbeat",
+        "切分Funk贝斯线与稳固 backbeat",
         "clavinet、电钢琴、合成器 riff",
         "简短循环 groove 上的即兴",
         "中速可舞律动",
         "紧凑打击乐与 wah 效果器"
       ],
-      "history": "Herbie Hancock 的《Head Hunters》(1973) 是里程碑，将放克 groove 与爵士即兴结合；Donald Byrd、Roy Ayers、Grover Washington Jr. 等进一步普及了这一风格。",
+      "history": "Herbie Hancock 的《Head Hunters》(1973) 是里程碑，将Funk groove 与爵士即兴结合；Donald Byrd、Roy Ayers、Grover Washington Jr. 等进一步普及了这一风格。",
       "listenFor": [
-        "先抓放克贝斯的切分 groove",
+        "先抓Funk贝斯的切分 groove",
         "再听 clavinet/电钢琴 riff",
         "注意即兴如何在循环 groove 上展开"
       ],
@@ -7727,10 +7727,10 @@
       "genre": "Latin",
       "style": "Boogaloo",
       "title": "Latin / Boogaloo",
-      "overview": "Boogaloo（bugalú）是 1960 年代中期在纽约拉丁裔社区兴起的短暂潮流，把古巴 son/mambo 与美国 R&B、soul 融合。核心声音是英语与西语夹杂的呼喊、放克化的钢琴 montuno 与拍手、简单上口的律动。识别点是拉丁打击乐加上灵魂乐/节奏布鲁斯的钢琴与英语喊唱。",
+      "overview": "Boogaloo（bugalú）是 1960 年代中期在纽约拉丁裔社区兴起的短暂潮流，把古巴 son/mambo 与美国 R&B、soul 融合。核心声音是英语与西语夹杂的呼喊、Funk化的钢琴 montuno 与拍手、简单上口的律动。识别点是拉丁打击乐加上灵魂乐/节奏布鲁斯的钢琴与英语喊唱。",
       "styleFocus": [
         "拉丁 conga/timbales 与 R&B 律动结合",
-        "放克化、重复的钢琴 montuno",
+        "Funk化、重复的钢琴 montuno",
         "英语-西语夹杂的呼喊与拍手",
         "中速、易舞的欢快律动",
         "铜管即兴与 soul 化和声"
@@ -8871,19 +8871,19 @@
       "genre": "Latin",
       "style": "Timba",
       "title": "Latin / Timba",
-      "overview": "Timba 是 1990 年代在古巴发展的现代 salsa 变体，融合 songo、funk、jazz、hip-hop 与 rumba，节奏更复杂密集。核心声音是激烈多变的打击层、放克化 bass、突然的力度变化与炫技铜管。识别点是比传统 salsa 更密集躁动、段落变化更剧烈、bass 更放克的古巴当代舞曲。",
+      "overview": "Timba 是 1990 年代在古巴发展的现代 salsa 变体，融合 songo、funk、jazz、hip-hop 与 rumba，节奏更复杂密集。核心声音是激烈多变的打击层、Funk化 bass、突然的力度变化与炫技铜管。识别点是比传统 salsa 更密集躁动、段落变化更剧烈、bass 更Funk的古巴当代舞曲。",
       "styleFocus": [
         "复杂密集、多变的打击层（含 songo）",
-        "放克化、切分强烈的电 bass",
+        "Funk化、切分强烈的电 bass",
         "突然的 break 与力度对比",
         "炫技铜管 riff 与钢琴 tumbao",
         "融合 rumba、funk、hip-hop 元素"
       ],
       "history": "1990 年代在古巴'特殊时期'由 NG La Banda、Los Van Van、La Charanga Habanera 等推动成型，是古巴对纽约 salsa 的当代回应。",
       "listenFor": [
-        "先抓比传统 salsa 更密集躁动的打击与放克 bass。",
+        "先抓比传统 salsa 更密集躁动的打击与Funk bass。",
         "再听突然的段落 break 与力度对比。",
-        "注意它比经典 Salsa 更复杂、更放克、段落更狂野，是古巴当代产物，可据此区分。"
+        "注意它比经典 Salsa 更复杂、更Funk、段落更狂野，是古巴当代产物，可据此区分。"
       ],
       "mainstreamEntry": {
         "artist": "Los Van Van",
@@ -9605,7 +9605,7 @@
       "overview": "Bollywood（宝莱坞流行）指印度印地语电影中的歌舞插曲，由幕后专业歌手 playback singing（对口型代唱）录制、演员在银幕上表演。辨认它的关键在于：为电影叙事服务的旋律、印度古典/民间元素与西方流行编曲的混融，以及浓烈的舞蹈段落。",
       "styleFocus": [
         "playback singing：幕后歌手代唱，演员对口型",
-        "融合 tabla、dholak、sitar 与弦乐、合成器、放克贝斯",
+        "融合 tabla、dholak、sitar 与弦乐、合成器、Funk贝斯",
         "旋律受拉格（raga）与印度旋律润饰（murki）影响",
         "常见 filmi 舞曲节奏与庞大群舞编排",
         "编曲宏大，含前奏 interlude 与器乐段"
@@ -9706,9 +9706,9 @@
       "genre": "Pop",
       "style": "City Pop",
       "title": "Pop / City Pop",
-      "overview": "City Pop 是 1970 年代末至 80 年代日本经济繁荣期兴起的都市流行乐，融合 AOR、放克、软摇滚与拉丁元素，描绘都会生活的时髦与惬意。辨认它的关键在于：光滑的放克贝斯、爵士化和声、精致的录音棚编曲与那种「都市夜晚、海滨兜风」的氛围。",
+      "overview": "City Pop 是 1970 年代末至 80 年代日本经济繁荣期兴起的都市流行乐，融合 AOR、Funk、软摇滚与拉丁元素，描绘都会生活的时髦与惬意。辨认它的关键在于：光滑的Funk贝斯、爵士化和声、精致的录音棚编曲与那种「都市夜晚、海滨兜风」的氛围。",
       "styleFocus": [
-        "中速 groove，光滑的 slap/指弹放克贝斯",
+        "中速 groove，光滑的 slap/指弹Funk贝斯",
         "爵士化的扩展和弦（七、九和弦）",
         "亮丽的 Rhodes 电钢、合成器与铜管点缀",
         "干净利落的鼓组与精致录音棚制作",
@@ -9716,7 +9716,7 @@
       ],
       "history": "以山下达郎、竹内玛莉亚、大貫妙子等为代表，脱胎于昭和歌谣与 Sugar Babe 等团体，近年经 vaporwave 与网络（如《Plastic Love》）重新走红全球。",
       "listenFor": [
-        "先抓光滑流动的放克贝斯线",
+        "先抓光滑流动的Funk贝斯线",
         "再听 Rhodes 电钢与爵士化和声色彩",
         "注意精致编曲营造的都市氛围"
       ],
@@ -10468,7 +10468,7 @@
         "口号式、召唤群众互动的副歌",
         "power soca 更快、groovy soca 更慢的分支"
       ],
-      "history": "Soca 由特立尼达的 Ras Shorty I（Lord Shorty）在 1970 年代初创，将 Calypso 与印度裔加勒比节奏及放克融合，后经 Machel Montano、Arrow 等推向国际，成为加勒比狂欢节的主导舞曲。",
+      "history": "Soca 由特立尼达的 Ras Shorty I（Lord Shorty）在 1970 年代初创，将 Calypso 与印度裔加勒比节奏及Funk融合，后经 Machel Montano、Arrow 等推向国际，成为加勒比狂欢节的主导舞曲。",
       "listenFor": [
         "先抓比 Calypso 快得多、为跳舞而生的强劲节拍",
         "再听密集打击乐与合成器的派对能量",
