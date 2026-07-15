@@ -31,6 +31,10 @@ if (new URLSearchParams(window.location.search).get("showModel") === "1") {
 }
 
 const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be3a3"];
+// Genres whose aggregate share falls below this are folded into a single
+// neutral "其他" slice so tiny long-tail genres don't clutter the charts.
+const OTHER_GENRE_THRESHOLD = 5;
+const OTHER_GENRE_COLOR = "#6b6e64";
 
 let activeModel = "";
 let taxonomyBundle = null;
@@ -241,15 +245,45 @@ function buildTwoLevel(compositions) {
         .sort((a, b) => b.percent - a.percent)
     }))
     .sort((a, b) => b.percent - a.percent);
-  genres.forEach((g, index) => { g.color = MIX_COLORS[index % MIX_COLORS.length]; });
-  return genres;
+
+  // Fold long-tail genres (share < threshold) into one neutral "其他" slice.
+  // Only the GENRE dimension is thresholded — the style dimension is never
+  // filtered, so every real style of the folded genres is kept and shown as a
+  // child style of "其他" (with its true style label, not the genre name).
+  const major = genres.filter(g => g.percent >= OTHER_GENRE_THRESHOLD);
+  const minor = genres.filter(g => g.percent < OTHER_GENRE_THRESHOLD);
+  if (minor.length) {
+    const otherPercent = minor.reduce((sum, g) => sum + g.percent, 0);
+    const otherStyles = minor
+      .flatMap(g => g.styles)
+      .sort((a, b) => b.percent - a.percent);
+    major.push({
+      name: "__other__",
+      label: "其他",
+      percent: otherPercent,
+      styles: otherStyles
+    });
+  }
+
+  major.forEach((g, index) => {
+    g.color = g.name === "__other__" ? OTHER_GENRE_COLOR : MIX_COLORS[index % MIX_COLORS.length];
+  });
+  return major;
 }
+
+let twoLevelShown = false;
 
 function renderAggregate(compositions) {
   const genres = buildTwoLevel(compositions);
   renderSunburst(genres);
   renderMosaic(genres);
   genreTwoLevel.hidden = genres.length === 0;
+  // Default to the mosaic view the first time the charts appear, without
+  // overriding a view the user may have switched to during analysis.
+  if (genres.length && !twoLevelShown) {
+    twoLevelShown = true;
+    switchView("mosaic");
+  }
 }
 
 // Show one view at a time. The toggle acts as a tablist and the inactive
@@ -670,6 +704,7 @@ form.addEventListener("submit", async event => {
   sunburstCenter.innerHTML = "";
   mosaicStage.innerHTML = "";
   genreTwoLevel.hidden = true;
+  twoLevelShown = false;
   trackCount.textContent = "0 首";
   playlistMeta.textContent = "正在解析网易云歌单…";
 
