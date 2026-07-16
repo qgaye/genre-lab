@@ -1278,6 +1278,21 @@ function nebulaRgba(hex, alpha) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
 function renderNebula(genres) {
   nebulaGenres = genres;
   // Legend mirrors the mosaic's: one round key per parent genre.
@@ -1413,23 +1428,79 @@ function buildNebula() {
 
 function drawNebula() {
   const ctx = nebulaCanvas.getContext("2d");
+  const studio = isStudioChartStyle();
   nebulaTick += 1;
   ctx.clearRect(0, 0, nebulaW, nebulaH);
+
+  if (studio) {
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = "rgba(244, 240, 232, 0.08)";
+    ctx.lineWidth = 1;
+    for (let x = 24; x < nebulaW; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, nebulaH);
+      ctx.stroke();
+    }
+    for (let y = 24; y < nebulaH; y += 48) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(nebulaW, y);
+      ctx.stroke();
+    }
+    ctx.translate(nebulaW / 2, nebulaH / 2);
+    for (const r of [56, 112, 168, 224]) {
+      if (r > Math.max(nebulaW, nebulaH)) continue;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r, r * 0.72, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const byGenre = new Map();
+    for (const cl of nebulaClusters) {
+      const list = byGenre.get(cl.genre.name) || [];
+      list.push(cl);
+      byGenre.set(cl.genre.name, list);
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (const list of byGenre.values()) {
+      if (list.length < 2) continue;
+      list.sort((a, b) => a.styleIndex - b.styleIndex);
+      ctx.strokeStyle = nebulaRgba(list[0].genre.color, 0.26);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(list[0].cx, list[0].cy);
+      for (let i = 1; i < list.length; i++) ctx.lineTo(list[i].cx, list[i].cy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
   // Particles + halos are drawn additively so overlaps glow like a real nebula.
   ctx.globalCompositeOperation = "lighter";
   for (const cl of nebulaClusters) {
-    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * 0.05;
-    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * 0.05;
+    const driftScale = studio ? 0.025 : 0.05;
+    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * driftScale;
+    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * driftScale;
     const cx = cl.cx + dx;
     const cy = cl.cy + dy;
-    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * 1.15);
-    halo.addColorStop(0, nebulaRgba(cl.genre.color, 0.16));
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * (studio ? 1.4 : 1.15));
+    halo.addColorStop(0, nebulaRgba(cl.genre.color, studio ? 0.24 : 0.16));
     halo.addColorStop(1, nebulaRgba(cl.genre.color, 0));
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(cx, cy, cl.R * 1.15, 0, Math.PI * 2);
+    ctx.arc(cx, cy, cl.R * (studio ? 1.4 : 1.15), 0, Math.PI * 2);
     ctx.fill();
+    if (studio) {
+      ctx.strokeStyle = nebulaRgba(cl.genre.color, 0.45);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cl.R * 0.82, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     cl.drawCx = cx;
     cl.drawCy = cy;
     for (const p of cl.parts) {
@@ -1442,7 +1513,7 @@ function drawNebula() {
       const x = cx + Math.cos(p.ang) * rad;
       const y = cy + Math.sin(p.ang) * rad;
       const tw = 0.55 + 0.45 * Math.sin(p.twk);
-      ctx.fillStyle = nebulaRgba(cl.genre.color, 0.5 + 0.4 * tw);
+      ctx.fillStyle = nebulaRgba(cl.genre.color, (studio ? 0.64 : 0.5) + 0.32 * tw);
       ctx.beginPath();
       ctx.arc(x, y, p.size, 0, Math.PI * 2);
       ctx.fill();
@@ -1454,15 +1525,35 @@ function drawNebula() {
   ctx.textAlign = "center";
   for (const cl of nebulaClusters) {
     if (cl.R < 20) continue;
-    const nameSize = Math.max(11, Math.min(18, cl.R * 0.32));
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    const nameSize = Math.max(11, Math.min(studio ? 16 : 18, cl.R * (studio ? 0.28 : 0.32)));
     ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
-    ctx.fillStyle = cl.genre.color;
-    ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
-    ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
+    ctx.shadowBlur = studio ? 10 : 6;
+    if (studio) {
+      const label = cl.style.label.length > 14 ? `${cl.style.label.slice(0, 12)}...` : cl.style.label;
+      const w = Math.max(62, Math.min(138, ctx.measureText(label).width + 26));
+      const h = 28;
+      const x = cl.drawCx - w / 2;
+      const y = cl.drawCy + cl.R * 0.62;
+      ctx.fillStyle = "rgba(13, 15, 13, 0.72)";
+      ctx.strokeStyle = nebulaRgba(cl.genre.color, 0.52);
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, y, w, h, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(244, 240, 232, 0.95)";
+      ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
+      ctx.fillText(label, cl.drawCx, y + 12);
+      ctx.fillStyle = cl.genre.color;
+      ctx.font = `900 10px "Avenir Next", Helvetica, Arial, sans-serif`;
+      ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, y + 24);
+    } else {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
+      ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
+      ctx.fillStyle = cl.genre.color;
+      ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
+      ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
+    }
     ctx.shadowBlur = 0;
   }
 
@@ -1563,7 +1654,10 @@ function resetPlaylistView() {
   trackList.innerHTML = "";
   sunburstSvg.innerHTML = "";
   sunburstCenter.innerHTML = "";
+  sunburstLegend.innerHTML = "";
   mosaicStage.innerHTML = "";
+  nebulaLegend.innerHTML = "";
+  stopNebula();
   genreTwoLevel.hidden = true;
   twoLevelShown = false;
   lastCompositions = null;
@@ -2266,6 +2360,7 @@ if (langToggle) {
   });
 }
 
+applyChartStyle(chartVisualStyle, false);
 applyLanguage();
 initModelSelector();
 // Resume an in-flight / finished job whose id is in the page URL (mobile
