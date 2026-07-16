@@ -48,6 +48,12 @@ const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be
 // neutral "其他" slice so tiny long-tail genres don't clutter the charts.
 const OTHER_GENRE_THRESHOLD = 5;
 const OTHER_GENRE_COLOR = "#6b6e64";
+// Within each parent genre, styles below this aggregate share, or ranked beyond
+// MAX_STYLES_PER_GENRE, are folded into one "其他" child tile so the sunburst /
+// mosaic / share image don't fill up with unreadable 1%/0% slivers when a large
+// playlist spreads across many styles.
+const OTHER_STYLE_THRESHOLD = 2;
+const MAX_STYLES_PER_GENRE = 6;
 
 let activeModel = "";
 let running = false;
@@ -68,7 +74,7 @@ const I18N = {
     "lang.toggle": "EN",
     "console.aria": "歌单曲风分析工作台",
     "field.model": "曲风模型",
-    "pl.title": "歌单曲风分析",
+    "pl.title": "我的音乐品味",
     "pl.nav.single": "单曲",
     "pl.status.waiting": "等待输入",
     "pl.field.link": "网易云歌单链接",
@@ -108,6 +114,8 @@ const I18N = {
     "pl.card.body.essentiaFail": "Essentia 分析失败：{err}",
     "pl.card.status.queryTags": "查询曲风标签…",
     "pl.log.tagFail": "{title}：曲风标签查询失败（{err}），仅用音频分析",
+    "pl.log.trackDone": "{title} 分析完成（{i}/{n}）",
+    "pl.log.trackFail": "{title} 分析失败（{i}/{n}）",
     "pl.card.status.noResult": "无结果",
     "pl.card.body.noHit": "音频分析未命中任何曲风。",
     "pl.card.status.done": "完成",
@@ -126,6 +134,8 @@ const I18N = {
     "pl.overview.emptyTracks": "该歌单没有可分析的曲目。",
     "pl.status.analyzing": "分析中 {i}/{n}",
     "pl.progress.analyzingNth": "分析第 {i}/{n} 首",
+    "pl.status.resuming": "继续分析 {i}/{n}",
+    "pl.progress.resumed": "检测到上次分析被中断，已完成 {done}/{n} 首，继续分析剩余曲目…",
     "pl.progress.complete": "分析完成",
     "pl.progress.completeInfo": "成功分析 {ok}/{n} 首",
     "pl.status.complete": "完成 {ok}/{n}",
@@ -189,6 +199,8 @@ const I18N = {
     "pl.card.body.essentiaFail": "Essentia analysis failed: {err}",
     "pl.card.status.queryTags": "Querying genre tags…",
     "pl.log.tagFail": "{title}: genre tag lookup failed ({err}); using audio analysis only",
+    "pl.log.trackDone": "{title} analyzed ({i}/{n})",
+    "pl.log.trackFail": "{title} failed ({i}/{n})",
     "pl.card.status.noResult": "No result",
     "pl.card.body.noHit": "Audio analysis matched no genre.",
     "pl.card.status.done": "Done",
@@ -207,6 +219,8 @@ const I18N = {
     "pl.overview.emptyTracks": "This playlist has no analyzable tracks.",
     "pl.status.analyzing": "Analyzing {i}/{n}",
     "pl.progress.analyzingNth": "Analyzing track {i}/{n}",
+    "pl.status.resuming": "Resuming {i}/{n}",
+    "pl.progress.resumed": "The previous analysis was interrupted; {done}/{n} done, resuming the remaining tracks…",
     "pl.progress.complete": "Analysis complete",
     "pl.progress.completeInfo": "Analyzed {ok}/{n} tracks",
     "pl.status.complete": "Done {ok}/{n}",
@@ -379,6 +393,7 @@ function createTrackCard(track, index) {
   trackList.appendChild(node);
   return {
     node,
+    title: track.title,
     status: node.querySelector(".track-status"),
     body: node.querySelector(".track-card-body")
   };
@@ -528,8 +543,26 @@ function buildTwoLevel(compositions) {
 
   major.forEach((g, index) => {
     g.color = g.name === "__other__" ? OTHER_GENRE_COLOR : MIX_COLORS[index % MIX_COLORS.length];
+    g.styles = foldGenreStyles(g.styles);
   });
   return major;
+}
+
+// Within one parent genre, keep at most MAX_STYLES_PER_GENRE styles that also
+// clear OTHER_STYLE_THRESHOLD and DROP the long-tail rest entirely — folding
+// them into an "其他" tile would be misleading, since the sum of many tiny
+// styles often outweighs every real style and dominates the chart. The kept
+// styles are then rescaled so their shares again sum to the parent genre's
+// total, keeping the parent area honest while the mosaic tiles / sunburst arc
+// fill it exactly. Always keeps at least the top style.
+function foldGenreStyles(styles) {
+  const sorted = [...styles].sort((a, b) => b.percent - a.percent);
+  const originalTotal = sorted.reduce((sum, style) => sum + style.percent, 0);
+  let kept = sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  if (!kept.length) kept = sorted.slice(0, 1);
+  const keptTotal = kept.reduce((sum, style) => sum + style.percent, 0) || 1;
+  const scale = originalTotal / keptTotal;
+  return kept.map(style => ({ ...style, percent: style.percent * scale }));
 }
 
 let twoLevelShown = false;
@@ -1018,10 +1051,19 @@ function installJob(info) {
 }
 
 // Apply the newly completed results from a status payload to the cards and
-// aggregate charts.
-function applyResults(data) {
+// aggregate charts. Each newly arrived result also appends a per-track line to
+// the progress log so both fresh and resumed runs show "<track> analyzed".
+// `silent` skips those lines for the historical batch a resumed page loads in
+// one shot (which would otherwise flood the log with hundreds of entries).
+function applyResults(data, silent = false) {
+  const total = jobState.total || data.total || 0;
   for (const result of data.results || []) {
-    jobState.compositions[result.index] = renderTrackResult(jobState.cards[result.index], result);
+    const card = jobState.cards[result.index];
+    jobState.compositions[result.index] = renderTrackResult(card, result);
+    if (silent) continue;
+    const title = (card && card.title) || "";
+    const key = result.status === "ok" ? "pl.log.trackDone" : "pl.log.trackFail";
+    logLine(t(key, { title, i: result.index + 1, n: total }));
   }
   jobState.applied = data.completed;
   if (data.results && data.results.length) renderAggregate(jobState.compositions);
@@ -1140,13 +1182,22 @@ async function resumeJobFromUrl() {
       tracks: data.tracks,
       total: data.total
     });
-    applyResults(data);
+    // Load the already-finished batch silently (no per-track log spam); the
+    // resume notice below explains how many were already done.
+    applyResults(data, true);
     updateJobProgress(data);
     if (data.state === "done") {
       finishJob(data);
     } else if (data.state === "error") {
       failJob(data.error);
     } else {
+      // The run was interrupted (e.g. server restart); the server resumes it on
+      // demand, so surface that clearly and keep polling for progress. setStatus
+      // runs after updateJobProgress (line above) so the "resuming" pill wins.
+      const total = data.total || 0;
+      const nth = total ? Math.min(data.completed + 1, total) : 0;
+      logLine(t("pl.progress.resumed", { done: data.completed, n: total }));
+      setStatus(t("pl.status.resuming", { i: nth, n: total }), true);
       running = true;
       analyzeBtn.disabled = true;
       pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);

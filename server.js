@@ -17,6 +17,9 @@ const PUBLIC_DIR = path.join(ROOT, "public");
 const DOWNLOAD_DIR = path.join(ROOT, "downloads");
 const RUNTIME_DIR = path.join(ROOT, ".runtime");
 const ANALYSIS_LOG_FILE = path.join(RUNTIME_DIR, "analysis-log.ndjson");
+// Playlist aggregate jobs are persisted here (one JSON file per jobId) so an
+// in-flight or finished analysis survives a server restart.
+const PLAYLIST_JOBS_DIR = path.join(RUNTIME_DIR, "playlist-jobs");
 const DEFAULT_CONFIG_FILE = path.join(ROOT, "config", "defaults.json");
 const ESSENTIA_PYTHON = path.join(ROOT, ".venv-essentia", "bin", "python");
 const ESSENTIA_SCRIPT = path.join(ROOT, "scripts", "analyze_genre.py");
@@ -1711,12 +1714,67 @@ async function handleLog(req, res) {
 // A single POST submits a playlist and returns a jobId immediately; the tracks
 // are then analyzed serially in the background. The client polls a status
 // endpoint (carrying the jobId in the page URL) so mobile users can background
-// the app and resume later. Job state lives in memory only — a server restart
-// drops in-flight jobs, which the client handles by treating an unknown jobId
-// as expired.
+// the app and resume later. Running jobs are held in memory and mirrored to
+// disk (one JSON file per jobId under .runtime/playlist-jobs); a finished job is
+// dropped from memory but its file is kept forever. After a restart, requesting
+// a jobId whose file was still "running" resumes the run on demand (see getJob),
+// with a guard against launching the same run twice concurrently.
 // ---------------------------------------------------------------------------
+// In-memory map holds only jobs that are still running; a job is dropped from
+// memory the moment it finishes (its persisted file remains on disk forever).
 const PLAYLIST_JOBS = new Map();
-const PLAYLIST_JOB_TTL_MS = 30 * 60 * 1000; // keep finished jobs for 30 min
+
+// Persist a job to disk as a single JSON file holding everything the frontend
+// needs to render (track list + per-track compositions + progress/state). The
+// write is atomic (temp file + rename) because runPlaylistJob rewrites it after
+// every completed track, so a restart mid-write must never read a half file.
+function jobFilePath(jobId) {
+  return path.join(PLAYLIST_JOBS_DIR, `${jobId}.json`);
+}
+
+function persistJob(job) {
+  try {
+    fs.mkdirSync(PLAYLIST_JOBS_DIR, { recursive: true });
+    const target = jobFilePath(job.jobId);
+    const tmp = `${target}.${process.pid}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(job));
+    fs.renameSync(tmp, target);
+  } catch (error) {
+    console.warn(`无法持久化歌单任务 ${job.jobId}: ${error.message}`);
+  }
+}
+
+// Look up a job by id. Running jobs live in memory; otherwise the persisted
+// file is read from disk. If that file shows a job that was still "running"
+// when the server stopped, it is resumed on demand here. The in-memory map is
+// populated SYNCHRONOUSLY before the async run starts, so a second concurrent
+// request for the same jobId finds it in memory and never launches a duplicate
+// run (Node's single thread guarantees the sync section is not interleaved).
+function getJob(jobId) {
+  if (!jobId) return null;
+  if (PLAYLIST_JOBS.has(jobId)) return PLAYLIST_JOBS.get(jobId);
+  let job;
+  try {
+    job = JSON.parse(fs.readFileSync(jobFilePath(jobId), "utf8"));
+  } catch {
+    return null;
+  }
+  if (job.state === "running") resumeJob(job);
+  return job;
+}
+
+// Register an interrupted job in memory and continue its run from where it
+// stopped. Must set the map entry before awaiting anything (see getJob).
+function resumeJob(job) {
+  PLAYLIST_JOBS.set(job.jobId, job);
+  runPlaylistJob(job).catch(error => {
+    job.state = "error";
+    job.error = error.message;
+    job.updatedAt = Date.now();
+    persistJob(job);
+    PLAYLIST_JOBS.delete(job.jobId);
+  });
+}
 
 // GenreCore taxonomy bundles (distinct shape from the server's own bundle) are
 // built lazily per model and cached for the lifetime of the process.
@@ -1728,15 +1786,6 @@ function getGenreCoreBundle(modelName) {
     GENRE_CORE_BUNDLES.set(name, GenreCore.buildTaxonomy(loadDiscogsTaxonomy(name)));
   }
   return GENRE_CORE_BUNDLES.get(name);
-}
-
-function pruneExpiredJobs() {
-  const now = Date.now();
-  for (const [jobId, job] of PLAYLIST_JOBS) {
-    if (job.state !== "running" && now - job.updatedAt > PLAYLIST_JOB_TTL_MS) {
-      PLAYLIST_JOBS.delete(jobId);
-    }
-  }
 }
 
 // Analyze a single playlist track: download → Essentia → metadata → score.
@@ -1786,23 +1835,32 @@ async function analyzePlaylistTrack(track, modelName, bundle) {
   return { status: "ok", composition };
 }
 
-// Background driver: walks the job's tracks serially and records each result.
+// Background driver: walks the job's tracks serially and records each result,
+// persisting the job to disk after every track so a restart can resume from the
+// last completed index (already-done tracks are skipped) and finished results
+// survive. `completed` is recomputed from results so a resumed job stays
+// consistent regardless of how far the previous run got. Once finished the job
+// is dropped from memory — its persisted file keeps serving future requests.
 async function runPlaylistJob(job) {
   const bundle = getGenreCoreBundle(job.modelName);
+  persistJob(job);
   for (let i = 0; i < job.tracks.length; i += 1) {
+    if (job.results[i]) continue;
     const result = await analyzePlaylistTrack(job.tracks[i], job.modelName, bundle);
     job.results[i] = { index: i, ...result };
-    job.completed += 1;
+    job.completed = job.results.filter(Boolean).length;
     job.updatedAt = Date.now();
+    persistJob(job);
   }
   job.state = "done";
   job.ok = job.results.filter(item => item && item.status === "ok").length;
   job.updatedAt = Date.now();
+  persistJob(job);
+  PLAYLIST_JOBS.delete(job.jobId);
 }
 
 async function handleAnalyzePlaylist(req, res) {
   try {
-    pruneExpiredJobs();
     const body = await readBody(req);
     const raw = body.url || body.id || "";
     const modelName = resolveRequestModelName(body.model);
@@ -1821,6 +1879,9 @@ async function handleAnalyzePlaylist(req, res) {
       state: "running",
       modelName,
       name: playlist.name,
+      coverImgUrl: playlist.coverImgUrl,
+      creator: playlist.creator,
+      sourceUrl: playlist.sourceUrl,
       tracks,
       total: tracks.length,
       results: new Array(tracks.length).fill(null),
@@ -1830,6 +1891,7 @@ async function handleAnalyzePlaylist(req, res) {
       updatedAt: now
     };
     PLAYLIST_JOBS.set(jobId, job);
+    persistJob(job);
 
     // Start analysis in the background; the response returns immediately so the
     // client can render the track cards and begin polling.
@@ -1837,6 +1899,8 @@ async function handleAnalyzePlaylist(req, res) {
       job.state = "error";
       job.error = error.message;
       job.updatedAt = Date.now();
+      persistJob(job);
+      PLAYLIST_JOBS.delete(job.jobId);
     });
 
     sendJson(res, 200, {
@@ -1855,9 +1919,8 @@ async function handleAnalyzePlaylist(req, res) {
 }
 
 function handlePlaylistStatus(req, res, url) {
-  pruneExpiredJobs();
   const jobId = url.searchParams.get("jobId") || "";
-  const job = PLAYLIST_JOBS.get(jobId);
+  const job = getJob(jobId);
   if (!job) {
     sendJson(res, 404, { error: "分析任务不存在或已过期，请重新发起。", state: "expired" });
     return;
