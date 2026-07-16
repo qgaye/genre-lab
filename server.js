@@ -1604,7 +1604,22 @@ async function handleUploadAudio(req, res) {
   }
 }
 
+// A single Python process is CPU/RAM heavy, so we never run two at once. This
+// tiny FIFO async mutex serializes every Essentia spawn across all jobs: each
+// caller awaits the previous one before spawning. Because each job's tracks are
+// processed with `await`, two concurrent playlists simply take turns on the
+// lock — they interleave track-by-track instead of piling up parallel Pythons.
+let essentiaLock = Promise.resolve();
+
 function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
+  const run = essentiaLock.then(() => runEssentia(filePath, top, modelName));
+  // Keep the chain alive regardless of this run's outcome so a failure doesn't
+  // wedge the lock for everyone behind it.
+  essentiaLock = run.then(() => {}, () => {});
+  return run;
+}
+
+function runEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(ESSENTIA_PYTHON)) {
       reject(new Error("Essentia Python 环境不存在，请先安装 .venv-essentia。"));
