@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 歌单曲风分析</title>
-    <link rel="stylesheet" href="/styles.css?v=20260716-chart-styles">
+    <link rel="stylesheet" href="/styles.css?v=20260716-cover-proxy">
   </head>
   <body>
     <main class="shell shell-playlist">
@@ -58,10 +58,6 @@
               <button type="button" class="view-toggle-btn" data-view="sunburst" role="tab" aria-selected="false" data-i18n="pl.view.sunburst">旭日图</button>
               <button type="button" class="view-toggle-btn is-active" data-view="mosaic" role="tab" aria-selected="true" data-i18n="pl.view.mosaic">占比矩阵</button>
               <button type="button" class="view-toggle-btn" data-view="nebula" role="tab" aria-selected="false" data-i18n="pl.view.nebula">曲风星云</button>
-            </div>
-            <div class="chart-style-toggle" id="chartStyleToggle" role="group" aria-label="图表风格切换" data-i18n-aria="pl.style.aria">
-              <button type="button" class="chart-style-btn is-active" data-style="classic" aria-pressed="true" data-i18n="pl.style.classic">经典</button>
-              <button type="button" class="chart-style-btn" data-style="studio" aria-pressed="false" data-i18n="pl.style.studio">Studio</button>
             </div>
             <figure class="genre-sunburst" id="genreSunburst" hidden>
               <figcaption data-i18n="pl.sunburst.caption">曲风构成 · 内环流派 / 外环子风格</figcaption>
@@ -174,6 +170,6 @@
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
     <script src="/genre-core.js"></script>
-    <script src="/playlist.js?v=20260716-chart-styles"></script>
+    <script src="/playlist.js?v=20260716-cover-proxy"></script>
   </body>
 </html>

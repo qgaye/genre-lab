@@ -1289,7 +1289,6 @@ a.lang-toggle {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  position: relative;
 }
 
 .genre-2l[hidden] {
@@ -1327,62 +1326,6 @@ a.lang-toggle {
 .view-toggle-btn.is-active {
   color: #10120f;
   background: var(--accent);
-}
-
-.chart-style-toggle {
-  display: inline-flex;
-  align-self: flex-start;
-  gap: 6px;
-  padding: 4px;
-  border: 1px solid rgba(244, 240, 232, 0.14);
-  background:
-    linear-gradient(135deg, rgba(244, 240, 232, 0.08), rgba(244, 240, 232, 0.02)),
-    rgba(9, 11, 9, 0.42);
-}
-
-.chart-style-btn {
-  appearance: none;
-  min-height: 30px;
-  border: 0;
-  border-radius: 4px;
-  padding: 0 12px;
-  color: var(--muted);
-  background: transparent;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
-}
-
-.chart-style-btn:hover {
-  color: var(--ink);
-}
-
-.chart-style-btn.is-active {
-  color: #10120f;
-  background: #f4f0e8;
-  box-shadow: inset 0 -3px 0 var(--accent);
-}
-
-.genre-2l[data-chart-style="studio"] {
-  gap: 14px;
-}
-
-.genre-2l[data-chart-style="studio"] .view-toggle {
-  border-radius: 6px;
-  background: rgba(244, 240, 232, 0.075);
-}
-
-.genre-2l[data-chart-style="studio"] .view-toggle-btn {
-  border-radius: 4px;
-}
-
-.genre-2l[data-chart-style="studio"] .view-toggle-btn.is-active {
-  color: var(--ink);
-  background: rgba(244, 240, 232, 0.16);
-  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .genre-2l figure {
@@ -1462,28 +1405,6 @@ a.lang-toggle {
   display: block;
 }
 
-.sun-guide {
-  fill: none;
-  stroke: rgba(244, 240, 232, 0.1);
-  stroke-width: 0.75;
-  pointer-events: none;
-}
-
-.sun-guide-outer {
-  stroke: rgba(244, 240, 232, 0.2);
-}
-
-.sun-tick {
-  stroke: rgba(244, 240, 232, 0.12);
-  stroke-width: 0.7;
-  pointer-events: none;
-}
-
-.sun-tick-major {
-  stroke: rgba(200, 255, 95, 0.32);
-  stroke-width: 1.1;
-}
-
 .sun-genre,
 .sun-style {
   transition: opacity 160ms ease;
@@ -1507,75 +1428,6 @@ a.lang-toggle {
   font-size: 10px;
   font-weight: 800;
   pointer-events: none;
-}
-
-.genre-2l[data-chart-style="studio"] .sunburst-layout {
-  align-items: stretch;
-  gap: 16px;
-}
-
-.genre-2l[data-chart-style="studio"] .genre-sunburst .sunburst-stage {
-  max-width: 440px;
-  padding: 16px;
-  border: 1px solid rgba(244, 240, 232, 0.12);
-  background:
-    linear-gradient(90deg, rgba(244, 240, 232, 0.05) 1px, transparent 1px),
-    linear-gradient(rgba(244, 240, 232, 0.04) 1px, transparent 1px),
-    radial-gradient(circle, rgba(244, 240, 232, 0.08) 0 2px, transparent 3px),
-    radial-gradient(circle at 50% 50%, rgba(200, 255, 95, 0.08), transparent 58%),
-    rgba(7, 9, 8, 0.62);
-  background-size: 36px 36px, 36px 36px, 18px 18px, auto, auto;
-}
-
-.genre-2l[data-chart-style="studio"] .sun-genre,
-.genre-2l[data-chart-style="studio"] .sun-style {
-  stroke: rgba(12, 14, 12, 0.9);
-  stroke-width: 1.4;
-  filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.08));
-}
-
-.genre-2l[data-chart-style="studio"] .sun-style {
-  mix-blend-mode: screen;
-}
-
-.genre-2l[data-chart-style="studio"] .sun-label {
-  fill: rgba(244, 240, 232, 0.92);
-  font-size: 7.5px;
-  letter-spacing: 0.02em;
-  paint-order: stroke;
-  stroke: rgba(8, 10, 8, 0.86);
-  stroke-width: 3px;
-}
-
-.genre-2l[data-chart-style="studio"] .sunburst-center {
-  inset: 16px;
-  padding: 0 34%;
-}
-
-.genre-2l[data-chart-style="studio"] .sunburst-center::before {
-  content: "";
-  position: absolute;
-  width: 31%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1px solid rgba(244, 240, 232, 0.22);
-  background:
-    radial-gradient(circle, rgba(244, 240, 232, 0.88) 0 5px, transparent 6px),
-    radial-gradient(circle, rgba(12, 14, 12, 0.92) 0 41%, rgba(244, 240, 232, 0.1) 42% 43%, rgba(12, 14, 12, 0.72) 44%);
-  box-shadow: 0 0 30px rgba(200, 255, 95, 0.12);
-}
-
-.genre-2l[data-chart-style="studio"] .sunburst-center strong,
-.genre-2l[data-chart-style="studio"] .sunburst-center span {
-  position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
-}
-
-.genre-2l[data-chart-style="studio"] .sunburst-legend {
-  align-self: center;
-  padding: 12px;
-  border-left: 1px solid rgba(244, 240, 232, 0.12);
 }
 
 .sunburst-center {
@@ -1712,95 +1564,6 @@ a.lang-toggle {
   margin-left: 0;
 }
 
-.genre-2l[data-chart-style="studio"] .mosaic-stage {
-  gap: 10px;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-legend {
-  gap: 6px;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-legend-item {
-  padding: 6px 9px;
-  border: 1px solid rgba(244, 240, 232, 0.12);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--genre-color) 16%, transparent), rgba(244, 240, 232, 0.03));
-  font-size: 12px;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-dot {
-  border-radius: 999px;
-  box-shadow: 0 0 10px var(--genre-color);
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-tree {
-  height: 460px;
-  border: 1px solid rgba(244, 240, 232, 0.12);
-  background:
-    linear-gradient(90deg, rgba(244, 240, 232, 0.05) 1px, transparent 1px),
-    linear-gradient(rgba(244, 240, 232, 0.04) 1px, transparent 1px),
-    linear-gradient(135deg, rgba(244, 240, 232, 0.045), rgba(244, 240, 232, 0)),
-    #0b0d0a;
-  background-size: 32px 32px, 32px 32px, auto, auto;
-  overflow: hidden;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-tree::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 24% 18%, rgba(244, 240, 232, 0.1), transparent 22%);
-  mix-blend-mode: screen;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-block {
-  border-radius: 1px;
-  border: 1px solid rgba(244, 240, 232, 0.2);
-  color: var(--ink);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--genre-color) 78%, #f4f0e8 10%), color-mix(in srgb, var(--genre-color) 36%, #10120f 64%)) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(12, 14, 12, 0.58),
-    0 12px 28px rgba(0, 0, 0, 0.2);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-block::before {
-  content: attr(data-rank);
-  position: absolute;
-  left: 6px;
-  bottom: 5px;
-  color: rgba(244, 240, 232, 0.48);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-block::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.16), transparent 38%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 7px);
-  mix-blend-mode: screen;
-}
-
-.genre-2l[data-chart-style="studio"] .mosaic-block:hover {
-  filter: brightness(1.14) saturate(1.08);
-}
-
-.genre-2l[data-chart-style="studio"] .mb-name,
-.genre-2l[data-chart-style="studio"] .mb-pct {
-  position: relative;
-  z-index: 1;
-}
-
-.genre-2l[data-chart-style="studio"] .mb-pct {
-  color: #f4f0e8;
-}
-
 /* Nebula view: a canvas starfield where each style is a small particle cluster,
    clusters grouped and colored by parent genre. Sits in the same slot as the
    mosaic (third toggle view). */
@@ -1866,43 +1629,6 @@ a.lang-toggle {
 .nebula-legend-item b {
   color: var(--muted);
   font-weight: 800;
-}
-
-.genre-2l[data-chart-style="studio"] .nebula-stage {
-  height: 460px;
-  border-radius: 0;
-  border: 1px solid rgba(244, 240, 232, 0.14);
-  background:
-    radial-gradient(circle at 50% 50%, rgba(244, 240, 232, 0.08), transparent 28%),
-    linear-gradient(135deg, rgba(200, 255, 95, 0.08), transparent 34%),
-    linear-gradient(315deg, rgba(99, 210, 255, 0.08), transparent 38%),
-    #070908;
-}
-
-.genre-2l[data-chart-style="studio"] .nebula-stage::before {
-  content: "";
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  width: 86px;
-  height: 2px;
-  z-index: 1;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  pointer-events: none;
-}
-
-.genre-2l[data-chart-style="studio"] .nebula-legend {
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  justify-content: flex-end;
-}
-
-.genre-2l[data-chart-style="studio"] .nebula-legend-item {
-  padding: 5px 8px;
-  border: 1px solid rgba(244, 240, 232, 0.12);
-  background: rgba(7, 9, 8, 0.58);
-  backdrop-filter: blur(8px);
 }
 
 @media (max-width: 720px) {

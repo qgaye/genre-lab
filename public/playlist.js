@@ -17,7 +17,6 @@ const progressLog = document.querySelector("#progressLog");
 const playlistMeta = document.querySelector("#playlistMeta");
 const genreTwoLevel = document.querySelector("#genreTwoLevel");
 const viewToggle = document.querySelector("#viewToggle");
-const chartStyleToggle = document.querySelector("#chartStyleToggle");
 const genreSunburst = document.querySelector("#genreSunburst");
 const genreMosaic = document.querySelector("#genreMosaic");
 const genreNebula = document.querySelector("#genreNebula");
@@ -98,9 +97,6 @@ const I18N = {
     "pl.view.sunburst": "旭日图",
     "pl.view.mosaic": "占比矩阵",
     "pl.view.nebula": "曲风星云",
-    "pl.style.aria": "图表风格切换",
-    "pl.style.classic": "经典",
-    "pl.style.studio": "Studio",
     "pl.sunburst.caption": "曲风构成 · 内环流派 / 外环子风格",
     "pl.mosaic.caption": "占比矩阵 · 面积即占比 / 同色同流派",
     "pl.nebula.caption": "曲风星云 · 每簇一个子风格 / 同色同流派",
@@ -197,9 +193,6 @@ const I18N = {
     "pl.view.sunburst": "Sunburst",
     "pl.view.mosaic": "Mosaic",
     "pl.view.nebula": "Nebula",
-    "pl.style.aria": "Chart style toggle",
-    "pl.style.classic": "Classic",
-    "pl.style.studio": "Studio",
     "pl.sunburst.caption": "Genre mix · inner ring genre / outer ring style",
     "pl.mosaic.caption": "Share mosaic · area = share / same color = same genre",
     "pl.nebula.caption": "Genre nebula · one cluster per style / same color = same genre",
@@ -786,22 +779,11 @@ let lastCompositions = null;
 // Snapshot of the finished-analysis summary so the overview/status/count text
 // can be re-localized when the language is switched after analysis.
 let lastSummary = null;
-const CHART_STYLE_STORAGE_KEY = "genre-lab-chart-style";
-let chartVisualStyle = "classic";
-try {
-  const savedChartStyle = localStorage.getItem(CHART_STYLE_STORAGE_KEY);
-  if (savedChartStyle === "studio" || savedChartStyle === "classic") chartVisualStyle = savedChartStyle;
-} catch {}
-
-function isStudioChartStyle() {
-  return chartVisualStyle === "studio";
-}
 
 function renderAggregate(compositions) {
   lastCompositions = compositions;
   const genres = buildTwoLevel(compositions, jobState && jobState.tracks ? jobState.tracks : []);
   registerStyleAssociations(genres);
-  applyChartStyle(chartVisualStyle, false);
   renderSunburst(genres);
   renderMosaic(genres);
   renderNebula(genres);
@@ -840,40 +822,6 @@ viewToggle.addEventListener("click", event => {
   if (btn) switchView(btn.dataset.view);
 });
 
-function applyChartStyle(style, persist = true) {
-  if (style !== "studio" && style !== "classic") return;
-  chartVisualStyle = style;
-  if (genreTwoLevel) genreTwoLevel.dataset.chartStyle = style;
-  if (chartStyleToggle) {
-    for (const btn of chartStyleToggle.querySelectorAll(".chart-style-btn")) {
-      const active = btn.dataset.style === style;
-      btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-pressed", active ? "true" : "false");
-    }
-  }
-  if (persist) {
-    try {
-      localStorage.setItem(CHART_STYLE_STORAGE_KEY, style);
-    } catch {}
-  }
-}
-
-function refreshActiveChartStyle() {
-  applyChartStyle(chartVisualStyle, false);
-  if (lastCompositions) renderAggregate(lastCompositions);
-  if (!genreMosaic.hidden) layoutMosaicTree();
-  if (!genreNebula.hidden) startNebula();
-}
-
-if (chartStyleToggle) {
-  chartStyleToggle.addEventListener("click", event => {
-    const btn = event.target.closest(".chart-style-btn");
-    if (!btn || btn.dataset.style === chartVisualStyle) return;
-    applyChartStyle(btn.dataset.style);
-    refreshActiveChartStyle();
-  });
-}
-
 // Sunburst: inner ring = parent genre share, outer ring = child style share.
 // Child slices share the parent hue, differentiated by opacity.
 function renderSunburst(genres) {
@@ -881,17 +829,15 @@ function renderSunburst(genres) {
   sunburstSvg.innerHTML = "";
   sunburstCenter.innerHTML = "";
   sunburstLegend.innerHTML = "";
-  sunburstSvg.classList.toggle("is-studio", isStudioChartStyle());
   if (!genres.length) return;
 
   const cx = 112;
   const cy = 112;
-  const studio = isStudioChartStyle();
-  const rGenreIn = studio ? 32 : 42;
-  const rGenreOut = studio ? 63 : 78;
-  const rStyleIn = studio ? 69 : 81;
-  const rStyleOut = studio ? 108 : 106;
-  const GAP = studio ? 0.03 : 0.014;
+  const rGenreIn = 42;
+  const rGenreOut = 78;
+  const rStyleIn = 81;
+  const rStyleOut = 106;
+  const GAP = 0.014;
 
   const point = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   const sector = (rInner, rOuter, a0, a1) => {
@@ -903,30 +849,7 @@ function renderSunburst(genres) {
     return `M${o0[0].toFixed(2)} ${o0[1].toFixed(2)} A${rOuter} ${rOuter} 0 ${large} 1 ${o1[0].toFixed(2)} ${o1[1].toFixed(2)} L${i1[0].toFixed(2)} ${i1[1].toFixed(2)} A${rInner} ${rInner} 0 ${large} 0 ${i0[0].toFixed(2)} ${i0[1].toFixed(2)} Z`;
   };
 
-  if (studio) {
-    for (const [r, cls] of [[108, "outer"], [86, "mid"], [65, "inner"], [31, "label"]]) {
-      const circle = document.createElementNS(NS, "circle");
-      circle.setAttribute("cx", cx);
-      circle.setAttribute("cy", cy);
-      circle.setAttribute("r", r);
-      circle.setAttribute("class", `sun-guide sun-guide-${cls}`);
-      sunburstSvg.appendChild(circle);
-    }
-    for (let i = 0; i < 48; i++) {
-      const a = -Math.PI / 2 + i / 48 * Math.PI * 2;
-      const p0 = point(i % 4 === 0 ? 92 : 98, a);
-      const p1 = point(108, a);
-      const tick = document.createElementNS(NS, "line");
-      tick.setAttribute("x1", p0[0].toFixed(1));
-      tick.setAttribute("y1", p0[1].toFixed(1));
-      tick.setAttribute("x2", p1[0].toFixed(1));
-      tick.setAttribute("y2", p1[1].toFixed(1));
-      tick.setAttribute("class", i % 4 === 0 ? "sun-tick sun-tick-major" : "sun-tick");
-      sunburstSvg.appendChild(tick);
-    }
-  }
-
-  let angle = studio ? -Math.PI * 0.72 : -Math.PI / 2;
+  let angle = -Math.PI / 2;
   for (const genre of genres) {
     const sweep = genre.percent / 100 * Math.PI * 2;
     const a0 = angle;
@@ -960,7 +883,7 @@ function renderSunburst(genres) {
       sPath.appendChild(sTitle);
       sunburstSvg.appendChild(sPath);
 
-      if (style.percent >= (studio ? 8 : 11)) {
+      if (style.percent >= 11) {
         const mid = sa + ssw / 2;
         const lp = point((rStyleIn + rStyleOut) / 2, mid);
         const text = document.createElementNS(NS, "text");
@@ -968,9 +891,7 @@ function renderSunburst(genres) {
         text.setAttribute("y", (lp[1] + 3).toFixed(1));
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("class", "sun-label");
-        text.textContent = studio && style.percent >= 13
-          ? `${style.label.slice(0, 8)} ${Math.round(style.percent)}%`
-          : `${Math.round(style.percent)}%`;
+        text.textContent = `${Math.round(style.percent)}%`;
         sunburstSvg.appendChild(text);
       }
       sa += ssw;
@@ -1123,7 +1044,6 @@ function renderMosaic(genres) {
     const dot = document.createElement("i");
     dot.className = "mosaic-dot";
     dot.style.background = genre.color;
-    item.style.setProperty("--genre-color", genre.color);
     item.appendChild(dot);
     item.append(document.createTextNode(genre.label));
     const pct = document.createElement("b");
@@ -1177,14 +1097,12 @@ function layoutMosaicTree() {
       const bh = Math.max(0, sr.h - GAP);
       const block = document.createElement("div");
       block.className = "mosaic-block";
-      block.dataset.rank = String(rank + 1);
       block.style.left = `${sr.x + GAP / 2}px`;
       block.style.top = `${sr.y + GAP / 2}px`;
       block.style.width = `${bw}px`;
       block.style.height = `${bh}px`;
-      block.style.setProperty("--genre-color", genre.color);
       block.style.background = genre.color;
-      block.style.opacity = isStudioChartStyle() ? "1" : (rank === 0 ? "1" : String(Math.max(0.45, 1 - rank * 0.22)));
+      block.style.opacity = rank === 0 ? "1" : String(Math.max(0.45, 1 - rank * 0.22));
       block.title = `${genre.label} / ${style.label} ${Math.round(style.percent)}%`;
       block.dataset.genre = style.genre || genre.name;
       block.dataset.style = style.name;
@@ -1278,21 +1196,6 @@ function nebulaRgba(hex, alpha) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-  const radius = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + w - radius, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
-  ctx.lineTo(x + w, y + h - radius);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
-  ctx.lineTo(x + radius, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-}
-
 function renderNebula(genres) {
   nebulaGenres = genres;
   // Legend mirrors the mosaic's: one round key per parent genre.
@@ -1333,54 +1236,6 @@ function buildNebula() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   nebulaClusters = [];
-  const studio = isStudioChartStyle();
-  if (studio) {
-    const cx0 = nebulaW * 0.5;
-    const cy0 = nebulaH * 0.5;
-    const maxOrbit = Math.max(72, Math.min(nebulaW, nebulaH) * 0.42);
-    let angle = -Math.PI * 0.7;
-    for (const [genreIndex, genre] of nebulaGenres.entries()) {
-      const sweep = Math.max(0.28, genre.percent / 100 * Math.PI * 2);
-      const styles = genre.styles.length ? genre.styles : [];
-      for (const [styleIndex, style] of styles.entries()) {
-        const ratio = (styleIndex + 0.5) / Math.max(1, styles.length);
-        const a = angle + sweep * ratio + Math.sin(genreIndex + styleIndex) * 0.08;
-        const orbit = maxOrbit * (0.28 + ratio * 0.64);
-        const R = Math.max(13, Math.min(44, 8 + Math.sqrt(style.percent) * 6.2));
-        const cx = Math.max(R + 12, Math.min(nebulaW - R - 12, cx0 + Math.cos(a) * orbit));
-        const cy = Math.max(R + 12, Math.min(nebulaH - R - 12, cy0 + Math.sin(a) * orbit * 0.72));
-        const count = Math.max(6, Math.round(style.percent * 4));
-        const parts = [];
-        for (let i = 0; i < count; i++) {
-          const baseRad = R * Math.sqrt(Math.random()) * 0.78;
-          parts.push({
-            ang: nebulaRand(0, Math.PI * 2),
-            baseRad,
-            spin: nebulaRand(-0.003, 0.003),
-            osc: nebulaRand(0, Math.PI * 2),
-            oscSpd: nebulaRand(0.003, 0.008),
-            oscAmp: nebulaRand(0.8, 3.5),
-            size: nebulaRand(1.1, 2.8),
-            twk: nebulaRand(0, Math.PI * 2)
-          });
-        }
-        nebulaClusters.push({
-          genre,
-          style,
-          cx,
-          cy,
-          R,
-          parts,
-          drift: nebulaRand(0, Math.PI * 2),
-          genreIndex,
-          styleIndex
-        });
-      }
-      angle += sweep;
-    }
-    return;
-  }
-
   const genreRects = squarifyTreemap(
     nebulaGenres.map(g => ({ value: g.percent, genre: g })),
     0, 0, nebulaW, nebulaH
@@ -1428,79 +1283,23 @@ function buildNebula() {
 
 function drawNebula() {
   const ctx = nebulaCanvas.getContext("2d");
-  const studio = isStudioChartStyle();
   nebulaTick += 1;
   ctx.clearRect(0, 0, nebulaW, nebulaH);
-
-  if (studio) {
-    ctx.save();
-    ctx.globalCompositeOperation = "source-over";
-    ctx.strokeStyle = "rgba(244, 240, 232, 0.08)";
-    ctx.lineWidth = 1;
-    for (let x = 24; x < nebulaW; x += 48) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, nebulaH);
-      ctx.stroke();
-    }
-    for (let y = 24; y < nebulaH; y += 48) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(nebulaW, y);
-      ctx.stroke();
-    }
-    ctx.translate(nebulaW / 2, nebulaH / 2);
-    for (const r of [56, 112, 168, 224]) {
-      if (r > Math.max(nebulaW, nebulaH)) continue;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, r, r * 0.72, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    const byGenre = new Map();
-    for (const cl of nebulaClusters) {
-      const list = byGenre.get(cl.genre.name) || [];
-      list.push(cl);
-      byGenre.set(cl.genre.name, list);
-    }
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    for (const list of byGenre.values()) {
-      if (list.length < 2) continue;
-      list.sort((a, b) => a.styleIndex - b.styleIndex);
-      ctx.strokeStyle = nebulaRgba(list[0].genre.color, 0.26);
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(list[0].cx, list[0].cy);
-      for (let i = 1; i < list.length; i++) ctx.lineTo(list[i].cx, list[i].cy);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
 
   // Particles + halos are drawn additively so overlaps glow like a real nebula.
   ctx.globalCompositeOperation = "lighter";
   for (const cl of nebulaClusters) {
-    const driftScale = studio ? 0.025 : 0.05;
-    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * driftScale;
-    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * driftScale;
+    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * 0.05;
+    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * 0.05;
     const cx = cl.cx + dx;
     const cy = cl.cy + dy;
-    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * (studio ? 1.4 : 1.15));
-    halo.addColorStop(0, nebulaRgba(cl.genre.color, studio ? 0.24 : 0.16));
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * 1.15);
+    halo.addColorStop(0, nebulaRgba(cl.genre.color, 0.16));
     halo.addColorStop(1, nebulaRgba(cl.genre.color, 0));
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(cx, cy, cl.R * (studio ? 1.4 : 1.15), 0, Math.PI * 2);
+    ctx.arc(cx, cy, cl.R * 1.15, 0, Math.PI * 2);
     ctx.fill();
-    if (studio) {
-      ctx.strokeStyle = nebulaRgba(cl.genre.color, 0.45);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cl.R * 0.82, 0, Math.PI * 2);
-      ctx.stroke();
-    }
     cl.drawCx = cx;
     cl.drawCy = cy;
     for (const p of cl.parts) {
@@ -1513,7 +1312,7 @@ function drawNebula() {
       const x = cx + Math.cos(p.ang) * rad;
       const y = cy + Math.sin(p.ang) * rad;
       const tw = 0.55 + 0.45 * Math.sin(p.twk);
-      ctx.fillStyle = nebulaRgba(cl.genre.color, (studio ? 0.64 : 0.5) + 0.32 * tw);
+      ctx.fillStyle = nebulaRgba(cl.genre.color, 0.5 + 0.4 * tw);
       ctx.beginPath();
       ctx.arc(x, y, p.size, 0, Math.PI * 2);
       ctx.fill();
@@ -1525,35 +1324,15 @@ function drawNebula() {
   ctx.textAlign = "center";
   for (const cl of nebulaClusters) {
     if (cl.R < 20) continue;
-    const nameSize = Math.max(11, Math.min(studio ? 16 : 18, cl.R * (studio ? 0.28 : 0.32)));
+    const nameSize = Math.max(11, Math.min(18, cl.R * 0.32));
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
     ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
-    ctx.shadowBlur = studio ? 10 : 6;
-    if (studio) {
-      const label = cl.style.label.length > 14 ? `${cl.style.label.slice(0, 12)}...` : cl.style.label;
-      const w = Math.max(62, Math.min(138, ctx.measureText(label).width + 26));
-      const h = 28;
-      const x = cl.drawCx - w / 2;
-      const y = cl.drawCy + cl.R * 0.62;
-      ctx.fillStyle = "rgba(13, 15, 13, 0.72)";
-      ctx.strokeStyle = nebulaRgba(cl.genre.color, 0.52);
-      ctx.lineWidth = 1;
-      roundRect(ctx, x, y, w, h, 4);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "rgba(244, 240, 232, 0.95)";
-      ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
-      ctx.fillText(label, cl.drawCx, y + 12);
-      ctx.fillStyle = cl.genre.color;
-      ctx.font = `900 10px "Avenir Next", Helvetica, Arial, sans-serif`;
-      ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, y + 24);
-    } else {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-      ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
-      ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
-      ctx.fillStyle = cl.genre.color;
-      ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
-      ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
-    }
+    ctx.shadowBlur = 6;
+    ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
+    ctx.fillStyle = cl.genre.color;
+    ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
     ctx.shadowBlur = 0;
   }
 
@@ -1654,10 +1433,7 @@ function resetPlaylistView() {
   trackList.innerHTML = "";
   sunburstSvg.innerHTML = "";
   sunburstCenter.innerHTML = "";
-  sunburstLegend.innerHTML = "";
   mosaicStage.innerHTML = "";
-  nebulaLegend.innerHTML = "";
-  stopNebula();
   genreTwoLevel.hidden = true;
   twoLevelShown = false;
   lastCompositions = null;
@@ -2360,7 +2136,6 @@ if (langToggle) {
   });
 }
 
-applyChartStyle(chartVisualStyle, false);
 applyLanguage();
 initModelSelector();
 // Resume an in-flight / finished job whose id is in the page URL (mobile
