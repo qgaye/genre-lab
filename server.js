@@ -1893,6 +1893,8 @@ async function handleAnalyzePlaylist(req, res) {
       jobId,
       state: "running",
       modelName,
+      // Original user input, kept so a resumed page can refill the link box.
+      inputUrl: raw,
       name: playlist.name,
       coverImgUrl: playlist.coverImgUrl,
       creator: playlist.creator,
@@ -1951,6 +1953,7 @@ function handlePlaylistStatus(req, res, url) {
     jobId: job.jobId,
     state: job.state,
     error: job.error || "",
+    inputUrl: job.inputUrl || "",
     name: job.name,
     total: job.total,
     completed: job.completed,

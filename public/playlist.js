@@ -1176,6 +1176,9 @@ async function resumeJobFromUrl() {
       return;
     }
     resetPlaylistView();
+    // Refill the link box with the original input so the resumed page matches
+    // what the user first submitted.
+    if (data.inputUrl) playlistInput.value = data.inputUrl;
     installJob({
       jobId,
       name: data.name,
