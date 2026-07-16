@@ -206,10 +206,26 @@ const DEFAULT_CONFIG = loadDefaultConfig();
 loadEnvFile(path.join(ROOT, ".env.local"));
 loadEnvFile(path.join(ROOT, ".env"));
 
+// A playlist larger than this many tracks is randomly down-sampled to this size
+// before we fetch song names / analyze, keeping big playlists tractable. Order
+// of precedence: PLAYLIST_MAX_TRACKS env > config/defaults.json > 100. Set to 0
+// to disable the cap (analyze everything). Computed after .env files load so an
+// env-file override is honored.
+const PLAYLIST_MAX_TRACKS = (() => {
+  const raw = process.env.PLAYLIST_MAX_TRACKS;
+  const source = raw != null && raw !== "" ? raw : DEFAULT_CONFIG.playlistMaxTracks;
+  const n = Number(source);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 100;
+})();
+
 // Genre model registry. Keep in sync with scripts/analyze_genre.py. Each model
 // has a fixed taxonomy config at data/<model>/discogs-taxonomy.json. A request
 // may target either model; the active default is chosen by GENRE_MODEL env or
 // config/defaults.json genreModel.
+//
+// Memory note: effnet400's model is cached/reused in the worker (~1.2GB
+// resident). maest519 is far heavier (~4GB RSS), so the worker builds it fresh
+// per request and never caches it — see scripts/analyze_genre.py.
 const GENRE_MODELS = {
   effnet400: {
     label: "Essentia Discogs400 - 400 styles, faster/coarser",
@@ -984,6 +1000,19 @@ async function resolveNetEasePlaylistId(value) {
   return "";
 }
 
+// Return a random subset of `size` items from `arr` using a partial
+// Fisher-Yates shuffle. Does not mutate the input. If `size` >= length the
+// whole array (shuffled copy) is returned.
+function sampleArray(arr, size) {
+  const copy = arr.slice();
+  const n = Math.min(size, copy.length);
+  for (let i = 0; i < n; i += 1) {
+    const j = i + Math.floor(Math.random() * (copy.length - i));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
 // Resolve a NetEase playlist link into its metadata and full track list. Shared
 // by the single-shot /api/netease-playlist handler and the playlist aggregate
 // job. Throws an Error carrying a `statusCode` so callers can map it to the
@@ -1015,7 +1044,22 @@ async function loadNetEasePlaylist(raw) {
   const trackIds = Array.isArray(playlist.trackIds)
     ? playlist.trackIds.map(item => String(item && item.id ? item.id : "")).filter(Boolean)
     : [];
-  if (trackIds.length > rawTracks.length) {
+  // Full size of the playlist (every listed track), before any down-sampling.
+  const originalCount = Math.max(trackIds.length, rawTracks.length);
+  // Big playlists are randomly down-sampled to PLAYLIST_MAX_TRACKS so analysis
+  // stays tractable. We sample at the id level (before fetching song names) to
+  // avoid pulling details we would only throw away.
+  let sampled = false;
+  let sampledCount = originalCount;
+  if (PLAYLIST_MAX_TRACKS > 0 && trackIds.length > PLAYLIST_MAX_TRACKS) {
+    const pickedIds = sampleArray(trackIds, PLAYLIST_MAX_TRACKS);
+    const fetched = await fetchNetEaseSongsByIds(pickedIds);
+    if (fetched.length) {
+      rawTracks = fetched;
+      sampled = true;
+      sampledCount = fetched.length;
+    }
+  } else if (trackIds.length > rawTracks.length) {
     const fetched = await fetchNetEaseSongsByIds(trackIds);
     if (fetched.length) rawTracks = fetched;
   }
@@ -1026,14 +1070,29 @@ async function loadNetEasePlaylist(raw) {
     album: (track.al && track.al.name) || (track.album && track.album.name) || "",
     sourceUrl: `https://music.163.com/song?id=${track.id}`
   })).filter(track => track.title);
+  // Fall back to sampling the already-detailed tracks when trackIds was absent
+  // but the inlined list still exceeds the cap.
+  let finalTracks = tracks;
+  if (!sampled && PLAYLIST_MAX_TRACKS > 0 && tracks.length > PLAYLIST_MAX_TRACKS) {
+    finalTracks = sampleArray(tracks, PLAYLIST_MAX_TRACKS);
+    sampled = true;
+    sampledCount = finalTracks.length;
+  } else if (sampled) {
+    sampledCount = tracks.length;
+  }
   return {
     id: String(playlist.id || id),
     name: playlist.name || "",
     coverImgUrl: playlist.coverImgUrl || "",
-    trackCount: playlist.trackCount || tracks.length,
+    trackCount: playlist.trackCount || originalCount,
+    // originalCount = playlist size; sampled/sampledCount tell the client when a
+    // random subset was analyzed instead of the whole playlist.
+    originalCount,
+    sampled,
+    sampledCount,
     creator: playlist.creator && playlist.creator.nickname ? playlist.creator.nickname : "",
     sourceUrl: `https://music.163.com/playlist?id=${id}`,
-    tracks
+    tracks: finalTracks
   };
 }
 
@@ -1604,67 +1663,147 @@ async function handleUploadAudio(req, res) {
   }
 }
 
-// A single Python process is CPU/RAM heavy, so we never run two at once. This
-// tiny FIFO async mutex serializes every Essentia spawn across all jobs: each
-// caller awaits the previous one before spawning. Because each job's tracks are
-// processed with `await`, two concurrent playlists simply take turns on the
-// lock — they interleave track-by-track instead of piling up parallel Pythons.
-let essentiaLock = Promise.resolve();
+// Essentia runs inside a single long-lived Python worker. Spawning Python and
+// loading the TensorFlow model graph costs several seconds, so instead of
+// starting a fresh process per track we lazily start ONE worker on the first
+// request and reuse it for every later analysis. The worker stays alive between
+// requests; it is only (re)spawned when it is missing or after a crash/timeout.
+//
+// A single Python process is CPU/RAM heavy and the worker's stdin loop handles
+// one request at a time, so we still serialize every analysis through this FIFO
+// async queue: two concurrent playlists interleave track-by-track on the shared
+// worker instead of piling up parallel Pythons.
+//
+// The worker's TensorFlow model stays resident (~1.2GB RSS) for as long as the
+// process lives. On small hosts that memory matters, so after ESSENTIA_IDLE_MS
+// with no requests we kill the worker to give the memory back to the OS; the
+// next analysis simply pays the lazy startup cost again.
+const ESSENTIA_REQUEST_TIMEOUT = 180000;
+const ESSENTIA_IDLE_MS = Number(process.env.ESSENTIA_IDLE_MS || 60000);
+let essentiaWorker = null;
+let essentiaQueue = Promise.resolve();
+let essentiaRequestId = 0;
 
 function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
-  const run = essentiaLock.then(() => runEssentia(filePath, top, modelName));
+  const run = essentiaQueue.then(() => runEssentiaOnWorker(filePath, top, modelName));
   // Keep the chain alive regardless of this run's outcome so a failure doesn't
-  // wedge the lock for everyone behind it.
-  essentiaLock = run.then(() => {}, () => {});
+  // wedge the queue for everyone behind it.
+  essentiaQueue = run.then(() => {}, () => {});
   return run;
 }
 
-function runEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
+// Kill an idle worker so its resident model memory is returned to the OS. Armed
+// after each response; disarmed as soon as a new request grabs the worker.
+function scheduleEssentiaIdleShutdown(worker) {
+  clearTimeout(worker.idleTimer);
+  worker.idleTimer = setTimeout(() => {
+    if (essentiaWorker === worker) essentiaWorker = null;
+    try { worker.child.stdin.end(); } catch (error) { void error; }
+    try { worker.child.kill("SIGTERM"); } catch (error) { void error; }
+  }, ESSENTIA_IDLE_MS);
+  // Don't let this timer keep the Node event loop alive on its own.
+  if (typeof worker.idleTimer.unref === "function") worker.idleTimer.unref();
+}
+
+// Parse the worker's newline-delimited JSON stdout. Each analysis emits exactly
+// one response object; a startup "ready" line and any stray non-JSON noise are
+// ignored. Responses are matched to the in-flight request by id.
+function handleEssentiaWorkerData(worker, chunk) {
+  worker.buffer += chunk;
+  let idx;
+  while ((idx = worker.buffer.indexOf("\n")) >= 0) {
+    const line = worker.buffer.slice(0, idx).trim();
+    worker.buffer = worker.buffer.slice(idx + 1);
+    if (!line) continue;
+    let msg;
+    try {
+      msg = JSON.parse(line);
+    } catch (error) {
+      void error;
+      continue;
+    }
+    if (msg.ready) continue;
+    const current = worker.current;
+    if (!current || (msg.id != null && msg.id !== current.id)) continue;
+    clearTimeout(current.timer);
+    worker.current = null;
+    // The worker is now idle: start the countdown to free its model memory.
+    scheduleEssentiaIdleShutdown(worker);
+    if (msg.ok) current.resolve(msg.result);
+    else current.reject(new Error(msg.error || "Essentia 分析失败。"));
+  }
+}
+
+function startEssentiaWorker() {
+  if (!fs.existsSync(ESSENTIA_PYTHON)) {
+    throw new Error("Essentia Python 环境不存在，请先安装 .venv-essentia。");
+  }
+  if (!fs.existsSync(ESSENTIA_SCRIPT)) {
+    throw new Error("Essentia 分析脚本不存在。");
+  }
+  const child = spawn(ESSENTIA_PYTHON, [ESSENTIA_SCRIPT, "--serve"], {
+    cwd: ROOT,
+    stdio: ["pipe", "pipe", "pipe"]
+  });
+  const worker = { child, buffer: "", stderr: "", current: null, idleTimer: null };
+  child.stdout.setEncoding("utf8");
+  child.stdout.on("data", chunk => handleEssentiaWorkerData(worker, chunk));
+  child.stderr.on("data", chunk => {
+    worker.stderr += chunk.toString();
+    // Keep only the tail so long-running workers don't accumulate log memory.
+    if (worker.stderr.length > 8192) worker.stderr = worker.stderr.slice(-8192);
+  });
+  const failWorker = error => {
+    clearTimeout(worker.idleTimer);
+    if (essentiaWorker === worker) essentiaWorker = null;
+    const current = worker.current;
+    if (current) {
+      clearTimeout(current.timer);
+      worker.current = null;
+      current.reject(error);
+    }
+  };
+  // A clean idle-shutdown exits with a non-error message; only surface it to a
+  // waiting request (there won't be one after an idle kill).
+  child.on("error", err => failWorker(new Error(`无法启动 Essentia：${err.message}`)));
+  child.on("close", code => failWorker(new Error(worker.stderr.trim() || `Essentia worker 退出码 ${code}`)));
+  essentiaWorker = worker;
+  return worker;
+}
+
+function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
   return new Promise((resolve, reject) => {
-    if (!fs.existsSync(ESSENTIA_PYTHON)) {
-      reject(new Error("Essentia Python 环境不存在，请先安装 .venv-essentia。"));
+    let worker;
+    try {
+      worker = essentiaWorker && essentiaWorker.child.stdin.writable
+        ? essentiaWorker
+        : startEssentiaWorker();
+    } catch (error) {
+      reject(error);
       return;
     }
-    if (!fs.existsSync(ESSENTIA_SCRIPT)) {
-      reject(new Error("Essentia 分析脚本不存在。"));
-      return;
-    }
-
-    const child = spawn(ESSENTIA_PYTHON, [
-      ESSENTIA_SCRIPT,
-      filePath,
-      "--model",
-      modelName,
-      "--top",
-      String(top),
-      "--json"
-    ], { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
+    // A request is arriving: cancel any pending idle shutdown so the worker
+    // isn't killed out from under us.
+    clearTimeout(worker.idleTimer);
+    const id = ++essentiaRequestId;
     const timer = setTimeout(() => {
-      child.kill("SIGTERM");
+      // The worker processes one request at a time, so a stuck request means
+      // the whole worker is wedged: kill it and let the next call respawn.
+      clearTimeout(worker.idleTimer);
+      if (essentiaWorker === worker) essentiaWorker = null;
+      worker.current = null;
+      try { worker.child.kill("SIGTERM"); } catch (error) { void error; }
       reject(new Error("Essentia 曲风分析超时。"));
-    }, 180000);
-
-    child.stdout.on("data", chunk => stdout += chunk.toString());
-    child.stderr.on("data", chunk => stderr += chunk.toString());
-    child.on("error", error => {
+    }, ESSENTIA_REQUEST_TIMEOUT);
+    worker.current = { id, resolve, reject, timer };
+    const payload = JSON.stringify({ id, audio: filePath, top, model: modelName }) + "\n";
+    try {
+      worker.child.stdin.write(payload);
+    } catch (error) {
       clearTimeout(timer);
-      reject(new Error(`无法启动 Essentia：${error.message}`));
-    });
-    child.on("close", code => {
-      clearTimeout(timer);
-      if (code !== 0) {
-        reject(new Error(stderr.trim() || `Essentia 退出码 ${code}`));
-        return;
-      }
-      try {
-        const line = stdout.trim().split(/\r?\n/).filter(Boolean).pop();
-        resolve(JSON.parse(line));
-      } catch (error) {
-        reject(new Error(`无法解析 Essentia 输出：${error.message}`));
-      }
-    });
+      worker.current = null;
+      reject(new Error(`无法向 Essentia worker 写入：${error.message}`));
+    }
   });
 }
 
@@ -1899,6 +2038,11 @@ async function handleAnalyzePlaylist(req, res) {
       coverImgUrl: playlist.coverImgUrl,
       creator: playlist.creator,
       sourceUrl: playlist.sourceUrl,
+      // Sampling metadata: when a big playlist was down-sampled, originalCount is
+      // its full size and `sampled` is true so the client can explain that only a
+      // random subset (tracks.length) is being analyzed.
+      originalCount: playlist.originalCount || tracks.length,
+      sampled: Boolean(playlist.sampled),
       tracks,
       total: tracks.length,
       results: new Array(tracks.length).fill(null),
@@ -1927,6 +2071,8 @@ async function handleAnalyzePlaylist(req, res) {
       creator: playlist.creator,
       sourceUrl: playlist.sourceUrl,
       total: tracks.length,
+      originalCount: playlist.originalCount || tracks.length,
+      sampled: Boolean(playlist.sampled),
       modelKey: modelName,
       tracks
     });
@@ -1956,6 +2102,8 @@ function handlePlaylistStatus(req, res, url) {
     inputUrl: job.inputUrl || "",
     name: job.name,
     total: job.total,
+    originalCount: job.originalCount || job.total,
+    sampled: Boolean(job.sampled),
     completed: job.completed,
     ok: job.ok,
     // The track list lets a resumed page (which never saw the submit response)
@@ -2120,6 +2268,16 @@ if (require.main === module) {
   server.listen(PORT, HOST, () => {
     console.log(`Genre Lab running at http://${HOST}:${PORT}`);
   });
+  // Don't leave the long-lived Essentia worker orphaned when the server stops.
+  const stopEssentiaWorker = () => {
+    if (essentiaWorker) {
+      try { essentiaWorker.child.kill("SIGTERM"); } catch (error) { void error; }
+      essentiaWorker = null;
+    }
+  };
+  process.on("exit", stopEssentiaWorker);
+  process.on("SIGINT", () => { stopEssentiaWorker(); process.exit(0); });
+  process.on("SIGTERM", () => { stopEssentiaWorker(); process.exit(0); });
 }
 
 module.exports = {

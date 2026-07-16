@@ -126,10 +126,11 @@ const I18N = {
     "pl.progress.parse": "解析歌单",
     "pl.progress.requesting": "请求网易云歌单信息…",
     "pl.playlist.fallbackName": "网易云歌单",
-    "pl.overview.subtitle": "共 {n} 首",
     "pl.overview.analyzing": "{name} · 共 {n} 首歌曲，逐曲分析中…",
     "pl.parsed.start": "歌单「{name}」共 {n} 首，开始逐曲分析",
+    "pl.parsed.start.sampled": "歌单「{name}」{total} 首中随机 {n} 首，开始逐曲分析",
     "pl.progress.parsedInfo": "歌单「{name}」共 {n} 首",
+    "pl.sampled.notice": "歌单「{name}」共 {total} 首，超过 {cap} 首上限，已随机挑选其中 {n} 首进行分析。",
     "pl.status.empty": "歌单为空",
     "pl.overview.emptyTracks": "该歌单没有可分析的曲目。",
     "pl.status.analyzing": "分析中 {i}/{n}",
@@ -139,8 +140,6 @@ const I18N = {
     "pl.progress.complete": "分析完成",
     "pl.progress.completeInfo": "成功分析 {ok}/{n} 首",
     "pl.status.complete": "完成 {ok}/{n}",
-    "pl.overview.completeSubtitle": "共 {n} 首 · 成功分析 {ok} 首",
-    "pl.overview.complete": "{name} · 共 {n} 首，成功分析 {ok} 首",
     "pl.status.error": "出错了",
     "pl.overview.failed": "分析失败：{err}",
     "pl.overview.expired": "分析结果已过期或不存在，请重新发起分析。",
@@ -211,10 +210,11 @@ const I18N = {
     "pl.progress.parse": "Parsing playlist",
     "pl.progress.requesting": "Requesting NetEase playlist info…",
     "pl.playlist.fallbackName": "NetEase playlist",
-    "pl.overview.subtitle": "{n} tracks",
     "pl.overview.analyzing": "{name} · {n} tracks, analyzing…",
     "pl.parsed.start": "Playlist \u201c{name}\u201d has {n} tracks; starting analysis",
+    "pl.parsed.start.sampled": "Playlist \u201c{name}\u201d: {n} of {total} tracks picked at random; starting analysis",
     "pl.progress.parsedInfo": "Playlist \u201c{name}\u201d has {n} tracks",
+    "pl.sampled.notice": "Playlist \u201c{name}\u201d has {total} tracks, exceeding the {cap}-track cap; {n} were randomly picked for analysis.",
     "pl.status.empty": "Empty playlist",
     "pl.overview.emptyTracks": "This playlist has no analyzable tracks.",
     "pl.status.analyzing": "Analyzing {i}/{n}",
@@ -224,8 +224,6 @@ const I18N = {
     "pl.progress.complete": "Analysis complete",
     "pl.progress.completeInfo": "Analyzed {ok}/{n} tracks",
     "pl.status.complete": "Done {ok}/{n}",
-    "pl.overview.completeSubtitle": "{n} tracks · {ok} analyzed",
-    "pl.overview.complete": "{name} · {n} tracks, {ok} analyzed",
     "pl.status.error": "Something went wrong",
     "pl.overview.failed": "Analysis failed: {err}",
     "pl.overview.expired": "This analysis has expired or no longer exists; please start a new one.",
@@ -1020,17 +1018,23 @@ function setJobInUrl(jobId) {
   history.replaceState(null, "", url);
 }
 
-// Render the "analyzing" overview / count / parsed line for a job.
+// Render the "analyzing" overview / count / parsed line for a job. When the
+// playlist was randomly down-sampled, the overview says "{n} of {total} (random)"
+// instead of a plain "{n} tracks" so the count isn't mistaken for the whole list.
 function renderPlaylistMeta(info) {
   const name = info.name || t("pl.playlist.fallbackName");
   const { total } = info;
+  const sampled = Boolean(info.sampled);
+  const originalCount = info.originalCount || total;
   shareMeta = {
     title: name,
-    subtitle: t("pl.overview.subtitle", { n: total })
+    subtitle: ""
   };
   playlistMeta.textContent = t("pl.overview.analyzing", { name, n: total });
   trackCount.textContent = t("pl.count.tracks", { n: total });
-  parsedLine.textContent = t("pl.parsed.start", { name, n: total });
+  parsedLine.textContent = sampled
+    ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
+    : t("pl.parsed.start", { name, n: total });
   return name;
 }
 
@@ -1043,6 +1047,8 @@ function installJob(info) {
     jobId: info.jobId,
     name,
     total: info.total,
+    sampled: Boolean(info.sampled),
+    originalCount: info.originalCount || info.total,
     cards: tracks.map((track, index) => createTrackCard(track, index)),
     compositions: new Array(tracks.length).fill(null),
     applied: 0
@@ -1089,14 +1095,14 @@ function finishJob(data) {
   stopPolling();
   const { name, total } = jobState;
   const ok = data.ok;
-  lastSummary = { name, total, ok };
+  lastSummary = { name, total, ok, sampled: jobState.sampled, originalCount: jobState.originalCount };
   setProgress(t("pl.progress.complete"), 100, t("pl.progress.completeInfo", { ok, n: total }));
   setStatus(t("pl.status.complete", { ok, n: total }));
   shareMeta = {
     title: name,
-    subtitle: t("pl.overview.completeSubtitle", { n: total, ok })
+    subtitle: ""
   };
-  playlistMeta.textContent = t("pl.overview.complete", { name, n: total, ok });
+  playlistMeta.textContent = name;
   running = false;
   analyzeBtn.disabled = false;
 }
@@ -1153,9 +1159,21 @@ async function pollOnce() {
   }
 }
 
+// When the server randomly down-sampled a large playlist, make it explicit: the
+// full size, the cap, and how many tracks were picked. Shown both on a fresh
+// submit and when resuming a sampled job.
+function noticeIfSampled(info) {
+  if (!info || !info.sampled) return;
+  const name = info.name || t("pl.playlist.fallbackName");
+  const analyzed = info.total || 0;
+  const total = info.originalCount || analyzed;
+  logLine(t("pl.sampled.notice", { name, total, cap: analyzed, n: analyzed }));
+}
+
 function beginJob(info) {
   const name = installJob(info);
   setProgress(t("pl.progress.parse"), 8, t("pl.progress.parsedInfo", { name, n: info.total }));
+  noticeIfSampled(info);
   running = true;
   analyzeBtn.disabled = true;
   pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
@@ -1183,7 +1201,9 @@ async function resumeJobFromUrl() {
       jobId,
       name: data.name,
       tracks: data.tracks,
-      total: data.total
+      total: data.total,
+      sampled: data.sampled,
+      originalCount: data.originalCount
     });
     // Load the already-finished batch silently (no per-track log spam); the
     // resume notice below explains how many were already done.
@@ -1200,6 +1220,7 @@ async function resumeJobFromUrl() {
       const total = data.total || 0;
       const nth = total ? Math.min(data.completed + 1, total) : 0;
       logLine(t("pl.progress.resumed", { done: data.completed, n: total }));
+      noticeIfSampled(data);
       setStatus(t("pl.status.resuming", { i: nth, n: total }), true);
       running = true;
       analyzeBtn.disabled = true;
@@ -1644,15 +1665,17 @@ function applyLanguage() {
   // Re-localize the finished-analysis summary text (the generic data-i18n loop
   // above reset these back to their idle defaults).
   if (lastSummary) {
-    const { name, total, ok } = lastSummary;
+    const { name, total, ok, sampled, originalCount } = lastSummary;
     trackCount.textContent = t("pl.count.tracks", { n: total });
-    parsedLine.textContent = t("pl.parsed.start", { name, n: total });
+    parsedLine.textContent = sampled
+      ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
+      : t("pl.parsed.start", { name, n: total });
     statusPill.textContent = t("pl.status.complete", { ok, n: total });
     progressLabel.textContent = t("pl.progress.complete");
-    playlistMeta.textContent = t("pl.overview.complete", { name, n: total, ok });
+    playlistMeta.textContent = name;
     shareMeta = {
       title: name,
-      subtitle: t("pl.overview.completeSubtitle", { n: total, ok })
+      subtitle: ""
     };
   }
 }
