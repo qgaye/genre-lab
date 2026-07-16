@@ -19,10 +19,14 @@ const genreTwoLevel = document.querySelector("#genreTwoLevel");
 const viewToggle = document.querySelector("#viewToggle");
 const genreSunburst = document.querySelector("#genreSunburst");
 const genreMosaic = document.querySelector("#genreMosaic");
+const genreNebula = document.querySelector("#genreNebula");
 const sunburstSvg = document.querySelector("#sunburstSvg");
 const sunburstCenter = document.querySelector("#sunburstCenter");
 const sunburstLegend = document.querySelector("#sunburstLegend");
 const mosaicStage = document.querySelector("#mosaicStage");
+const nebulaStage = document.querySelector("#nebulaStage");
+const nebulaCanvas = document.querySelector("#nebulaCanvas");
+const nebulaLegend = document.querySelector("#nebulaLegend");
 const trackList = document.querySelector("#trackList");
 const trackCount = document.querySelector("#trackCount");
 const trackCardTemplate = document.querySelector("#trackCardTemplate");
@@ -87,8 +91,10 @@ const I18N = {
     "pl.view.aria": "曲风视图切换",
     "pl.view.sunburst": "旭日图",
     "pl.view.mosaic": "占比矩阵",
+    "pl.view.nebula": "曲风星云",
     "pl.sunburst.caption": "曲风构成 · 内环流派 / 外环子风格",
     "pl.mosaic.caption": "占比矩阵 · 面积即占比 / 同色同流派",
+    "pl.nebula.caption": "曲风星云 · 每簇一个子风格 / 同色同流派",
     "pl.share.title": "生成占比矩阵图片并预览",
     "pl.share.button": "分享",
     "pl.share.busy": "生成中…",
@@ -171,8 +177,10 @@ const I18N = {
     "pl.view.aria": "Genre view toggle",
     "pl.view.sunburst": "Sunburst",
     "pl.view.mosaic": "Mosaic",
+    "pl.view.nebula": "Nebula",
     "pl.sunburst.caption": "Genre mix · inner ring genre / outer ring style",
     "pl.mosaic.caption": "Share mosaic · area = share / same color = same genre",
+    "pl.nebula.caption": "Genre nebula · one cluster per style / same color = same genre",
     "pl.share.title": "Generate a mosaic image and preview it",
     "pl.share.button": "Share",
     "pl.share.busy": "Generating…",
@@ -585,6 +593,7 @@ function renderAggregate(compositions) {
   const genres = buildTwoLevel(compositions);
   renderSunburst(genres);
   renderMosaic(genres);
+  renderNebula(genres);
   genreTwoLevel.hidden = genres.length === 0;
   if (shareMosaicBtn) shareMosaicBtn.disabled = genres.length === 0;
   // Default to the mosaic view the first time the charts appear, without
@@ -596,11 +605,11 @@ function renderAggregate(compositions) {
 }
 
 // Show one view at a time. The toggle acts as a tablist and the inactive
-// figure is hidden so only the selected chart is visible.
+// figures are hidden so only the selected chart is visible.
 function switchView(view) {
-  const isMosaic = view === "mosaic";
-  genreSunburst.hidden = isMosaic;
-  genreMosaic.hidden = !isMosaic;
+  genreSunburst.hidden = view !== "sunburst";
+  genreMosaic.hidden = view !== "mosaic";
+  genreNebula.hidden = view !== "nebula";
   for (const btn of viewToggle.querySelectorAll(".view-toggle-btn")) {
     const active = btn.dataset.view === view;
     btn.classList.toggle("is-active", active);
@@ -608,7 +617,11 @@ function switchView(view) {
   }
   // The mosaic figure has zero size while hidden, so lay it out only once it
   // becomes visible (and thus measurable).
-  if (isMosaic) layoutMosaicTree();
+  if (view === "mosaic") layoutMosaicTree();
+  // The nebula canvas likewise can't be sized while hidden; only run its
+  // animation loop while it's the visible view to avoid wasting frames.
+  if (view === "nebula") startNebula();
+  else stopNebula();
 }
 
 viewToggle.addEventListener("click", event => {
@@ -961,6 +974,228 @@ mosaicStage.addEventListener("click", event => {
   if (!block) return;
   const profile = profileFor(block.dataset.genre, block.dataset.style);
   if (profile) openStyleDialog(profile, block);
+});
+
+// ---------------------------------------------------------------------------
+// Nebula view: a canvas "galaxy" of the same two-level data. Each style is a
+// small drifting cluster of particles (≈ one particle per track-share point),
+// clusters are placed inside their parent genre's treemap region and share the
+// genre color, so same-genre styles read as one constellation. Its area still
+// tracks share (cluster radius ∝ √percent), and clicking a cluster opens the
+// same style intro dialog as the other views.
+// ---------------------------------------------------------------------------
+let nebulaGenres = [];
+let nebulaClusters = [];
+let nebulaRaf = null;
+let nebulaTick = 0;
+let nebulaW = 0;
+let nebulaH = 0;
+const nebulaReduceMotion =
+  window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function nebulaRand(a, b) {
+  return a + Math.random() * (b - a);
+}
+
+// Turn a #rrggbb hex plus alpha into an rgba() string for the canvas.
+function nebulaRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+function renderNebula(genres) {
+  nebulaGenres = genres;
+  // Legend mirrors the mosaic's: one round key per parent genre.
+  nebulaLegend.innerHTML = "";
+  for (const genre of genres) {
+    const item = document.createElement("span");
+    item.className = "nebula-legend-item";
+    const key = document.createElement("i");
+    key.className = "nebula-key";
+    key.style.background = genre.color;
+    key.style.color = genre.color;
+    item.appendChild(key);
+    item.append(document.createTextNode(`${genre.label} `));
+    const pct = document.createElement("b");
+    pct.textContent = `${Math.round(genre.percent)}%`;
+    item.appendChild(pct);
+    nebulaLegend.appendChild(item);
+  }
+  // Defer particle layout until the canvas is visible (and measurable).
+  if (!genreNebula.hidden) buildNebula();
+}
+
+// Build one particle cluster per style, positioned inside its parent genre's
+// treemap region so same-genre clusters sit together. Deferred until the canvas
+// has a measurable size (the nebula may be hidden behind another view).
+function buildNebula() {
+  const rect = nebulaStage.getBoundingClientRect();
+  nebulaW = rect.width;
+  nebulaH = rect.height;
+  if (!nebulaW || !nebulaH || !nebulaGenres.length) {
+    nebulaClusters = [];
+    return;
+  }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  nebulaCanvas.width = Math.round(nebulaW * dpr);
+  nebulaCanvas.height = Math.round(nebulaH * dpr);
+  const ctx = nebulaCanvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  nebulaClusters = [];
+  const genreRects = squarifyTreemap(
+    nebulaGenres.map(g => ({ value: g.percent, genre: g })),
+    0, 0, nebulaW, nebulaH
+  );
+  for (const gr of genreRects) {
+    const genre = gr.ref.genre;
+    const styleRects = squarifyTreemap(
+      genre.styles.map(s => ({ value: s.percent, style: s })),
+      gr.x, gr.y, gr.w, gr.h
+    );
+    for (const sr of styleRects) {
+      const style = sr.ref.style;
+      // Radius fills most of the style's region but stays circular, so clusters
+      // read as blobs rather than tiling the rectangle.
+      const R = Math.max(10, Math.min(sr.w, sr.h) * 0.46);
+      const cx = sr.x + sr.w / 2;
+      const cy = sr.y + sr.h / 2;
+      const count = Math.max(5, Math.round(style.percent * 3));
+      const parts = [];
+      for (let i = 0; i < count; i++) {
+        const baseRad = R * Math.sqrt(Math.random());
+        parts.push({
+          ang: nebulaRand(0, Math.PI * 2),
+          baseRad,
+          spin: nebulaRand(-0.006, 0.006) * (1 - (baseRad / R) * 0.4),
+          osc: nebulaRand(0, Math.PI * 2),
+          oscSpd: nebulaRand(0.004, 0.012),
+          oscAmp: nebulaRand(1.5, 6),
+          size: nebulaRand(0.9, 2.4),
+          twk: nebulaRand(0, Math.PI * 2)
+        });
+      }
+      nebulaClusters.push({
+        genre,
+        style,
+        cx,
+        cy,
+        R,
+        parts,
+        drift: nebulaRand(0, Math.PI * 2)
+      });
+    }
+  }
+}
+
+function drawNebula() {
+  const ctx = nebulaCanvas.getContext("2d");
+  nebulaTick += 1;
+  ctx.clearRect(0, 0, nebulaW, nebulaH);
+
+  // Particles + halos are drawn additively so overlaps glow like a real nebula.
+  ctx.globalCompositeOperation = "lighter";
+  for (const cl of nebulaClusters) {
+    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * 0.05;
+    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * 0.05;
+    const cx = cl.cx + dx;
+    const cy = cl.cy + dy;
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * 1.15);
+    halo.addColorStop(0, nebulaRgba(cl.genre.color, 0.16));
+    halo.addColorStop(1, nebulaRgba(cl.genre.color, 0));
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(cx, cy, cl.R * 1.15, 0, Math.PI * 2);
+    ctx.fill();
+    cl.drawCx = cx;
+    cl.drawCy = cy;
+    for (const p of cl.parts) {
+      if (!nebulaReduceMotion) {
+        p.ang += p.spin;
+        p.osc += p.oscSpd;
+        p.twk += 0.05;
+      }
+      const rad = p.baseRad + Math.sin(p.osc) * p.oscAmp;
+      const x = cx + Math.cos(p.ang) * rad;
+      const y = cy + Math.sin(p.ang) * rad;
+      const tw = 0.55 + 0.45 * Math.sin(p.twk);
+      ctx.fillStyle = nebulaRgba(cl.genre.color, 0.5 + 0.4 * tw);
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Labels sit on top, opaque, so style names stay readable over the glow.
+  ctx.globalCompositeOperation = "source-over";
+  ctx.textAlign = "center";
+  for (const cl of nebulaClusters) {
+    if (cl.R < 20) continue;
+    const nameSize = Math.max(11, Math.min(18, cl.R * 0.32));
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
+    ctx.fillStyle = cl.genre.color;
+    ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
+    ctx.shadowBlur = 0;
+  }
+
+  if (nebulaRaf !== null && !nebulaReduceMotion) {
+    nebulaRaf = requestAnimationFrame(drawNebula);
+  }
+}
+
+function startNebula() {
+  buildNebula();
+  if (!nebulaClusters.length) return;
+  if (nebulaReduceMotion) {
+    drawNebula();
+    return;
+  }
+  if (nebulaRaf !== null) cancelAnimationFrame(nebulaRaf);
+  nebulaRaf = requestAnimationFrame(drawNebula);
+}
+
+function stopNebula() {
+  if (nebulaRaf !== null) {
+    cancelAnimationFrame(nebulaRaf);
+    nebulaRaf = null;
+  }
+}
+
+// Click a cluster to open its style intro, mirroring the mosaic/sunburst.
+nebulaCanvas.addEventListener("click", event => {
+  if (!nebulaClusters.length) return;
+  const rect = nebulaCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  let hit = null;
+  let best = Infinity;
+  for (const cl of nebulaClusters) {
+    const cx = cl.drawCx != null ? cl.drawCx : cl.cx;
+    const cy = cl.drawCy != null ? cl.drawCy : cl.cy;
+    const d = Math.hypot(x - cx, y - cy);
+    if (d <= cl.R * 1.15 && d < best) {
+      best = d;
+      hit = cl;
+    }
+  }
+  if (!hit) return;
+  const profile = profileFor(hit.style.genre || hit.genre.name, hit.style.name);
+  if (profile) openStyleDialog(profile, nebulaCanvas);
+});
+
+let nebulaResizeQueued = false;
+window.addEventListener("resize", () => {
+  if (nebulaResizeQueued || genreNebula.hidden) return;
+  nebulaResizeQueued = true;
+  requestAnimationFrame(() => {
+    nebulaResizeQueued = false;
+    startNebula();
+  });
 });
 
 // ---------------------------------------------------------------------------
