@@ -1,4 +1,5 @@
 {
   "itunesCountry": "CN",
-  "genreModel": "effnet400"
+  "genreModel": "effnet400",
+  "playlistMaxTracks": 100
 }

@@ -4,6 +4,11 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
+// The DOM-free genre scoring core is shared with the playlist frontend. The
+// aggregate playlist job scores every track server-side instead of relaying
+// raw Essentia/metadata payloads back to the browser. The module assigns to
+// `this` (module.exports) when required in Node, exposing a GenreCore field.
+const GenreCore = require("./public/genre-core.js").GenreCore;
 
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -12,6 +17,9 @@ const PUBLIC_DIR = path.join(ROOT, "public");
 const DOWNLOAD_DIR = path.join(ROOT, "downloads");
 const RUNTIME_DIR = path.join(ROOT, ".runtime");
 const ANALYSIS_LOG_FILE = path.join(RUNTIME_DIR, "analysis-log.ndjson");
+// Playlist aggregate jobs are persisted here (one JSON file per jobId) so an
+// in-flight or finished analysis survives a server restart.
+const PLAYLIST_JOBS_DIR = path.join(RUNTIME_DIR, "playlist-jobs");
 const DEFAULT_CONFIG_FILE = path.join(ROOT, "config", "defaults.json");
 const ESSENTIA_PYTHON = path.join(ROOT, ".venv-essentia", "bin", "python");
 const ESSENTIA_SCRIPT = path.join(ROOT, "scripts", "analyze_genre.py");
@@ -198,10 +206,26 @@ const DEFAULT_CONFIG = loadDefaultConfig();
 loadEnvFile(path.join(ROOT, ".env.local"));
 loadEnvFile(path.join(ROOT, ".env"));
 
+// A playlist larger than this many tracks is randomly down-sampled to this size
+// before we fetch song names / analyze, keeping big playlists tractable. Order
+// of precedence: PLAYLIST_MAX_TRACKS env > config/defaults.json > 100. Set to 0
+// to disable the cap (analyze everything). Computed after .env files load so an
+// env-file override is honored.
+const PLAYLIST_MAX_TRACKS = (() => {
+  const raw = process.env.PLAYLIST_MAX_TRACKS;
+  const source = raw != null && raw !== "" ? raw : DEFAULT_CONFIG.playlistMaxTracks;
+  const n = Number(source);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 100;
+})();
+
 // Genre model registry. Keep in sync with scripts/analyze_genre.py. Each model
 // has a fixed taxonomy config at data/<model>/discogs-taxonomy.json. A request
 // may target either model; the active default is chosen by GENRE_MODEL env or
 // config/defaults.json genreModel.
+//
+// Memory note: effnet400's model is cached/reused in the worker (~1.2GB
+// resident). maest519 is far heavier (~4GB RSS), so the worker builds it fresh
+// per request and never caches it — see scripts/analyze_genre.py.
 const GENRE_MODELS = {
   effnet400: {
     label: "Essentia Discogs400 - 400 styles, faster/coarser",
@@ -717,48 +741,62 @@ async function searchDiscogs(bundle, title, artists, album = "") {
   };
 }
 
+// Core metadata lookup shared by the single-track /api/metadata handler and the
+// playlist aggregate job. Returns the payload the frontend GenreCore.scoreTrack
+// consumes, or throws with a `validationError` flag on bad input.
+async function runMetadata(body) {
+  const startedAt = process.hrtime.bigint();
+  const modelName = resolveRequestModelName(body.model);
+  const bundle = getTaxonomyBundle(modelName);
+  const title = cleanTerm(body.title);
+  const artists = splitArtists(body.artists);
+  if (!title && artists.length === 0) {
+    const error = new Error("请输入歌名或艺人。");
+    error.validationError = true;
+    throw error;
+  }
+
+  const [itunes, lastfm] = await Promise.allSettled([
+    searchITunes(title || artists[0], artists),
+    searchLastFm(title, artists)
+  ]);
+  const lastFmData = lastfm.status === "fulfilled" ? lastfm.value : { trackTags: [], error: lastfm.reason.message };
+  const itunesData = itunes.status === "fulfilled" ? itunes.value : [];
+  const wantedTitle = normalizeText(title);
+  const wantedArtists = artists.map(normalizeText);
+  const bestITunesAlbum = (itunesData || []).find(item => {
+    const itemTitle = normalizeText(item.trackName);
+    const itemArtist = normalizeText(item.artistName);
+    const titleMatch = wantedTitle && (itemTitle === wantedTitle || itemTitle.includes(wantedTitle) || wantedTitle.includes(itemTitle));
+    const artistMatch = !wantedArtists.length || wantedArtists.some(name => itemArtist.includes(name) || name.includes(itemArtist));
+    return titleMatch && artistMatch && item.collectionName;
+  });
+  const album = cleanTerm(body.album) || lastFmData.album || (bestITunesAlbum && bestITunesAlbum.collectionName) || "";
+  const discogs = await searchDiscogs(bundle, title || artists[0], artists, album).catch(error => ({ releases: [], error: error.message }));
+
+  return {
+    query: { title, artists },
+    modelKey: modelName,
+    elapsedSeconds: elapsedSecondsSince(startedAt),
+    sources: {
+      itunes: itunesData.length ? itunesData : (itunes.status === "fulfilled" ? itunes.value : { error: itunes.reason.message }),
+      lastfm: lastFmData,
+      discogs
+    }
+  };
+}
+
 async function handleMetadata(req, res) {
   const startedAt = process.hrtime.bigint();
   try {
     const body = await readBody(req);
-    const modelName = resolveRequestModelName(body.model);
-    const bundle = getTaxonomyBundle(modelName);
-    const title = cleanTerm(body.title);
-    const artists = splitArtists(body.artists);
-    if (!title && artists.length === 0) {
-      sendJson(res, 400, { error: "请输入歌名或艺人。" });
+    const result = await runMetadata(body);
+    sendJson(res, 200, result);
+  } catch (error) {
+    if (error.validationError) {
+      sendJson(res, 400, { error: error.message });
       return;
     }
-
-    const [itunes, lastfm] = await Promise.allSettled([
-      searchITunes(title || artists[0], artists),
-      searchLastFm(title, artists)
-    ]);
-    const lastFmData = lastfm.status === "fulfilled" ? lastfm.value : { trackTags: [], error: lastfm.reason.message };
-    const itunesData = itunes.status === "fulfilled" ? itunes.value : [];
-    const wantedTitle = normalizeText(title);
-    const wantedArtists = artists.map(normalizeText);
-    const bestITunesAlbum = (itunesData || []).find(item => {
-      const itemTitle = normalizeText(item.trackName);
-      const itemArtist = normalizeText(item.artistName);
-      const titleMatch = wantedTitle && (itemTitle === wantedTitle || itemTitle.includes(wantedTitle) || wantedTitle.includes(itemTitle));
-      const artistMatch = !wantedArtists.length || wantedArtists.some(name => itemArtist.includes(name) || name.includes(itemArtist));
-      return titleMatch && artistMatch && item.collectionName;
-    });
-    const album = cleanTerm(body.album) || lastFmData.album || (bestITunesAlbum && bestITunesAlbum.collectionName) || "";
-    const discogs = await searchDiscogs(bundle, title || artists[0], artists, album).catch(error => ({ releases: [], error: error.message }));
-
-    sendJson(res, 200, {
-      query: { title, artists },
-      modelKey: modelName,
-      elapsedSeconds: elapsedSecondsSince(startedAt),
-      sources: {
-        itunes: itunesData.length ? itunesData : (itunes.status === "fulfilled" ? itunes.value : { error: itunes.reason.message }),
-        lastfm: lastFmData,
-        discogs
-      }
-    });
-  } catch (error) {
     sendJson(res, 500, { error: error.message, elapsedSeconds: elapsedSecondsSince(startedAt) });
   }
 }
@@ -962,58 +1000,110 @@ async function resolveNetEasePlaylistId(value) {
   return "";
 }
 
+// Return a random subset of `size` items from `arr` using a partial
+// Fisher-Yates shuffle. Does not mutate the input. If `size` >= length the
+// whole array (shuffled copy) is returned.
+function sampleArray(arr, size) {
+  const copy = arr.slice();
+  const n = Math.min(size, copy.length);
+  for (let i = 0; i < n; i += 1) {
+    const j = i + Math.floor(Math.random() * (copy.length - i));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
+// Resolve a NetEase playlist link into its metadata and full track list. Shared
+// by the single-shot /api/netease-playlist handler and the playlist aggregate
+// job. Throws an Error carrying a `statusCode` so callers can map it to the
+// right HTTP status.
+async function loadNetEasePlaylist(raw) {
+  const id = await resolveNetEasePlaylistId(raw);
+  if (!id) {
+    const isSongLink = /\/song[/?#]/i.test(cleanTerm(raw)) || /\/song$/i.test(cleanTerm(raw));
+    const error = new Error(isSongLink
+      ? "这是一个单曲链接，不是歌单链接。请粘贴网易云歌单（/playlist）链接。"
+      : "没有在网易云链接中找到歌单 id。");
+    error.statusCode = 400;
+    throw error;
+  }
+  const data = await fetchJson(`https://music.163.com/api/v6/playlist/detail?id=${encodeURIComponent(id)}`, {
+    "referer": "https://music.163.com/"
+  });
+  const playlist = data && data.playlist;
+  if (!playlist || !Array.isArray(playlist.tracks)) {
+    const error = new Error(`网易云没有返回歌单 id ${id} 的曲目信息。`);
+    error.statusCode = 404;
+    throw error;
+  }
+  // The v6 playlist/detail endpoint only inlines the first handful of tracks
+  // in `playlist.tracks`, but it lists every track's id in
+  // `playlist.trackIds`. Fetch the full song details by id so the whole
+  // playlist is available, not just the preview slice.
+  let rawTracks = playlist.tracks;
+  const trackIds = Array.isArray(playlist.trackIds)
+    ? playlist.trackIds.map(item => String(item && item.id ? item.id : "")).filter(Boolean)
+    : [];
+  // Full size of the playlist (every listed track), before any down-sampling.
+  const originalCount = Math.max(trackIds.length, rawTracks.length);
+  // Big playlists are randomly down-sampled to PLAYLIST_MAX_TRACKS so analysis
+  // stays tractable. We sample at the id level (before fetching song names) to
+  // avoid pulling details we would only throw away.
+  let sampled = false;
+  let sampledCount = originalCount;
+  if (PLAYLIST_MAX_TRACKS > 0 && trackIds.length > PLAYLIST_MAX_TRACKS) {
+    const pickedIds = sampleArray(trackIds, PLAYLIST_MAX_TRACKS);
+    const fetched = await fetchNetEaseSongsByIds(pickedIds);
+    if (fetched.length) {
+      rawTracks = fetched;
+      sampled = true;
+      sampledCount = fetched.length;
+    }
+  } else if (trackIds.length > rawTracks.length) {
+    const fetched = await fetchNetEaseSongsByIds(trackIds);
+    if (fetched.length) rawTracks = fetched;
+  }
+  const tracks = rawTracks.map(track => ({
+    id: String(track.id || ""),
+    title: track.name || "",
+    artists: ((track.ar || track.artists) || []).map(artist => artist.name).filter(Boolean),
+    album: (track.al && track.al.name) || (track.album && track.album.name) || "",
+    sourceUrl: `https://music.163.com/song?id=${track.id}`
+  })).filter(track => track.title);
+  // Fall back to sampling the already-detailed tracks when trackIds was absent
+  // but the inlined list still exceeds the cap.
+  let finalTracks = tracks;
+  if (!sampled && PLAYLIST_MAX_TRACKS > 0 && tracks.length > PLAYLIST_MAX_TRACKS) {
+    finalTracks = sampleArray(tracks, PLAYLIST_MAX_TRACKS);
+    sampled = true;
+    sampledCount = finalTracks.length;
+  } else if (sampled) {
+    sampledCount = tracks.length;
+  }
+  return {
+    id: String(playlist.id || id),
+    name: playlist.name || "",
+    coverImgUrl: playlist.coverImgUrl || "",
+    trackCount: playlist.trackCount || originalCount,
+    // originalCount = playlist size; sampled/sampledCount tell the client when a
+    // random subset was analyzed instead of the whole playlist.
+    originalCount,
+    sampled,
+    sampledCount,
+    creator: playlist.creator && playlist.creator.nickname ? playlist.creator.nickname : "",
+    sourceUrl: `https://music.163.com/playlist?id=${id}`,
+    tracks: finalTracks
+  };
+}
+
 async function handleNetEasePlaylist(req, res) {
   try {
     const body = await readBody(req);
     const raw = body.url || body.id || "";
-    const id = await resolveNetEasePlaylistId(raw);
-    if (!id) {
-      const isSongLink = /\/song[/?#]/i.test(cleanTerm(raw)) || /\/song$/i.test(cleanTerm(raw));
-      sendJson(res, 400, {
-        error: isSongLink
-          ? "这是一个单曲链接，不是歌单链接。请粘贴网易云歌单（/playlist）链接。"
-          : "没有在网易云链接中找到歌单 id。"
-      });
-      return;
-    }
-    const data = await fetchJson(`https://music.163.com/api/v6/playlist/detail?id=${encodeURIComponent(id)}`, {
-      "referer": "https://music.163.com/"
-    });
-    const playlist = data && data.playlist;
-    if (!playlist || !Array.isArray(playlist.tracks)) {
-      sendJson(res, 404, { error: `网易云没有返回歌单 id ${id} 的曲目信息。` });
-      return;
-    }
-    // The v6 playlist/detail endpoint only inlines the first handful of tracks
-    // in `playlist.tracks`, but it lists every track's id in
-    // `playlist.trackIds`. Fetch the full song details by id so the whole
-    // playlist is available, not just the preview slice.
-    let rawTracks = playlist.tracks;
-    const trackIds = Array.isArray(playlist.trackIds)
-      ? playlist.trackIds.map(item => String(item && item.id ? item.id : "")).filter(Boolean)
-      : [];
-    if (trackIds.length > rawTracks.length) {
-      const fetched = await fetchNetEaseSongsByIds(trackIds);
-      if (fetched.length) rawTracks = fetched;
-    }
-    const tracks = rawTracks.map(track => ({
-      id: String(track.id || ""),
-      title: track.name || "",
-      artists: ((track.ar || track.artists) || []).map(artist => artist.name).filter(Boolean),
-      album: (track.al && track.al.name) || (track.album && track.album.name) || "",
-      sourceUrl: `https://music.163.com/song?id=${track.id}`
-    })).filter(track => track.title);
-    sendJson(res, 200, {
-      id: String(playlist.id || id),
-      name: playlist.name || "",
-      coverImgUrl: playlist.coverImgUrl || "",
-      trackCount: playlist.trackCount || tracks.length,
-      creator: playlist.creator && playlist.creator.nickname ? playlist.creator.nickname : "",
-      sourceUrl: `https://music.163.com/playlist?id=${id}`,
-      tracks
-    });
+    const playlist = await loadNetEasePlaylist(raw);
+    sendJson(res, 200, playlist);
   } catch (error) {
-    sendJson(res, 500, { error: error.message });
+    sendJson(res, error.statusCode || 500, { error: error.message });
   }
 }
 
@@ -1450,78 +1540,99 @@ async function downloadSearchAudio(query, target = {}) {
   throw new Error(`找到 ${viable.length} 个匹配候选，但都无法下载：${errors.slice(0, 3).join("；")}`);
 }
 
-async function handleDownload(req, res) {
+// Core download logic shared by the single-track /api/download handler and the
+// playlist aggregate job. Takes the same fields as the /api/download body and
+// returns the response payload (including the resolved local `filePath`), or
+// throws when nothing could be downloaded. A `validationError` on the thrown
+// error signals a 400-class input problem rather than a 500 failure.
+async function runDownload(body) {
   const startedAt = process.hrtime.bigint();
-  try {
-    const body = await readBody(req);
-    const url = String(body.url || "").trim();
-    const manualUrl = extractHttpUrl(url) || url;
-    const platformUrl = String(body.platformUrl || body.sourceUrl || "").trim();
-    const manualPlatformSource = musicPlatformDownloadSource(url);
-    const platformSource = manualPlatformSource || (!/^https?:\/\//i.test(manualUrl) ? musicPlatformDownloadSource(platformUrl) : null);
-    const title = cleanTerm(body.title);
-    const artists = splitArtists(body.artists);
-    const query = String(body.query || [quoteSearchTerm(title), quoteSearchTerm(artists.join(" "))].filter(Boolean).join(" ")).trim();
-    if (!/^https?:\/\//i.test(manualUrl) && !platformSource && !query) {
-      sendJson(res, 400, { error: "请输入“歌名 - 艺人”，或提供音频/公开视频链接。" });
-      return;
-    }
+  const url = String(body.url || "").trim();
+  const manualUrl = extractHttpUrl(url) || url;
+  const platformUrl = String(body.platformUrl || body.sourceUrl || "").trim();
+  const manualPlatformSource = musicPlatformDownloadSource(url);
+  const platformSource = manualPlatformSource || (!/^https?:\/\//i.test(manualUrl) ? musicPlatformDownloadSource(platformUrl) : null);
+  const title = cleanTerm(body.title);
+  const artists = splitArtists(body.artists);
+  const query = String(body.query || [quoteSearchTerm(title), quoteSearchTerm(artists.join(" "))].filter(Boolean).join(" ")).trim();
+  if (!/^https?:\/\//i.test(manualUrl) && !platformSource && !query) {
+    const error = new Error("请输入“歌名 - 艺人”，或提供音频/公开视频链接。");
+    error.validationError = true;
+    throw error;
+  }
 
-    let filePath;
-    let method;
-    let selectedSource = manualUrl || (platformSource && platformSource.url) || query;
-    let downloadResult = null;
-    let fallbackReason = "";
-    if (/^https?:\/\//i.test(manualUrl) && !manualPlatformSource) {
-      if (isAudioUrl(manualUrl)) {
-        const ext = path.extname(new URL(manualUrl).pathname).toLowerCase() || ".mp3";
-        filePath = path.join(DOWNLOAD_DIR, safeDownloadName(ext));
-        await downloadDirectAudio(manualUrl, filePath);
-        method = "direct";
-      } else {
-        filePath = await downloadWithYtDlp(manualUrl);
-        method = "yt-dlp";
-      }
-    } else if (platformSource) {
-      try {
-        filePath = await downloadWithYtDlp(platformSource.url);
-        method = "yt-dlp-platform";
-        selectedSource = `${platformSource.label}: ${title || platformSource.url}`;
-      } catch (error) {
-        fallbackReason = `${platformSource.label}下载失败：${conciseErrorMessage(error)}`;
-        try {
-          downloadResult = await downloadSearchAudio(query, { title, artists });
-        } catch (searchError) {
-          throw new Error(`${fallbackReason}；回退搜索也失败：${searchError.message}`);
-        }
-        filePath = downloadResult.filePath;
-        method = "yt-dlp-search-fallback";
-        selectedSource = downloadResult.candidate.title
-          ? `${downloadResult.candidate.sourceLabel}: ${downloadResult.candidate.title}`
-          : query;
-      }
+  let filePath;
+  let method;
+  let selectedSource = manualUrl || (platformSource && platformSource.url) || query;
+  let downloadResult = null;
+  let fallbackReason = "";
+  if (/^https?:\/\//i.test(manualUrl) && !manualPlatformSource) {
+    if (isAudioUrl(manualUrl)) {
+      const ext = path.extname(new URL(manualUrl).pathname).toLowerCase() || ".mp3";
+      filePath = path.join(DOWNLOAD_DIR, safeDownloadName(ext));
+      await downloadDirectAudio(manualUrl, filePath);
+      method = "direct";
     } else {
-      downloadResult = await downloadSearchAudio(query, { title, artists });
+      filePath = await downloadWithYtDlp(manualUrl);
+      method = "yt-dlp";
+    }
+  } else if (platformSource) {
+    try {
+      filePath = await downloadWithYtDlp(platformSource.url);
+      method = "yt-dlp-platform";
+      selectedSource = `${platformSource.label}: ${title || platformSource.url}`;
+    } catch (error) {
+      fallbackReason = `${platformSource.label}下载失败：${conciseErrorMessage(error)}`;
+      try {
+        downloadResult = await downloadSearchAudio(query, { title, artists });
+      } catch (searchError) {
+        throw new Error(`${fallbackReason}；回退搜索也失败：${searchError.message}`);
+      }
       filePath = downloadResult.filePath;
-      method = "yt-dlp-search";
+      method = "yt-dlp-search-fallback";
       selectedSource = downloadResult.candidate.title
         ? `${downloadResult.candidate.sourceLabel}: ${downloadResult.candidate.title}`
         : query;
     }
+  } else {
+    downloadResult = await downloadSearchAudio(query, { title, artists });
+    filePath = downloadResult.filePath;
+    method = "yt-dlp-search";
+    selectedSource = downloadResult.candidate.title
+      ? `${downloadResult.candidate.sourceLabel}: ${downloadResult.candidate.title}`
+      : query;
+  }
 
-    sendJson(res, 200, {
-      method,
-      source: selectedSource,
-      fallbackReason,
-      elapsedSeconds: elapsedSecondsSince(startedAt),
-      matchScore: downloadResult && downloadResult.candidate ? downloadResult.candidate.matchScore : null,
-      sourcePlatform: downloadResult && downloadResult.candidate
-        ? downloadResult.candidate.source
-        : (method === "yt-dlp-platform" && platformSource ? platformSource.platform : null),
-      audioUrl: `/downloads/${path.basename(filePath)}`,
-      fileName: path.basename(filePath)
-    });
+  return {
+    method,
+    source: selectedSource,
+    fallbackReason,
+    elapsedSeconds: elapsedSecondsSince(startedAt),
+    matchScore: downloadResult && downloadResult.candidate ? downloadResult.candidate.matchScore : null,
+    sourcePlatform: downloadResult && downloadResult.candidate
+      ? downloadResult.candidate.source
+      : (method === "yt-dlp-platform" && platformSource ? platformSource.platform : null),
+    audioUrl: `/downloads/${path.basename(filePath)}`,
+    fileName: path.basename(filePath),
+    filePath
+  };
+}
+
+async function handleDownload(req, res) {
+  const startedAt = process.hrtime.bigint();
+  try {
+    const body = await readBody(req);
+    const result = await runDownload(body);
+    // The local filePath is an internal detail; the single-track API only
+    // exposes the download-relative audioUrl / fileName.
+    const { filePath, ...payload } = result;
+    void filePath;
+    sendJson(res, 200, payload);
   } catch (error) {
+    if (error.validationError) {
+      sendJson(res, 400, { error: error.message });
+      return;
+    }
     sendJson(res, 500, {
       error: error.message,
       elapsedSeconds: elapsedSecondsSince(startedAt),
@@ -1552,52 +1663,147 @@ async function handleUploadAudio(req, res) {
   }
 }
 
+// Essentia runs inside a single long-lived Python worker. Spawning Python and
+// loading the TensorFlow model graph costs several seconds, so instead of
+// starting a fresh process per track we lazily start ONE worker on the first
+// request and reuse it for every later analysis. The worker stays alive between
+// requests; it is only (re)spawned when it is missing or after a crash/timeout.
+//
+// A single Python process is CPU/RAM heavy and the worker's stdin loop handles
+// one request at a time, so we still serialize every analysis through this FIFO
+// async queue: two concurrent playlists interleave track-by-track on the shared
+// worker instead of piling up parallel Pythons.
+//
+// The worker's TensorFlow model stays resident (~1.2GB RSS) for as long as the
+// process lives. On small hosts that memory matters, so after ESSENTIA_IDLE_MS
+// with no requests we kill the worker to give the memory back to the OS; the
+// next analysis simply pays the lazy startup cost again.
+const ESSENTIA_REQUEST_TIMEOUT = 180000;
+const ESSENTIA_IDLE_MS = Number(process.env.ESSENTIA_IDLE_MS || 60000);
+let essentiaWorker = null;
+let essentiaQueue = Promise.resolve();
+let essentiaRequestId = 0;
+
 function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
+  const run = essentiaQueue.then(() => runEssentiaOnWorker(filePath, top, modelName));
+  // Keep the chain alive regardless of this run's outcome so a failure doesn't
+  // wedge the queue for everyone behind it.
+  essentiaQueue = run.then(() => {}, () => {});
+  return run;
+}
+
+// Kill an idle worker so its resident model memory is returned to the OS. Armed
+// after each response; disarmed as soon as a new request grabs the worker.
+function scheduleEssentiaIdleShutdown(worker) {
+  clearTimeout(worker.idleTimer);
+  worker.idleTimer = setTimeout(() => {
+    if (essentiaWorker === worker) essentiaWorker = null;
+    try { worker.child.stdin.end(); } catch (error) { void error; }
+    try { worker.child.kill("SIGTERM"); } catch (error) { void error; }
+  }, ESSENTIA_IDLE_MS);
+  // Don't let this timer keep the Node event loop alive on its own.
+  if (typeof worker.idleTimer.unref === "function") worker.idleTimer.unref();
+}
+
+// Parse the worker's newline-delimited JSON stdout. Each analysis emits exactly
+// one response object; a startup "ready" line and any stray non-JSON noise are
+// ignored. Responses are matched to the in-flight request by id.
+function handleEssentiaWorkerData(worker, chunk) {
+  worker.buffer += chunk;
+  let idx;
+  while ((idx = worker.buffer.indexOf("\n")) >= 0) {
+    const line = worker.buffer.slice(0, idx).trim();
+    worker.buffer = worker.buffer.slice(idx + 1);
+    if (!line) continue;
+    let msg;
+    try {
+      msg = JSON.parse(line);
+    } catch (error) {
+      void error;
+      continue;
+    }
+    if (msg.ready) continue;
+    const current = worker.current;
+    if (!current || (msg.id != null && msg.id !== current.id)) continue;
+    clearTimeout(current.timer);
+    worker.current = null;
+    // The worker is now idle: start the countdown to free its model memory.
+    scheduleEssentiaIdleShutdown(worker);
+    if (msg.ok) current.resolve(msg.result);
+    else current.reject(new Error(msg.error || "Essentia 分析失败。"));
+  }
+}
+
+function startEssentiaWorker() {
+  if (!fs.existsSync(ESSENTIA_PYTHON)) {
+    throw new Error("Essentia Python 环境不存在，请先安装 .venv-essentia。");
+  }
+  if (!fs.existsSync(ESSENTIA_SCRIPT)) {
+    throw new Error("Essentia 分析脚本不存在。");
+  }
+  const child = spawn(ESSENTIA_PYTHON, [ESSENTIA_SCRIPT, "--serve"], {
+    cwd: ROOT,
+    stdio: ["pipe", "pipe", "pipe"]
+  });
+  const worker = { child, buffer: "", stderr: "", current: null, idleTimer: null };
+  child.stdout.setEncoding("utf8");
+  child.stdout.on("data", chunk => handleEssentiaWorkerData(worker, chunk));
+  child.stderr.on("data", chunk => {
+    worker.stderr += chunk.toString();
+    // Keep only the tail so long-running workers don't accumulate log memory.
+    if (worker.stderr.length > 8192) worker.stderr = worker.stderr.slice(-8192);
+  });
+  const failWorker = error => {
+    clearTimeout(worker.idleTimer);
+    if (essentiaWorker === worker) essentiaWorker = null;
+    const current = worker.current;
+    if (current) {
+      clearTimeout(current.timer);
+      worker.current = null;
+      current.reject(error);
+    }
+  };
+  // A clean idle-shutdown exits with a non-error message; only surface it to a
+  // waiting request (there won't be one after an idle kill).
+  child.on("error", err => failWorker(new Error(`无法启动 Essentia：${err.message}`)));
+  child.on("close", code => failWorker(new Error(worker.stderr.trim() || `Essentia worker 退出码 ${code}`)));
+  essentiaWorker = worker;
+  return worker;
+}
+
+function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
   return new Promise((resolve, reject) => {
-    if (!fs.existsSync(ESSENTIA_PYTHON)) {
-      reject(new Error("Essentia Python 环境不存在，请先安装 .venv-essentia。"));
+    let worker;
+    try {
+      worker = essentiaWorker && essentiaWorker.child.stdin.writable
+        ? essentiaWorker
+        : startEssentiaWorker();
+    } catch (error) {
+      reject(error);
       return;
     }
-    if (!fs.existsSync(ESSENTIA_SCRIPT)) {
-      reject(new Error("Essentia 分析脚本不存在。"));
-      return;
-    }
-
-    const child = spawn(ESSENTIA_PYTHON, [
-      ESSENTIA_SCRIPT,
-      filePath,
-      "--model",
-      modelName,
-      "--top",
-      String(top),
-      "--json"
-    ], { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
+    // A request is arriving: cancel any pending idle shutdown so the worker
+    // isn't killed out from under us.
+    clearTimeout(worker.idleTimer);
+    const id = ++essentiaRequestId;
     const timer = setTimeout(() => {
-      child.kill("SIGTERM");
+      // The worker processes one request at a time, so a stuck request means
+      // the whole worker is wedged: kill it and let the next call respawn.
+      clearTimeout(worker.idleTimer);
+      if (essentiaWorker === worker) essentiaWorker = null;
+      worker.current = null;
+      try { worker.child.kill("SIGTERM"); } catch (error) { void error; }
       reject(new Error("Essentia 曲风分析超时。"));
-    }, 180000);
-
-    child.stdout.on("data", chunk => stdout += chunk.toString());
-    child.stderr.on("data", chunk => stderr += chunk.toString());
-    child.on("error", error => {
+    }, ESSENTIA_REQUEST_TIMEOUT);
+    worker.current = { id, resolve, reject, timer };
+    const payload = JSON.stringify({ id, audio: filePath, top, model: modelName }) + "\n";
+    try {
+      worker.child.stdin.write(payload);
+    } catch (error) {
       clearTimeout(timer);
-      reject(new Error(`无法启动 Essentia：${error.message}`));
-    });
-    child.on("close", code => {
-      clearTimeout(timer);
-      if (code !== 0) {
-        reject(new Error(stderr.trim() || `Essentia 退出码 ${code}`));
-        return;
-      }
-      try {
-        const line = stdout.trim().split(/\r?\n/).filter(Boolean).pop();
-        resolve(JSON.parse(line));
-      } catch (error) {
-        reject(new Error(`无法解析 Essentia 输出：${error.message}`));
-      }
-    });
+      worker.current = null;
+      reject(new Error(`无法向 Essentia worker 写入：${error.message}`));
+    }
   });
 }
 
@@ -1654,6 +1860,259 @@ async function handleLog(req, res) {
   } catch (error) {
     sendJson(res, 500, { error: error.message });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Playlist aggregate analysis job
+//
+// A single POST submits a playlist and returns a jobId immediately; the tracks
+// are then analyzed serially in the background. The client polls a status
+// endpoint (carrying the jobId in the page URL) so mobile users can background
+// the app and resume later. Running jobs are held in memory and mirrored to
+// disk (one JSON file per jobId under .runtime/playlist-jobs); a finished job is
+// dropped from memory but its file is kept forever. After a restart, requesting
+// a jobId whose file was still "running" resumes the run on demand (see getJob),
+// with a guard against launching the same run twice concurrently.
+// ---------------------------------------------------------------------------
+// In-memory map holds only jobs that are still running; a job is dropped from
+// memory the moment it finishes (its persisted file remains on disk forever).
+const PLAYLIST_JOBS = new Map();
+
+// Persist a job to disk as a single JSON file holding everything the frontend
+// needs to render (track list + per-track compositions + progress/state). The
+// write is atomic (temp file + rename) because runPlaylistJob rewrites it after
+// every completed track, so a restart mid-write must never read a half file.
+function jobFilePath(jobId) {
+  return path.join(PLAYLIST_JOBS_DIR, `${jobId}.json`);
+}
+
+function persistJob(job) {
+  try {
+    fs.mkdirSync(PLAYLIST_JOBS_DIR, { recursive: true });
+    const target = jobFilePath(job.jobId);
+    const tmp = `${target}.${process.pid}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(job));
+    fs.renameSync(tmp, target);
+  } catch (error) {
+    console.warn(`无法持久化歌单任务 ${job.jobId}: ${error.message}`);
+  }
+}
+
+// Look up a job by id. Running jobs live in memory; otherwise the persisted
+// file is read from disk. If that file shows a job that was still "running"
+// when the server stopped, it is resumed on demand here. The in-memory map is
+// populated SYNCHRONOUSLY before the async run starts, so a second concurrent
+// request for the same jobId finds it in memory and never launches a duplicate
+// run (Node's single thread guarantees the sync section is not interleaved).
+function getJob(jobId) {
+  if (!jobId) return null;
+  if (PLAYLIST_JOBS.has(jobId)) return PLAYLIST_JOBS.get(jobId);
+  let job;
+  try {
+    job = JSON.parse(fs.readFileSync(jobFilePath(jobId), "utf8"));
+  } catch {
+    return null;
+  }
+  if (job.state === "running") resumeJob(job);
+  return job;
+}
+
+// Register an interrupted job in memory and continue its run from where it
+// stopped. Must set the map entry before awaiting anything (see getJob).
+function resumeJob(job) {
+  PLAYLIST_JOBS.set(job.jobId, job);
+  runPlaylistJob(job).catch(error => {
+    job.state = "error";
+    job.error = error.message;
+    job.updatedAt = Date.now();
+    persistJob(job);
+    PLAYLIST_JOBS.delete(job.jobId);
+  });
+}
+
+// GenreCore taxonomy bundles (distinct shape from the server's own bundle) are
+// built lazily per model and cached for the lifetime of the process.
+const GENRE_CORE_BUNDLES = new Map();
+
+function getGenreCoreBundle(modelName) {
+  const name = GENRE_MODELS[modelName] ? modelName : GENRE_MODEL_NAME;
+  if (!GENRE_CORE_BUNDLES.has(name)) {
+    GENRE_CORE_BUNDLES.set(name, GenreCore.buildTaxonomy(loadDiscogsTaxonomy(name)));
+  }
+  return GENRE_CORE_BUNDLES.get(name);
+}
+
+// Analyze a single playlist track: download → Essentia → metadata → score.
+// Returns a per-track result record; never throws (failures are captured).
+async function analyzePlaylistTrack(track, modelName, bundle) {
+  const artists = (track.artists || []).join(" / ");
+  let download;
+  try {
+    download = await runDownload({
+      url: "",
+      platformUrl: track.sourceUrl || "",
+      platform: "netease-url",
+      title: track.title,
+      artists,
+      query: [`"${track.title}"`, artists ? `"${artists}"` : ""].filter(Boolean).join(" ")
+    });
+  } catch (error) {
+    return { status: "failed", stage: "download", error: error.message };
+  }
+
+  let essentia;
+  try {
+    essentia = await analyzeWithEssentia(download.filePath, 12, modelName);
+  } catch (error) {
+    await deleteLocalAudio(download.filePath);
+    return { status: "failed", stage: "essentia", error: error.message };
+  }
+  await deleteLocalAudio(download.filePath);
+
+  // Metadata is optional: it only boosts styles Essentia already found.
+  let metadata = null;
+  try {
+    metadata = await runMetadata({ title: track.title, artists, album: track.album || "", model: modelName });
+  } catch (error) {
+    void error;
+  }
+
+  const composition = GenreCore.scoreTrack(bundle, {
+    essentia,
+    metadata,
+    track: { title: track.title, artists }
+  });
+
+  if (!composition.length) {
+    return { status: "failed", stage: "score", error: "没有匹配到曲风。" };
+  }
+  return { status: "ok", composition };
+}
+
+// Background driver: walks the job's tracks serially and records each result,
+// persisting the job to disk after every track so a restart can resume from the
+// last completed index (already-done tracks are skipped) and finished results
+// survive. `completed` is recomputed from results so a resumed job stays
+// consistent regardless of how far the previous run got. Once finished the job
+// is dropped from memory — its persisted file keeps serving future requests.
+async function runPlaylistJob(job) {
+  const bundle = getGenreCoreBundle(job.modelName);
+  persistJob(job);
+  for (let i = 0; i < job.tracks.length; i += 1) {
+    if (job.results[i]) continue;
+    const result = await analyzePlaylistTrack(job.tracks[i], job.modelName, bundle);
+    job.results[i] = { index: i, ...result };
+    job.completed = job.results.filter(Boolean).length;
+    job.updatedAt = Date.now();
+    persistJob(job);
+  }
+  job.state = "done";
+  job.ok = job.results.filter(item => item && item.status === "ok").length;
+  job.updatedAt = Date.now();
+  persistJob(job);
+  PLAYLIST_JOBS.delete(job.jobId);
+}
+
+async function handleAnalyzePlaylist(req, res) {
+  try {
+    const body = await readBody(req);
+    const raw = body.url || body.id || "";
+    const modelName = resolveRequestModelName(body.model);
+
+    const playlist = await loadNetEasePlaylist(raw);
+    const tracks = playlist.tracks || [];
+    if (!tracks.length) {
+      sendJson(res, 404, { error: "歌单里没有可分析的曲目。" });
+      return;
+    }
+
+    const jobId = crypto.randomBytes(8).toString("hex");
+    const now = Date.now();
+    const job = {
+      jobId,
+      state: "running",
+      modelName,
+      // Original user input, kept so a resumed page can refill the link box.
+      inputUrl: raw,
+      name: playlist.name,
+      coverImgUrl: playlist.coverImgUrl,
+      creator: playlist.creator,
+      sourceUrl: playlist.sourceUrl,
+      // Sampling metadata: when a big playlist was down-sampled, originalCount is
+      // its full size and `sampled` is true so the client can explain that only a
+      // random subset (tracks.length) is being analyzed.
+      originalCount: playlist.originalCount || tracks.length,
+      sampled: Boolean(playlist.sampled),
+      tracks,
+      total: tracks.length,
+      results: new Array(tracks.length).fill(null),
+      completed: 0,
+      ok: 0,
+      createdAt: now,
+      updatedAt: now
+    };
+    PLAYLIST_JOBS.set(jobId, job);
+    persistJob(job);
+
+    // Start analysis in the background; the response returns immediately so the
+    // client can render the track cards and begin polling.
+    runPlaylistJob(job).catch(error => {
+      job.state = "error";
+      job.error = error.message;
+      job.updatedAt = Date.now();
+      persistJob(job);
+      PLAYLIST_JOBS.delete(job.jobId);
+    });
+
+    sendJson(res, 200, {
+      jobId,
+      name: playlist.name,
+      coverImgUrl: playlist.coverImgUrl,
+      creator: playlist.creator,
+      sourceUrl: playlist.sourceUrl,
+      total: tracks.length,
+      originalCount: playlist.originalCount || tracks.length,
+      sampled: Boolean(playlist.sampled),
+      modelKey: modelName,
+      tracks
+    });
+  } catch (error) {
+    sendJson(res, error.statusCode || 500, { error: error.message });
+  }
+}
+
+function handlePlaylistStatus(req, res, url) {
+  const jobId = url.searchParams.get("jobId") || "";
+  const job = getJob(jobId);
+  if (!job) {
+    sendJson(res, 404, { error: "分析任务不存在或已过期，请重新发起。", state: "expired" });
+    return;
+  }
+  // Incremental delivery: the client passes the count it already has so we only
+  // ship newly completed results, which keeps mobile polling payloads small.
+  const since = Math.max(0, Number(url.searchParams.get("since")) || 0);
+  const results = [];
+  for (let i = since; i < job.results.length; i += 1) {
+    if (job.results[i]) results.push(job.results[i]);
+  }
+  sendJson(res, 200, {
+    jobId: job.jobId,
+    state: job.state,
+    error: job.error || "",
+    inputUrl: job.inputUrl || "",
+    name: job.name,
+    total: job.total,
+    originalCount: job.originalCount || job.total,
+    sampled: Boolean(job.sampled),
+    completed: job.completed,
+    ok: job.ok,
+    // The track list lets a resumed page (which never saw the submit response)
+    // rebuild the cards. It is small (title/artist strings only).
+    tracks: job.tracks,
+    since,
+    results,
+    updatedAt: job.updatedAt
+  });
 }
 
 function serveStatic(req, res) {
@@ -1765,6 +2224,10 @@ const server = http.createServer((req, res) => {
     handleNetEasePlaylist(req, res);
     return;
   }
+  if (req.method === "POST" && req.url === "/api/analyze-playlist") {
+    handleAnalyzePlaylist(req, res);
+    return;
+  }
   if (req.method === "POST" && req.url === "/api/qq-song") {
     handleQQMusicSong(req, res);
     return;
@@ -1790,6 +2253,11 @@ const server = http.createServer((req, res) => {
     return;
   }
   if (req.method === "GET") {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    if (url.pathname === "/api/analyze-playlist/status") {
+      handlePlaylistStatus(req, res, url);
+      return;
+    }
     serveStatic(req, res);
     return;
   }
@@ -1800,6 +2268,16 @@ if (require.main === module) {
   server.listen(PORT, HOST, () => {
     console.log(`Genre Lab running at http://${HOST}:${PORT}`);
   });
+  // Don't leave the long-lived Essentia worker orphaned when the server stops.
+  const stopEssentiaWorker = () => {
+    if (essentiaWorker) {
+      try { essentiaWorker.child.kill("SIGTERM"); } catch (error) { void error; }
+      essentiaWorker = null;
+    }
+  };
+  process.on("exit", stopEssentiaWorker);
+  process.on("SIGINT", () => { stopEssentiaWorker(); process.exit(0); });
+  process.on("SIGTERM", () => { stopEssentiaWorker(); process.exit(0); });
 }
 
 module.exports = {

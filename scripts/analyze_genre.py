@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import argparse
+import gc
 import json
 import os
+import sys
+import traceback
 from pathlib import Path
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
@@ -59,10 +62,24 @@ def resolve_model(name):
     return MODEL_REGISTRY[name]
 
 
+# Loading a TensorFlow graph and parsing the label taxonomy are the dominant
+# per-analysis costs. In serve mode the same model is reused for every track, so
+# both are built once and cached, keyed by model config / metadata file.
+_MODEL_CACHE = {}
+_CLASSES_CACHE = {}
+
+
 def load_classes(metadata_path):
-    with metadata_path.open("r", encoding="utf-8") as f:
-        metadata = json.load(f)
-    return metadata["classes"]
+    # The label taxonomy never changes between tracks, so cache the parsed list
+    # per metadata file instead of re-reading and re-parsing the JSON each call.
+    key = str(metadata_path)
+    cached = _CLASSES_CACHE.get(key)
+    if cached is None:
+        with metadata_path.open("r", encoding="utf-8") as f:
+            metadata = json.load(f)
+        cached = metadata["classes"]
+        _CLASSES_CACHE[key] = cached
+    return cached
 
 
 def summarize_predictions(predictions):
@@ -75,32 +92,49 @@ def summarize_predictions(predictions):
 
 
 def analyze_effnet(audio, config):
-    embedding_model = TensorflowPredictEffnetDiscogs(
-        graphFilename=str(MODELS / config["embedding_graph"]),
-        output=config["embedding_output"],
-    )
+    embedding_model, classifier = _effnet_models(config)
     embeddings = embedding_model(audio)
-
-    classifier = TensorflowPredict2D(
-        graphFilename=str(MODELS / config["classifier_graph"]),
-        input=config["classifier_input"],
-        output=config["classifier_output"],
-    )
     return summarize_predictions(classifier(embeddings))
 
 
 def analyze_maest(audio, config):
-    output_node = os.environ.get("MAEST_OUTPUT_NODE", config["output"]).strip()
-    model = TensorflowPredictMAEST(
-        graphFilename=str(MODELS / config["graph"]),
-        output=output_node,
-    )
+    model = _maest_model(config)
     scores = summarize_predictions(model(audio))
     # MAEST classification activations may come out as raw logits; map to a
     # 0..1 range with a sigmoid when the values fall outside that range.
     if scores.size and (scores.min() < 0.0 or scores.max() > 1.0):
         scores = 1.0 / (1.0 + np.exp(-scores))
     return scores
+
+
+def _effnet_models(config):
+    key = ("effnet", config["embedding_graph"], config["classifier_graph"])
+    cached = _MODEL_CACHE.get(key)
+    if cached is None:
+        embedding_model = TensorflowPredictEffnetDiscogs(
+            graphFilename=str(MODELS / config["embedding_graph"]),
+            output=config["embedding_output"],
+        )
+        classifier = TensorflowPredict2D(
+            graphFilename=str(MODELS / config["classifier_graph"]),
+            input=config["classifier_input"],
+            output=config["classifier_output"],
+        )
+        cached = (embedding_model, classifier)
+        _MODEL_CACHE[key] = cached
+    return cached
+
+
+def _maest_model(config):
+    # MAEST's TensorFlow model is huge (~4GB resident). Unlike effnet we do NOT
+    # cache it: keeping it alive between requests would pin that memory for the
+    # whole worker lifetime and OOM small hosts. Build it fresh each call so it
+    # can be garbage-collected once the analysis returns.
+    output_node = os.environ.get("MAEST_OUTPUT_NODE", config["output"]).strip()
+    return TensorflowPredictMAEST(
+        graphFilename=str(MODELS / config["graph"]),
+        output=output_node,
+    )
 
 
 def analyze(audio_path, top_n, model_name):
@@ -123,9 +157,63 @@ def analyze(audio_path, top_n, model_name):
     return config, [(label, float(score)) for label, score in ranked[:top_n]]
 
 
+def build_payload(audio_path, top_n, model_name):
+    config, predictions = analyze(audio_path, top_n, model_name)
+    return {
+        "audio": str(audio_path),
+        "model": config["label"],
+        "modelKey": model_name,
+        "predictions": [
+            {"label": label, "score": score}
+            for label, score in predictions
+        ],
+    }
+
+
+def serve_loop():
+    # Long-lived worker mode: read one JSON request per line from stdin and emit
+    # one JSON response per line on stdout. The heavy TensorFlow/model load is
+    # paid once (lazily, on the first request) for effnet400 and reused for every
+    # later track. maest519 is deliberately not cached (see _maest_model), so its
+    # large model is rebuilt per request and freed afterwards.
+    # Request : {"id": <any>, "audio": <path>, "top": <int>, "model": <name>}
+    # Response: {"id": <any>, "ok": true, "result": {...}}
+    #        or {"id": <any>, "ok": false, "error": "..."}
+    sys.stdout.write(json.dumps({"ready": True}) + "\n")
+    sys.stdout.flush()
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        req_id = None
+        try:
+            req = json.loads(line)
+            req_id = req.get("id")
+            audio_path = Path(req["audio"])
+            if not audio_path.exists():
+                raise ValueError(f"Audio file not found: {audio_path}")
+            top_n = int(req.get("top", 12))
+            model_name = req.get("model") or os.environ.get("GENRE_MODEL", "effnet400")
+            payload = build_payload(audio_path, top_n, model_name)
+            response = {"id": req_id, "ok": True, "result": payload}
+        except Exception as error:  # noqa: BLE001 - report any failure per request
+            response = {
+                "id": req_id,
+                "ok": False,
+                "error": str(error) or error.__class__.__name__,
+            }
+            sys.stderr.write(traceback.format_exc())
+            sys.stderr.flush()
+        sys.stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+        # Reclaim the memory of any uncached model (maest519) before idling so the
+        # worker doesn't sit on ~4GB between requests.
+        gc.collect()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Analyze music genre/style tags with Essentia Discogs models.")
-    parser.add_argument("audio", type=Path, help="Audio file path, e.g. mp3/wav/flac.")
+    parser.add_argument("audio", type=Path, nargs="?", help="Audio file path, e.g. mp3/wav/flac.")
     parser.add_argument("--top", type=int, default=12, help="Number of labels to show.")
     parser.add_argument(
         "--model",
@@ -134,29 +222,33 @@ def main():
         help="Genre model to run (default from GENRE_MODEL env or effnet400).",
     )
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
+    parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="Run as a long-lived worker: read JSON requests from stdin, one per line.",
+    )
     args = parser.parse_args()
+
+    if args.serve:
+        serve_loop()
+        return
+
+    if args.audio is None:
+        parser.error("audio is required unless --serve is used")
 
     if not args.audio.exists():
         raise SystemExit(f"Audio file not found: {args.audio}")
 
-    config, predictions = analyze(args.audio, args.top, args.model)
+    payload = build_payload(args.audio, args.top, args.model)
     if args.json:
-        print(json.dumps({
-            "audio": str(args.audio),
-            "model": config["label"],
-            "modelKey": args.model,
-            "predictions": [
-                {"label": label, "score": score}
-                for label, score in predictions
-            ]
-        }, ensure_ascii=False))
+        print(json.dumps(payload, ensure_ascii=False))
         return
 
-    print(f"Audio: {args.audio}")
-    print(f"Model: {config['label']}")
+    print(f"Audio: {payload['audio']}")
+    print(f"Model: {payload['model']}")
     print("Top genre/style predictions:")
-    for label, score in predictions:
-        print(f"{score:0.4f}  {label}")
+    for item in payload["predictions"]:
+        print(f"{item['score']:0.4f}  {item['label']}")
 
 
 if __name__ == "__main__":

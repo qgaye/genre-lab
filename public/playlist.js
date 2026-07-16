@@ -1,8 +1,9 @@
-// Playlist genre analysis page. It fetches a NetEase playlist, then for each
-// track downloads a public audio match, runs Essentia genre analysis and
-// queries iTunes / Discogs / Last.fm metadata, scores the track with the shared
-// GenreCore pipeline, and renders the per-track genre composition. The
-// aggregate composition across all tracks is shown at the top.
+// Playlist genre analysis page. It submits a NetEase playlist to the server's
+// aggregate job endpoint, which downloads a public audio match, runs Essentia
+// genre analysis, queries iTunes / Discogs / Last.fm metadata and scores each
+// track server-side. The page receives a jobId (kept in the URL so a mobile
+// tab can background/resume), polls for per-track results, and renders both the
+// per-track composition and the aggregate composition across all tracks.
 const form = document.querySelector("#playlistForm");
 const playlistInput = document.querySelector("#playlistInput");
 const modelSelect = document.querySelector("#modelSelect");
@@ -18,10 +19,14 @@ const genreTwoLevel = document.querySelector("#genreTwoLevel");
 const viewToggle = document.querySelector("#viewToggle");
 const genreSunburst = document.querySelector("#genreSunburst");
 const genreMosaic = document.querySelector("#genreMosaic");
+const genreNebula = document.querySelector("#genreNebula");
 const sunburstSvg = document.querySelector("#sunburstSvg");
 const sunburstCenter = document.querySelector("#sunburstCenter");
 const sunburstLegend = document.querySelector("#sunburstLegend");
 const mosaicStage = document.querySelector("#mosaicStage");
+const nebulaStage = document.querySelector("#nebulaStage");
+const nebulaCanvas = document.querySelector("#nebulaCanvas");
+const nebulaLegend = document.querySelector("#nebulaLegend");
 const trackList = document.querySelector("#trackList");
 const trackCount = document.querySelector("#trackCount");
 const trackCardTemplate = document.querySelector("#trackCardTemplate");
@@ -47,12 +52,14 @@ const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be
 // neutral "其他" slice so tiny long-tail genres don't clutter the charts.
 const OTHER_GENRE_THRESHOLD = 5;
 const OTHER_GENRE_COLOR = "#6b6e64";
-// Cap the number of tracks analyzed per playlist to keep long playlists from
-// running for too long; extras beyond this are dropped with a notice.
-const MAX_TRACKS = 20;
+// Within each parent genre, styles below this aggregate share, or ranked beyond
+// MAX_STYLES_PER_GENRE, are folded into one "其他" child tile so the sunburst /
+// mosaic / share image don't fill up with unreadable 1%/0% slivers when a large
+// playlist spreads across many styles.
+const OTHER_STYLE_THRESHOLD = 2;
+const MAX_STYLES_PER_GENRE = 6;
 
 let activeModel = "";
-let taxonomyBundle = null;
 let running = false;
 
 // ---------------------------------------------------------------------------
@@ -71,7 +78,7 @@ const I18N = {
     "lang.toggle": "EN",
     "console.aria": "歌单曲风分析工作台",
     "field.model": "曲风模型",
-    "pl.title": "歌单曲风分析",
+    "pl.title": "我的音乐品味",
     "pl.nav.single": "单曲",
     "pl.status.waiting": "等待输入",
     "pl.field.link": "网易云歌单链接",
@@ -84,8 +91,10 @@ const I18N = {
     "pl.view.aria": "曲风视图切换",
     "pl.view.sunburst": "旭日图",
     "pl.view.mosaic": "占比矩阵",
+    "pl.view.nebula": "曲风星云",
     "pl.sunburst.caption": "曲风构成 · 内环流派 / 外环子风格",
     "pl.mosaic.caption": "占比矩阵 · 面积即占比 / 同色同流派",
+    "pl.nebula.caption": "曲风星云 · 每簇一个子风格 / 同色同流派",
     "pl.share.title": "生成占比矩阵图片并预览",
     "pl.share.button": "分享",
     "pl.share.busy": "生成中…",
@@ -111,6 +120,8 @@ const I18N = {
     "pl.card.body.essentiaFail": "Essentia 分析失败：{err}",
     "pl.card.status.queryTags": "查询曲风标签…",
     "pl.log.tagFail": "{title}：曲风标签查询失败（{err}），仅用音频分析",
+    "pl.log.trackDone": "{title} 分析完成（{i}/{n}）",
+    "pl.log.trackFail": "{title} 分析失败（{i}/{n}）",
     "pl.card.status.noResult": "无结果",
     "pl.card.body.noHit": "音频分析未命中任何曲风。",
     "pl.card.status.done": "完成",
@@ -121,29 +132,23 @@ const I18N = {
     "pl.progress.parse": "解析歌单",
     "pl.progress.requesting": "请求网易云歌单信息…",
     "pl.playlist.fallbackName": "网易云歌单",
-    "pl.overview.subtitle": "共 {n} 首",
     "pl.overview.analyzing": "{name} · 共 {n} 首歌曲，逐曲分析中…",
     "pl.parsed.start": "歌单「{name}」共 {n} 首，开始逐曲分析",
+    "pl.parsed.start.sampled": "歌单「{name}」{total} 首中随机 {n} 首，开始逐曲分析",
     "pl.progress.parsedInfo": "歌单「{name}」共 {n} 首",
-    "pl.limit.notice": "歌单共 {total} 首，超过上限，仅分析前 {limit} 首。",
-    "pl.count.trackedOf": "{n} / {total} 首",
-    "pl.overview.subtitleLimited": "共 {total} 首 · 仅分析前 {limit} 首",
-    "pl.overview.analyzingLimited": "{name} · 共 {total} 首，仅分析前 {limit} 首，逐曲分析中…",
-    "pl.parsed.startLimited": "歌单「{name}」共 {total} 首，仅分析前 {limit} 首，开始分析",
-    "pl.progress.parsedInfoLimited": "歌单「{name}」共 {total} 首，仅分析前 {limit} 首",
-    "pl.overview.completeSubtitleLimited": "共 {total} 首 · 分析前 {limit} 首，成功 {ok} 首",
-    "pl.overview.completeLimited": "{name} · 共 {total} 首，仅分析前 {limit} 首，成功分析 {ok} 首",
+    "pl.sampled.notice": "歌单「{name}」共 {total} 首，超过 {cap} 首上限，已随机挑选其中 {n} 首进行分析。",
     "pl.status.empty": "歌单为空",
     "pl.overview.emptyTracks": "该歌单没有可分析的曲目。",
     "pl.status.analyzing": "分析中 {i}/{n}",
     "pl.progress.analyzingNth": "分析第 {i}/{n} 首",
+    "pl.status.resuming": "继续分析 {i}/{n}",
+    "pl.progress.resumed": "检测到上次分析被中断，已完成 {done}/{n} 首，继续分析剩余曲目…",
     "pl.progress.complete": "分析完成",
     "pl.progress.completeInfo": "成功分析 {ok}/{n} 首",
     "pl.status.complete": "完成 {ok}/{n}",
-    "pl.overview.completeSubtitle": "共 {n} 首 · 成功分析 {ok} 首",
-    "pl.overview.complete": "{name} · 共 {n} 首，成功分析 {ok} 首",
     "pl.status.error": "出错了",
     "pl.overview.failed": "分析失败：{err}",
+    "pl.overview.expired": "分析结果已过期或不存在，请重新发起分析。",
     "pl.log.error": "错误：{err}",
     "pl.card.footer": "由 Genre Lab · 歌单曲风分析 生成",
     "pl.card.headline": "我的音乐风格",
@@ -172,8 +177,10 @@ const I18N = {
     "pl.view.aria": "Genre view toggle",
     "pl.view.sunburst": "Sunburst",
     "pl.view.mosaic": "Mosaic",
+    "pl.view.nebula": "Nebula",
     "pl.sunburst.caption": "Genre mix · inner ring genre / outer ring style",
     "pl.mosaic.caption": "Share mosaic · area = share / same color = same genre",
+    "pl.nebula.caption": "Genre nebula · one cluster per style / same color = same genre",
     "pl.share.title": "Generate a mosaic image and preview it",
     "pl.share.button": "Share",
     "pl.share.busy": "Generating…",
@@ -199,6 +206,8 @@ const I18N = {
     "pl.card.body.essentiaFail": "Essentia analysis failed: {err}",
     "pl.card.status.queryTags": "Querying genre tags…",
     "pl.log.tagFail": "{title}: genre tag lookup failed ({err}); using audio analysis only",
+    "pl.log.trackDone": "{title} analyzed ({i}/{n})",
+    "pl.log.trackFail": "{title} failed ({i}/{n})",
     "pl.card.status.noResult": "No result",
     "pl.card.body.noHit": "Audio analysis matched no genre.",
     "pl.card.status.done": "Done",
@@ -209,29 +218,23 @@ const I18N = {
     "pl.progress.parse": "Parsing playlist",
     "pl.progress.requesting": "Requesting NetEase playlist info…",
     "pl.playlist.fallbackName": "NetEase playlist",
-    "pl.overview.subtitle": "{n} tracks",
     "pl.overview.analyzing": "{name} · {n} tracks, analyzing…",
     "pl.parsed.start": "Playlist \u201c{name}\u201d has {n} tracks; starting analysis",
+    "pl.parsed.start.sampled": "Playlist \u201c{name}\u201d: {n} of {total} tracks picked at random; starting analysis",
     "pl.progress.parsedInfo": "Playlist \u201c{name}\u201d has {n} tracks",
-    "pl.limit.notice": "Playlist has {total} tracks, exceeding the limit; analyzing the first {limit} only.",
-    "pl.count.trackedOf": "{n} / {total} tracks",
-    "pl.overview.subtitleLimited": "{total} tracks · first {limit} analyzed",
-    "pl.overview.analyzingLimited": "{name} · {total} tracks, analyzing the first {limit}…",
-    "pl.parsed.startLimited": "Playlist \u201c{name}\u201d has {total} tracks; analyzing the first {limit}",
-    "pl.progress.parsedInfoLimited": "Playlist \u201c{name}\u201d has {total} tracks; analyzing the first {limit}",
-    "pl.overview.completeSubtitleLimited": "{total} tracks · first {limit} analyzed, {ok} succeeded",
-    "pl.overview.completeLimited": "{name} · {total} tracks, first {limit} analyzed, {ok} succeeded",
+    "pl.sampled.notice": "Playlist \u201c{name}\u201d has {total} tracks, exceeding the {cap}-track cap; {n} were randomly picked for analysis.",
     "pl.status.empty": "Empty playlist",
     "pl.overview.emptyTracks": "This playlist has no analyzable tracks.",
     "pl.status.analyzing": "Analyzing {i}/{n}",
     "pl.progress.analyzingNth": "Analyzing track {i}/{n}",
+    "pl.status.resuming": "Resuming {i}/{n}",
+    "pl.progress.resumed": "The previous analysis was interrupted; {done}/{n} done, resuming the remaining tracks…",
     "pl.progress.complete": "Analysis complete",
     "pl.progress.completeInfo": "Analyzed {ok}/{n} tracks",
     "pl.status.complete": "Done {ok}/{n}",
-    "pl.overview.completeSubtitle": "{n} tracks · {ok} analyzed",
-    "pl.overview.complete": "{name} · {n} tracks, {ok} analyzed",
     "pl.status.error": "Something went wrong",
     "pl.overview.failed": "Analysis failed: {err}",
+    "pl.overview.expired": "This analysis has expired or no longer exists; please start a new one.",
     "pl.log.error": "Error: {err}",
     "pl.card.footer": "Made with Genre Lab · Playlist Genre Analysis",
     "pl.card.headline": "My Music Taste",
@@ -333,6 +336,8 @@ async function initModelSelector() {
   }
 }
 
+// Load the model taxonomy script. Scoring itself runs server-side now; the
+// browser only needs DISCOGS_TAXONOMY for localized display names.
 async function loadModelTaxonomy(model) {
   const src = model ? `/discogs-taxonomy.js?model=${encodeURIComponent(model)}` : "/discogs-taxonomy.js";
   await new Promise((resolve, reject) => {
@@ -342,7 +347,6 @@ async function loadModelTaxonomy(model) {
     script.onerror = () => reject(new Error(t("pl.taxonomy.failed")));
     document.head.appendChild(script);
   });
-  taxonomyBundle = window.GenreCore.buildTaxonomy(window.DISCOGS_TAXONOMY);
 }
 
 modelSelect.addEventListener("change", () => {
@@ -395,6 +399,7 @@ function createTrackCard(track, index) {
   trackList.appendChild(node);
   return {
     node,
+    title: track.title,
     status: node.querySelector(".track-status"),
     body: node.querySelector(".track-card-body")
   };
@@ -544,8 +549,33 @@ function buildTwoLevel(compositions) {
 
   major.forEach((g, index) => {
     g.color = g.name === "__other__" ? OTHER_GENRE_COLOR : MIX_COLORS[index % MIX_COLORS.length];
+    g.styles = foldGenreStyles(g.styles, g.name === "__other__");
   });
   return major;
+}
+
+// Within one parent genre, keep at most MAX_STYLES_PER_GENRE styles that also
+// clear OTHER_STYLE_THRESHOLD and DROP the long-tail rest entirely — folding
+// them into an "其他" tile would be misleading, since the sum of many tiny
+// styles often outweighs every real style and dominates the chart. The kept
+// styles are then rescaled so their shares again sum to the parent genre's
+// total, keeping the parent area honest while the mosaic tiles / sunburst arc
+// fill it exactly. Always keeps at least the top style.
+//
+// The "其他" genre is itself an aggregate of long-tail genres, so each of its
+// styles is tiny in absolute terms and would all fail OTHER_STYLE_THRESHOLD,
+// leaving it with a single tile even when "其他" is large. For it we skip the
+// absolute threshold and just keep the top MAX_STYLES_PER_GENRE styles.
+function foldGenreStyles(styles, isOther = false) {
+  const sorted = [...styles].sort((a, b) => b.percent - a.percent);
+  const originalTotal = sorted.reduce((sum, style) => sum + style.percent, 0);
+  let kept = isOther
+    ? sorted.slice(0, MAX_STYLES_PER_GENRE)
+    : sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  if (!kept.length) kept = sorted.slice(0, 1);
+  const keptTotal = kept.reduce((sum, style) => sum + style.percent, 0) || 1;
+  const scale = originalTotal / keptTotal;
+  return kept.map(style => ({ ...style, percent: style.percent * scale }));
 }
 
 let twoLevelShown = false;
@@ -563,6 +593,7 @@ function renderAggregate(compositions) {
   const genres = buildTwoLevel(compositions);
   renderSunburst(genres);
   renderMosaic(genres);
+  renderNebula(genres);
   genreTwoLevel.hidden = genres.length === 0;
   if (shareMosaicBtn) shareMosaicBtn.disabled = genres.length === 0;
   // Default to the mosaic view the first time the charts appear, without
@@ -574,11 +605,11 @@ function renderAggregate(compositions) {
 }
 
 // Show one view at a time. The toggle acts as a tablist and the inactive
-// figure is hidden so only the selected chart is visible.
+// figures are hidden so only the selected chart is visible.
 function switchView(view) {
-  const isMosaic = view === "mosaic";
-  genreSunburst.hidden = isMosaic;
-  genreMosaic.hidden = !isMosaic;
+  genreSunburst.hidden = view !== "sunburst";
+  genreMosaic.hidden = view !== "mosaic";
+  genreNebula.hidden = view !== "nebula";
   for (const btn of viewToggle.querySelectorAll(".view-toggle-btn")) {
     const active = btn.dataset.view === view;
     btn.classList.toggle("is-active", active);
@@ -586,7 +617,11 @@ function switchView(view) {
   }
   // The mosaic figure has zero size while hidden, so lay it out only once it
   // becomes visible (and thus measurable).
-  if (isMosaic) layoutMosaicTree();
+  if (view === "mosaic") layoutMosaicTree();
+  // The nebula canvas likewise can't be sized while hidden; only run its
+  // animation loop while it's the visible view to avoid wasting frames.
+  if (view === "nebula") startNebula();
+  else stopNebula();
 }
 
 viewToggle.addEventListener("click", event => {
@@ -942,67 +977,500 @@ mosaicStage.addEventListener("click", event => {
 });
 
 // ---------------------------------------------------------------------------
-// Single-track analysis pipeline
+// Nebula view: a canvas "galaxy" of the same two-level data. Each style is a
+// small drifting cluster of particles (≈ one particle per track-share point),
+// clusters are placed inside their parent genre's treemap region and share the
+// genre color, so same-genre styles read as one constellation. Its area still
+// tracks share (cluster radius ∝ √percent), and clicking a cluster opens the
+// same style intro dialog as the other views.
 // ---------------------------------------------------------------------------
-async function analyzeTrack(track, card) {
-  const trackForScore = { title: track.title, artists: (track.artists || []).join(" / ") };
+let nebulaGenres = [];
+let nebulaClusters = [];
+let nebulaRaf = null;
+let nebulaTick = 0;
+let nebulaW = 0;
+let nebulaH = 0;
+const nebulaReduceMotion =
+  window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  setCardStatus(card, t("pl.card.status.download"), "busy");
-  let download;
-  try {
-    download = await postJson("/api/download", {
-      url: "",
-      platformUrl: track.sourceUrl || "",
-      platform: "netease-url",
-      title: track.title,
-      artists: trackForScore.artists,
-      query: [`"${track.title}"`, trackForScore.artists ? `"${trackForScore.artists}"` : ""].filter(Boolean).join(" ")
-    });
-  } catch (error) {
-    setCardStatus(card, t("pl.card.status.audioNotFound"), "fail");
-    card.body.textContent = t("pl.card.body.audioFail", { err: error.message });
-    return null;
+function nebulaRand(a, b) {
+  return a + Math.random() * (b - a);
+}
+
+// Turn a #rrggbb hex plus alpha into an rgba() string for the canvas.
+function nebulaRgba(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+function renderNebula(genres) {
+  nebulaGenres = genres;
+  // Legend mirrors the mosaic's: one round key per parent genre.
+  nebulaLegend.innerHTML = "";
+  for (const genre of genres) {
+    const item = document.createElement("span");
+    item.className = "nebula-legend-item";
+    const key = document.createElement("i");
+    key.className = "nebula-key";
+    key.style.background = genre.color;
+    key.style.color = genre.color;
+    item.appendChild(key);
+    item.append(document.createTextNode(`${genre.label} `));
+    const pct = document.createElement("b");
+    pct.textContent = `${Math.round(genre.percent)}%`;
+    item.appendChild(pct);
+    nebulaLegend.appendChild(item);
+  }
+  // Defer particle layout until the canvas is visible (and measurable).
+  if (!genreNebula.hidden) buildNebula();
+}
+
+// Build one particle cluster per style, positioned inside its parent genre's
+// treemap region so same-genre clusters sit together. Deferred until the canvas
+// has a measurable size (the nebula may be hidden behind another view).
+function buildNebula() {
+  const rect = nebulaStage.getBoundingClientRect();
+  nebulaW = rect.width;
+  nebulaH = rect.height;
+  if (!nebulaW || !nebulaH || !nebulaGenres.length) {
+    nebulaClusters = [];
+    return;
+  }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  nebulaCanvas.width = Math.round(nebulaW * dpr);
+  nebulaCanvas.height = Math.round(nebulaH * dpr);
+  const ctx = nebulaCanvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  nebulaClusters = [];
+  const genreRects = squarifyTreemap(
+    nebulaGenres.map(g => ({ value: g.percent, genre: g })),
+    0, 0, nebulaW, nebulaH
+  );
+  for (const gr of genreRects) {
+    const genre = gr.ref.genre;
+    const styleRects = squarifyTreemap(
+      genre.styles.map(s => ({ value: s.percent, style: s })),
+      gr.x, gr.y, gr.w, gr.h
+    );
+    for (const sr of styleRects) {
+      const style = sr.ref.style;
+      // Radius fills most of the style's region but stays circular, so clusters
+      // read as blobs rather than tiling the rectangle.
+      const R = Math.max(10, Math.min(sr.w, sr.h) * 0.46);
+      const cx = sr.x + sr.w / 2;
+      const cy = sr.y + sr.h / 2;
+      const count = Math.max(5, Math.round(style.percent * 3));
+      const parts = [];
+      for (let i = 0; i < count; i++) {
+        const baseRad = R * Math.sqrt(Math.random());
+        parts.push({
+          ang: nebulaRand(0, Math.PI * 2),
+          baseRad,
+          spin: nebulaRand(-0.006, 0.006) * (1 - (baseRad / R) * 0.4),
+          osc: nebulaRand(0, Math.PI * 2),
+          oscSpd: nebulaRand(0.004, 0.012),
+          oscAmp: nebulaRand(1.5, 6),
+          size: nebulaRand(0.9, 2.4),
+          twk: nebulaRand(0, Math.PI * 2)
+        });
+      }
+      nebulaClusters.push({
+        genre,
+        style,
+        cx,
+        cy,
+        R,
+        parts,
+        drift: nebulaRand(0, Math.PI * 2)
+      });
+    }
+  }
+}
+
+function drawNebula() {
+  const ctx = nebulaCanvas.getContext("2d");
+  nebulaTick += 1;
+  ctx.clearRect(0, 0, nebulaW, nebulaH);
+
+  // Particles + halos are drawn additively so overlaps glow like a real nebula.
+  ctx.globalCompositeOperation = "lighter";
+  for (const cl of nebulaClusters) {
+    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * 0.05;
+    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * 0.05;
+    const cx = cl.cx + dx;
+    const cy = cl.cy + dy;
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * 1.15);
+    halo.addColorStop(0, nebulaRgba(cl.genre.color, 0.16));
+    halo.addColorStop(1, nebulaRgba(cl.genre.color, 0));
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(cx, cy, cl.R * 1.15, 0, Math.PI * 2);
+    ctx.fill();
+    cl.drawCx = cx;
+    cl.drawCy = cy;
+    for (const p of cl.parts) {
+      if (!nebulaReduceMotion) {
+        p.ang += p.spin;
+        p.osc += p.oscSpd;
+        p.twk += 0.05;
+      }
+      const rad = p.baseRad + Math.sin(p.osc) * p.oscAmp;
+      const x = cx + Math.cos(p.ang) * rad;
+      const y = cy + Math.sin(p.ang) * rad;
+      const tw = 0.55 + 0.45 * Math.sin(p.twk);
+      ctx.fillStyle = nebulaRgba(cl.genre.color, 0.5 + 0.4 * tw);
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  setCardStatus(card, t("pl.card.status.essentia"), "busy");
-  let essentia;
-  try {
-    essentia = await postJson("/api/essentia", { fileName: download.fileName, top: 12, model: activeModel });
-  } catch (error) {
-    setCardStatus(card, t("pl.card.status.analyzeFail"), "fail");
-    card.body.textContent = t("pl.card.body.essentiaFail", { err: error.message });
-    return null;
+  // Labels sit on top, opaque, so style names stay readable over the glow.
+  ctx.globalCompositeOperation = "source-over";
+  ctx.textAlign = "center";
+  for (const cl of nebulaClusters) {
+    if (cl.R < 20) continue;
+    const nameSize = Math.max(11, Math.min(18, cl.R * 0.32));
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
+    ctx.fillStyle = cl.genre.color;
+    ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
+    ctx.shadowBlur = 0;
   }
 
-  setCardStatus(card, t("pl.card.status.queryTags"), "busy");
-  let metadata = null;
-  try {
-    metadata = await postJson("/api/metadata", {
-      title: track.title,
-      artists: trackForScore.artists,
-      album: track.album || "",
-      model: activeModel
-    });
-  } catch (error) {
-    // metadata is optional; Essentia alone still yields a composition
-    logLine(t("pl.log.tagFail", { title: track.title, err: error.message }));
+  if (nebulaRaf !== null && !nebulaReduceMotion) {
+    nebulaRaf = requestAnimationFrame(drawNebula);
   }
+}
 
-  const composition = window.GenreCore.scoreTrack(taxonomyBundle, {
-    essentia,
-    metadata,
-    track: trackForScore
+function startNebula() {
+  buildNebula();
+  if (!nebulaClusters.length) return;
+  if (nebulaReduceMotion) {
+    drawNebula();
+    return;
+  }
+  if (nebulaRaf !== null) cancelAnimationFrame(nebulaRaf);
+  nebulaRaf = requestAnimationFrame(drawNebula);
+}
+
+function stopNebula() {
+  if (nebulaRaf !== null) {
+    cancelAnimationFrame(nebulaRaf);
+    nebulaRaf = null;
+  }
+}
+
+// Click a cluster to open its style intro, mirroring the mosaic/sunburst.
+nebulaCanvas.addEventListener("click", event => {
+  if (!nebulaClusters.length) return;
+  const rect = nebulaCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  let hit = null;
+  let best = Infinity;
+  for (const cl of nebulaClusters) {
+    const cx = cl.drawCx != null ? cl.drawCx : cl.cx;
+    const cy = cl.drawCy != null ? cl.drawCy : cl.cy;
+    const d = Math.hypot(x - cx, y - cy);
+    if (d <= cl.R * 1.15 && d < best) {
+      best = d;
+      hit = cl;
+    }
+  }
+  if (!hit) return;
+  const profile = profileFor(hit.style.genre || hit.genre.name, hit.style.name);
+  if (profile) openStyleDialog(profile, nebulaCanvas);
+});
+
+let nebulaResizeQueued = false;
+window.addEventListener("resize", () => {
+  if (nebulaResizeQueued || genreNebula.hidden) return;
+  nebulaResizeQueued = true;
+  requestAnimationFrame(() => {
+    nebulaResizeQueued = false;
+    startNebula();
   });
+});
 
-  if (!composition.length) {
-    setCardStatus(card, t("pl.card.status.noResult"), "fail");
-    card.body.textContent = t("pl.card.body.noHit");
-    return null;
+// ---------------------------------------------------------------------------
+// Playlist aggregate job: submit once, then poll for per-track results.
+//
+// Scoring now happens server-side; the client submits the playlist, receives a
+// jobId (kept in the page URL so a backgrounded mobile tab can resume), and
+// polls a status endpoint every POLL_INTERVAL_MS, rendering each track's
+// composition or failure reason as it arrives.
+// ---------------------------------------------------------------------------
+const POLL_INTERVAL_MS = 10000;
+let jobState = null;
+let pollTimer = null;
+let pollBusy = false;
+
+// Map a failed track's stage to its status pill and body copy.
+const TRACK_FAIL_TEXT = {
+  download: { status: "pl.card.status.audioNotFound", body: "pl.card.body.audioFail" },
+  essentia: { status: "pl.card.status.analyzeFail", body: "pl.card.body.essentiaFail" },
+  score: { status: "pl.card.status.noResult", body: "pl.card.body.noHit" }
+};
+
+// Render one track result into its card. Returns the composition (or null on
+// failure) so it can be collected for the aggregate charts.
+function renderTrackResult(card, result) {
+  if (!card) return null;
+  if (result.status === "ok") {
+    setCardStatus(card, t("pl.card.status.done"), "done");
+    renderTrackMix(card.body, result.composition);
+    return result.composition;
   }
+  const map = TRACK_FAIL_TEXT[result.stage] || TRACK_FAIL_TEXT.essentia;
+  setCardStatus(card, t(map.status), "fail");
+  card.body.textContent = result.stage === "score"
+    ? t("pl.card.body.noHit")
+    : t(map.body, { err: result.error || "" });
+  return null;
+}
 
-  setCardStatus(card, t("pl.card.status.done"), "done");
-  renderTrackMix(card.body, composition);
-  return composition;
+// Reset all playlist view state before a fresh submit.
+function resetPlaylistView() {
+  resetProgress();
+  trackList.innerHTML = "";
+  sunburstSvg.innerHTML = "";
+  sunburstCenter.innerHTML = "";
+  mosaicStage.innerHTML = "";
+  genreTwoLevel.hidden = true;
+  twoLevelShown = false;
+  lastCompositions = null;
+  lastSummary = null;
+  shareMeta = { title: "", subtitle: "" };
+  if (shareMosaicBtn) shareMosaicBtn.disabled = true;
+  trackCount.textContent = t("pl.count.tracks", { n: 0 });
+  playlistMeta.textContent = t("pl.overview.parsing");
+}
+
+// Persist (or clear) the jobId in the page URL so refresh / app-switch resumes.
+function setJobInUrl(jobId) {
+  const url = new URL(window.location.href);
+  if (jobId) url.searchParams.set("job", jobId);
+  else url.searchParams.delete("job");
+  history.replaceState(null, "", url);
+}
+
+// Render the "analyzing" overview / count / parsed line for a job. When the
+// playlist was randomly down-sampled, the overview says "{n} of {total} (random)"
+// instead of a plain "{n} tracks" so the count isn't mistaken for the whole list.
+function renderPlaylistMeta(info) {
+  const name = info.name || t("pl.playlist.fallbackName");
+  const { total } = info;
+  const sampled = Boolean(info.sampled);
+  const originalCount = info.originalCount || total;
+  shareMeta = {
+    title: name,
+    subtitle: ""
+  };
+  playlistMeta.textContent = t("pl.overview.analyzing", { name, n: total });
+  trackCount.textContent = t("pl.count.tracks", { n: total });
+  parsedLine.textContent = sampled
+    ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
+    : t("pl.parsed.start", { name, n: total });
+  return name;
+}
+
+// Build the job's client state (cards + composition slots) from a submit or a
+// resumed status payload.
+function installJob(info) {
+  const name = renderPlaylistMeta(info);
+  const tracks = info.tracks || [];
+  jobState = {
+    jobId: info.jobId,
+    name,
+    total: info.total,
+    sampled: Boolean(info.sampled),
+    originalCount: info.originalCount || info.total,
+    cards: tracks.map((track, index) => createTrackCard(track, index)),
+    compositions: new Array(tracks.length).fill(null),
+    applied: 0
+  };
+  return name;
+}
+
+// Apply the newly completed results from a status payload to the cards and
+// aggregate charts. Each newly arrived result also appends a per-track line to
+// the progress log so both fresh and resumed runs show "<track> analyzed".
+// `silent` skips those lines for the historical batch a resumed page loads in
+// one shot (which would otherwise flood the log with hundreds of entries).
+function applyResults(data, silent = false) {
+  const total = jobState.total || data.total || 0;
+  for (const result of data.results || []) {
+    const card = jobState.cards[result.index];
+    jobState.compositions[result.index] = renderTrackResult(card, result);
+    if (silent) continue;
+    const title = (card && card.title) || "";
+    const key = result.status === "ok" ? "pl.log.trackDone" : "pl.log.trackFail";
+    logLine(t(key, { title, i: result.index + 1, n: total }));
+  }
+  jobState.applied = data.completed;
+  if (data.results && data.results.length) renderAggregate(jobState.compositions);
+}
+
+function updateJobProgress(data) {
+  if (data.state !== "running") return;
+  const total = jobState.total || data.total || 0;
+  const nth = total ? Math.min(data.completed + 1, total) : 0;
+  const pct = total ? 8 + Math.round((data.completed / total) * 90) : 8;
+  setStatus(t("pl.status.analyzing", { i: nth, n: total }), true);
+  setProgress(t("pl.progress.analyzingNth", { i: nth, n: total }), pct);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function finishJob(data) {
+  stopPolling();
+  const { name, total } = jobState;
+  const ok = data.ok;
+  lastSummary = { name, total, ok, sampled: jobState.sampled, originalCount: jobState.originalCount };
+  setProgress(t("pl.progress.complete"), 100, t("pl.progress.completeInfo", { ok, n: total }));
+  setStatus(t("pl.status.complete", { ok, n: total }));
+  shareMeta = {
+    title: name,
+    subtitle: ""
+  };
+  playlistMeta.textContent = name;
+  running = false;
+  analyzeBtn.disabled = false;
+}
+
+function failJob(message) {
+  stopPolling();
+  setStatus(t("pl.status.error"));
+  playlistMeta.textContent = t("pl.overview.failed", { err: message || "" });
+  logLine(t("pl.log.error", { err: message || "" }));
+  running = false;
+  analyzeBtn.disabled = false;
+}
+
+function expireJob() {
+  stopPolling();
+  setJobInUrl("");
+  setStatus(t("pl.status.error"));
+  playlistMeta.textContent = t("pl.overview.expired");
+  running = false;
+  analyzeBtn.disabled = false;
+}
+
+// Fetch job status. A 404 is surfaced as an "expired" state rather than an
+// error so callers can prompt the user to restart.
+async function fetchJobStatus(jobId, since) {
+  const response = await fetch(`/api/analyze-playlist/status?jobId=${encodeURIComponent(jobId)}&since=${since}`);
+  const data = await response.json();
+  if (response.status === 404) {
+    data.state = "expired";
+    return data;
+  }
+  if (!response.ok) throw new Error(data.error || t("pl.request.failed"));
+  return data;
+}
+
+async function pollOnce() {
+  if (!jobState || pollBusy) return;
+  pollBusy = true;
+  try {
+    const data = await fetchJobStatus(jobState.jobId, jobState.applied);
+    if (data.state === "expired") {
+      expireJob();
+      return;
+    }
+    applyResults(data);
+    updateJobProgress(data);
+    if (data.state === "done") finishJob(data);
+    else if (data.state === "error") failJob(data.error);
+  } catch (error) {
+    // Transient network error (e.g. app briefly backgrounded); keep polling.
+    logLine(t("pl.log.error", { err: error.message }));
+  } finally {
+    pollBusy = false;
+  }
+}
+
+// When the server randomly down-sampled a large playlist, make it explicit: the
+// full size, the cap, and how many tracks were picked. Shown both on a fresh
+// submit and when resuming a sampled job.
+function noticeIfSampled(info) {
+  if (!info || !info.sampled) return;
+  const name = info.name || t("pl.playlist.fallbackName");
+  const analyzed = info.total || 0;
+  const total = info.originalCount || analyzed;
+  logLine(t("pl.sampled.notice", { name, total, cap: analyzed, n: analyzed }));
+}
+
+function beginJob(info) {
+  const name = installJob(info);
+  setProgress(t("pl.progress.parse"), 8, t("pl.progress.parsedInfo", { name, n: info.total }));
+  noticeIfSampled(info);
+  running = true;
+  analyzeBtn.disabled = true;
+  pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
+  pollOnce();
+}
+
+// On page load, resume a job whose id is present in the URL (mobile app-switch
+// or refresh). Unknown / expired ids are cleared with a notice.
+async function resumeJobFromUrl() {
+  const jobId = new URLSearchParams(window.location.search).get("job");
+  if (!jobId) return;
+  try {
+    await loadModelTaxonomy(activeModel);
+    const data = await fetchJobStatus(jobId, 0);
+    if (data.state === "expired") {
+      setJobInUrl("");
+      playlistMeta.textContent = t("pl.overview.expired");
+      return;
+    }
+    resetPlaylistView();
+    // Refill the link box with the original input so the resumed page matches
+    // what the user first submitted.
+    if (data.inputUrl) playlistInput.value = data.inputUrl;
+    installJob({
+      jobId,
+      name: data.name,
+      tracks: data.tracks,
+      total: data.total,
+      sampled: data.sampled,
+      originalCount: data.originalCount
+    });
+    // Load the already-finished batch silently (no per-track log spam); the
+    // resume notice below explains how many were already done.
+    applyResults(data, true);
+    updateJobProgress(data);
+    if (data.state === "done") {
+      finishJob(data);
+    } else if (data.state === "error") {
+      failJob(data.error);
+    } else {
+      // The run was interrupted (e.g. server restart); the server resumes it on
+      // demand, so surface that clearly and keep polling for progress. setStatus
+      // runs after updateJobProgress (line above) so the "resuming" pill wins.
+      const total = data.total || 0;
+      const nth = total ? Math.min(data.completed + 1, total) : 0;
+      logLine(t("pl.progress.resumed", { done: data.completed, n: total }));
+      noticeIfSampled(data);
+      setStatus(t("pl.status.resuming", { i: nth, n: total }), true);
+      running = true;
+      analyzeBtn.disabled = true;
+      pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
+    }
+  } catch (error) {
+    logLine(t("pl.log.error", { err: error.message }));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1018,92 +1486,27 @@ form.addEventListener("submit", async event => {
   }
 
   running = true;
-  resetProgress();
-  trackList.innerHTML = "";
-  sunburstSvg.innerHTML = "";
-  sunburstCenter.innerHTML = "";
-  mosaicStage.innerHTML = "";
-  genreTwoLevel.hidden = true;
-  twoLevelShown = false;
-  lastCompositions = null;
-  lastSummary = null;
-  shareMeta = { title: "", subtitle: "" };
-  if (shareMosaicBtn) shareMosaicBtn.disabled = true;
-  trackCount.textContent = t("pl.count.tracks", { n: 0 });
-  playlistMeta.textContent = t("pl.overview.parsing");
+  resetPlaylistView();
 
   try {
     setStatus(t("pl.status.parsing"), true);
     await loadModelTaxonomy(activeModel);
     setProgress(t("pl.progress.parse"), 4, t("pl.progress.requesting"));
 
-    const playlist = await postJson("/api/netease-playlist", { url: raw });
-    const allTracks = playlist.tracks || [];
-    const name = playlist.name || t("pl.playlist.fallbackName");
-    const truncated = allTracks.length > MAX_TRACKS;
-    const tracks = truncated ? allTracks.slice(0, MAX_TRACKS) : allTracks;
-    const totalTracks = allTracks.length;
-    if (truncated) {
-      logLine(t("pl.limit.notice", { total: totalTracks, limit: MAX_TRACKS }));
-    }
-    shareMeta = {
-      title: name,
-      subtitle: truncated
-        ? t("pl.overview.subtitleLimited", { total: totalTracks, limit: MAX_TRACKS })
-        : t("pl.overview.subtitle", { n: tracks.length })
-    };
-    playlistMeta.textContent = truncated
-      ? t("pl.overview.analyzingLimited", { name, total: totalTracks, limit: MAX_TRACKS })
-      : t("pl.overview.analyzing", { name, n: tracks.length });
-    trackCount.textContent = truncated
-      ? t("pl.count.trackedOf", { n: tracks.length, total: totalTracks })
-      : t("pl.count.tracks", { n: tracks.length });
-    parsedLine.textContent = truncated
-      ? t("pl.parsed.startLimited", { name, total: totalTracks, limit: MAX_TRACKS })
-      : t("pl.parsed.start", { name, n: tracks.length });
-    setProgress(t("pl.progress.parse"), 8, truncated
-      ? t("pl.progress.parsedInfoLimited", { name, total: totalTracks, limit: MAX_TRACKS })
-      : t("pl.progress.parsedInfo", { name, n: tracks.length }));
-
-    if (!tracks.length) {
+    // Submit the playlist; the server returns a jobId immediately and analyzes
+    // the tracks in the background. Scoring now happens server-side.
+    const info = await postJson("/api/analyze-playlist", { url: raw, model: activeModel });
+    if (!info.tracks || !info.tracks.length) {
       setStatus(t("pl.status.empty"));
       playlistMeta.textContent = t("pl.overview.emptyTracks");
+      running = false;
+      analyzeBtn.disabled = false;
       return;
     }
-
-    const cards = tracks.map((track, index) => createTrackCard(track, index));
-    const compositions = [];
-    for (let i = 0; i < tracks.length; i += 1) {
-      const track = tracks[i];
-      const card = cards[i];
-      const pct = 8 + Math.round(((i + 0.5) / tracks.length) * 90);
-      setStatus(t("pl.status.analyzing", { i: i + 1, n: tracks.length }), true);
-      setProgress(t("pl.progress.analyzingNth", { i: i + 1, n: tracks.length }), pct, `${track.title} - ${(track.artists || []).join(" / ")}`);
-      const composition = await analyzeTrack(track, card);
-      compositions.push(composition);
-      renderAggregate(compositions);
-    }
-
-    const ok = compositions.filter(Boolean).length;
-    lastSummary = { name, analyzed: tracks.length, total: totalTracks, limit: MAX_TRACKS, truncated, ok };
-    setProgress(t("pl.progress.complete"), 100, t("pl.progress.completeInfo", { ok, n: tracks.length }));
-    setStatus(t("pl.status.complete", { ok, n: tracks.length }));
-    shareMeta = {
-      title: name,
-      subtitle: truncated
-        ? t("pl.overview.completeSubtitleLimited", { total: totalTracks, limit: MAX_TRACKS, ok })
-        : t("pl.overview.completeSubtitle", { n: tracks.length, ok })
-    };
-    playlistMeta.textContent = truncated
-      ? t("pl.overview.completeLimited", { name, total: totalTracks, limit: MAX_TRACKS, ok })
-      : t("pl.overview.complete", { name, n: tracks.length, ok });
+    setJobInUrl(info.jobId);
+    beginJob(info);
   } catch (error) {
-    setStatus(t("pl.status.error"));
-    playlistMeta.textContent = t("pl.overview.failed", { err: error.message });
-    logLine(t("pl.log.error", { err: error.message }));
-  } finally {
-    running = false;
-    analyzeBtn.disabled = false;
+    failJob(error.message);
   }
 });
 
@@ -1143,6 +1546,61 @@ function drawShareFooter(ctx, x, y, width) {
   ctx.restore();
 }
 
+// Wrap `text` into at most `maxLines` lines that each fit within `maxWidth`,
+// breaking on spaces/hyphens first and falling back to per-character breaks for
+// long unbreakable tokens. The last line is ellipsized if content overflows.
+function wrapCanvasText(ctx, text, maxWidth, maxLines) {
+  const lines = [];
+  let current = "";
+  // Keep separators (space/hyphen) attached to the preceding token so breaks
+  // land after them, e.g. "Synth-" / "pop".
+  const tokens = text.match(/[^\s-]+[\s-]?|[\s-]/g) || [text];
+  const pushChars = (token) => {
+    for (const ch of token) {
+      const next = current + ch;
+      if (ctx.measureText(next).width > maxWidth && current) {
+        lines.push(current);
+        current = ch;
+        if (lines.length >= maxLines) return true;
+      } else {
+        current = next;
+      }
+    }
+    return false;
+  };
+  for (let token of tokens) {
+    const candidate = current + token;
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+    if (current) {
+      lines.push(current.trimEnd());
+      current = "";
+      if (lines.length >= maxLines) break;
+    }
+    if (ctx.measureText(token).width <= maxWidth) {
+      current = token;
+    } else if (pushChars(token)) {
+      current = "";
+      break;
+    }
+  }
+  if (current && lines.length < maxLines) lines.push(current.trimEnd());
+  if (lines.length > maxLines) lines.length = maxLines;
+  // Ellipsize the last line if we ran out of room mid-text.
+  const consumed = lines.join("").replace(/\s/g, "").length;
+  const total = text.replace(/\s/g, "").length;
+  if (lines.length === maxLines && consumed < total) {
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1);
+    }
+    lines[maxLines - 1] = `${last}…`;
+  }
+  return lines;
+}
+
 // Draw the two-level treemap onto the canvas, mirroring the on-screen mosaic:
 // area = share, same color = same genre, child styles differ by opacity.
 function drawShareTreemap(ctx, genres, x, y, width, height) {
@@ -1178,19 +1636,50 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
       const pctText = `${Math.round(style.percent)}%`;
       const pctSize = Math.max(15, Math.min(46, Math.round(11 + Math.sqrt(bw * bh) * 0.08)));
       const nameSize = Math.max(13, Math.round(pctSize * 0.8));
-      if (bw >= 60 && bh >= 40) {
+      // A tall, narrow tile can't fit a horizontal "name %" row, so run the
+      // name top-to-bottom with the percent at the base. Mirrors the DOM
+      // mosaic's is-vertical branch (writing-mode: vertical-rl).
+      const isVertical = bh >= bw * 1.6 && bw < 60 && bh >= 60;
+      if (isVertical) {
+        ctx.save();
+        ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
+        // Percentage sits horizontally at the bottom of the tile.
+        const vPctSize = Math.max(13, Math.min(pctSize, 22));
+        ctx.font = `800 ${vPctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(pctText, bx + bw / 2, by + bh - 6);
+        // Name runs top-to-bottom (rotated 90°), clipped to the tile height.
+        const vNameSize = Math.max(12, Math.min(nameSize, bw - 6));
+        ctx.font = `700 ${vNameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        const avail = bh - vPctSize - 16;
+        let name = style.label;
+        while (name.length > 1 && ctx.measureText(name).width > avail) {
+          name = name.slice(0, -1);
+        }
+        ctx.translate(bx + bw / 2, by + 8);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillText(name, 0, 0);
+        ctx.restore();
+      } else if (bw >= 60 && bh >= 40) {
         ctx.save();
         ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
         ctx.textBaseline = "top";
         ctx.font = `700 ${nameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
-        // Clip name to block width to avoid overflow.
-        let name = style.label;
-        while (name.length > 1 && ctx.measureText(name).width > bw - 16) {
-          name = name.slice(0, -1);
+        // Wrap the name onto as many lines as the tile height allows instead of
+        // clipping it, matching the DOM mosaic (which wraps via --mb-lines).
+        const lineH = nameSize * 1.25 + 2;
+        const maxNameLines = Math.max(1, Math.floor((bh - 10 - pctSize - 6) / lineH));
+        const nameLines = wrapCanvasText(ctx, style.label, bw - 16, maxNameLines);
+        let ny = by + 8;
+        for (const line of nameLines) {
+          ctx.fillText(line, bx + 8, ny);
+          ny += lineH;
         }
-        ctx.fillText(name, bx + 8, by + 8);
         ctx.font = `800 ${pctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
-        ctx.fillText(pctText, bx + 8, by + 8 + nameSize + 6);
+        ctx.fillText(pctText, bx + 8, ny + 4);
         ctx.restore();
       } else if (bw >= 34 && bh >= 20) {
         ctx.save();
@@ -1418,23 +1907,17 @@ function applyLanguage() {
   // Re-localize the finished-analysis summary text (the generic data-i18n loop
   // above reset these back to their idle defaults).
   if (lastSummary) {
-    const { name, analyzed, total, limit, truncated, ok } = lastSummary;
-    trackCount.textContent = truncated
-      ? t("pl.count.trackedOf", { n: analyzed, total })
-      : t("pl.count.tracks", { n: analyzed });
-    parsedLine.textContent = truncated
-      ? t("pl.parsed.startLimited", { name, total, limit })
-      : t("pl.parsed.start", { name, n: analyzed });
-    statusPill.textContent = t("pl.status.complete", { ok, n: analyzed });
+    const { name, total, ok, sampled, originalCount } = lastSummary;
+    trackCount.textContent = t("pl.count.tracks", { n: total });
+    parsedLine.textContent = sampled
+      ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
+      : t("pl.parsed.start", { name, n: total });
+    statusPill.textContent = t("pl.status.complete", { ok, n: total });
     progressLabel.textContent = t("pl.progress.complete");
-    playlistMeta.textContent = truncated
-      ? t("pl.overview.completeLimited", { name, total, limit, ok })
-      : t("pl.overview.complete", { name, n: analyzed, ok });
+    playlistMeta.textContent = name;
     shareMeta = {
       title: name,
-      subtitle: truncated
-        ? t("pl.overview.completeSubtitleLimited", { total, limit, ok })
-        : t("pl.overview.completeSubtitle", { n: analyzed, ok })
+      subtitle: ""
     };
   }
 }
@@ -1457,3 +1940,6 @@ if (langToggle) {
 
 applyLanguage();
 initModelSelector();
+// Resume an in-flight / finished job whose id is in the page URL (mobile
+// app-switch or refresh). Runs after the model selector so activeModel is set.
+resumeJobFromUrl();

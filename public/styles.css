@@ -1405,6 +1405,73 @@ a.lang-toggle {
   margin-left: 0;
 }
 
+/* Nebula view: a canvas starfield where each style is a small particle cluster,
+   clusters grouped and colored by parent genre. Sits in the same slot as the
+   mosaic (third toggle view). */
+.genre-nebula {
+  min-width: 0;
+}
+
+.nebula-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nebula-stage {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 28% 30%, rgba(200, 255, 95, 0.05), transparent 55%),
+    radial-gradient(110% 90% at 76% 72%, rgba(99, 210, 255, 0.05), transparent 55%),
+    #0b0d0a;
+}
+
+.nebula-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.nebula-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  pointer-events: none;
+}
+
+.nebula-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.nebula-legend-item .nebula-key {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex: none;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.nebula-legend-item b {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 @media (max-width: 720px) {
   .genre-2l {
     gap: 16px;

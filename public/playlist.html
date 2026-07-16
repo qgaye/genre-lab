@@ -12,7 +12,7 @@
         <header class="mast">
           <div>
             <p class="kicker">Genre Lab</p>
-            <h1 data-i18n="pl.title">歌单曲风分析</h1>
+            <h1 data-i18n="pl.title">我的音乐品味</h1>
           </div>
           <div class="mast-actions">
             <div class="mast-buttons">
@@ -57,6 +57,7 @@
             <div class="view-toggle" id="viewToggle" role="tablist" aria-label="曲风视图切换" data-i18n-aria="pl.view.aria">
               <button type="button" class="view-toggle-btn" data-view="sunburst" role="tab" aria-selected="false" data-i18n="pl.view.sunburst">旭日图</button>
               <button type="button" class="view-toggle-btn is-active" data-view="mosaic" role="tab" aria-selected="true" data-i18n="pl.view.mosaic">占比矩阵</button>
+              <button type="button" class="view-toggle-btn" data-view="nebula" role="tab" aria-selected="false" data-i18n="pl.view.nebula">曲风星云</button>
             </div>
             <figure class="genre-sunburst" id="genreSunburst" hidden>
               <figcaption data-i18n="pl.sunburst.caption">曲风构成 · 内环流派 / 外环子风格</figcaption>
@@ -77,6 +78,15 @@
                 </button>
               </figcaption>
               <div class="mosaic-stage" id="mosaicStage"></div>
+            </figure>
+            <figure class="genre-nebula" id="genreNebula" hidden>
+              <figcaption class="nebula-caption">
+                <span data-i18n="pl.nebula.caption">曲风星云 · 每簇一个子风格 / 同色同流派</span>
+              </figcaption>
+              <div class="nebula-stage" id="nebulaStage">
+                <canvas id="nebulaCanvas"></canvas>
+                <div class="nebula-legend" id="nebulaLegend"></div>
+              </div>
             </figure>
           </div>
         </article>
