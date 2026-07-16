@@ -1,8 +1,9 @@
-// Playlist genre analysis page. It fetches a NetEase playlist, then for each
-// track downloads a public audio match, runs Essentia genre analysis and
-// queries iTunes / Discogs / Last.fm metadata, scores the track with the shared
-// GenreCore pipeline, and renders the per-track genre composition. The
-// aggregate composition across all tracks is shown at the top.
+// Playlist genre analysis page. It submits a NetEase playlist to the server's
+// aggregate job endpoint, which downloads a public audio match, runs Essentia
+// genre analysis, queries iTunes / Discogs / Last.fm metadata and scores each
+// track server-side. The page receives a jobId (kept in the URL so a mobile
+// tab can background/resume), polls for per-track results, and renders both the
+// per-track composition and the aggregate composition across all tracks.
 const form = document.querySelector("#playlistForm");
 const playlistInput = document.querySelector("#playlistInput");
 const modelSelect = document.querySelector("#modelSelect");
@@ -47,12 +48,8 @@ const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be
 // neutral "其他" slice so tiny long-tail genres don't clutter the charts.
 const OTHER_GENRE_THRESHOLD = 5;
 const OTHER_GENRE_COLOR = "#6b6e64";
-// Cap the number of tracks analyzed per playlist to keep long playlists from
-// running for too long; extras beyond this are dropped with a notice.
-const MAX_TRACKS = 20;
 
 let activeModel = "";
-let taxonomyBundle = null;
 let running = false;
 
 // ---------------------------------------------------------------------------
@@ -125,14 +122,6 @@ const I18N = {
     "pl.overview.analyzing": "{name} · 共 {n} 首歌曲，逐曲分析中…",
     "pl.parsed.start": "歌单「{name}」共 {n} 首，开始逐曲分析",
     "pl.progress.parsedInfo": "歌单「{name}」共 {n} 首",
-    "pl.limit.notice": "歌单共 {total} 首，超过上限，仅分析前 {limit} 首。",
-    "pl.count.trackedOf": "{n} / {total} 首",
-    "pl.overview.subtitleLimited": "共 {total} 首 · 仅分析前 {limit} 首",
-    "pl.overview.analyzingLimited": "{name} · 共 {total} 首，仅分析前 {limit} 首，逐曲分析中…",
-    "pl.parsed.startLimited": "歌单「{name}」共 {total} 首，仅分析前 {limit} 首，开始分析",
-    "pl.progress.parsedInfoLimited": "歌单「{name}」共 {total} 首，仅分析前 {limit} 首",
-    "pl.overview.completeSubtitleLimited": "共 {total} 首 · 分析前 {limit} 首，成功 {ok} 首",
-    "pl.overview.completeLimited": "{name} · 共 {total} 首，仅分析前 {limit} 首，成功分析 {ok} 首",
     "pl.status.empty": "歌单为空",
     "pl.overview.emptyTracks": "该歌单没有可分析的曲目。",
     "pl.status.analyzing": "分析中 {i}/{n}",
@@ -144,6 +133,7 @@ const I18N = {
     "pl.overview.complete": "{name} · 共 {n} 首，成功分析 {ok} 首",
     "pl.status.error": "出错了",
     "pl.overview.failed": "分析失败：{err}",
+    "pl.overview.expired": "分析结果已过期或不存在，请重新发起分析。",
     "pl.log.error": "错误：{err}",
     "pl.card.footer": "由 Genre Lab · 歌单曲风分析 生成",
     "pl.card.headline": "我的音乐风格",
@@ -213,14 +203,6 @@ const I18N = {
     "pl.overview.analyzing": "{name} · {n} tracks, analyzing…",
     "pl.parsed.start": "Playlist \u201c{name}\u201d has {n} tracks; starting analysis",
     "pl.progress.parsedInfo": "Playlist \u201c{name}\u201d has {n} tracks",
-    "pl.limit.notice": "Playlist has {total} tracks, exceeding the limit; analyzing the first {limit} only.",
-    "pl.count.trackedOf": "{n} / {total} tracks",
-    "pl.overview.subtitleLimited": "{total} tracks · first {limit} analyzed",
-    "pl.overview.analyzingLimited": "{name} · {total} tracks, analyzing the first {limit}…",
-    "pl.parsed.startLimited": "Playlist \u201c{name}\u201d has {total} tracks; analyzing the first {limit}",
-    "pl.progress.parsedInfoLimited": "Playlist \u201c{name}\u201d has {total} tracks; analyzing the first {limit}",
-    "pl.overview.completeSubtitleLimited": "{total} tracks · first {limit} analyzed, {ok} succeeded",
-    "pl.overview.completeLimited": "{name} · {total} tracks, first {limit} analyzed, {ok} succeeded",
     "pl.status.empty": "Empty playlist",
     "pl.overview.emptyTracks": "This playlist has no analyzable tracks.",
     "pl.status.analyzing": "Analyzing {i}/{n}",
@@ -232,6 +214,7 @@ const I18N = {
     "pl.overview.complete": "{name} · {n} tracks, {ok} analyzed",
     "pl.status.error": "Something went wrong",
     "pl.overview.failed": "Analysis failed: {err}",
+    "pl.overview.expired": "This analysis has expired or no longer exists; please start a new one.",
     "pl.log.error": "Error: {err}",
     "pl.card.footer": "Made with Genre Lab · Playlist Genre Analysis",
     "pl.card.headline": "My Music Taste",
@@ -333,6 +316,8 @@ async function initModelSelector() {
   }
 }
 
+// Load the model taxonomy script. Scoring itself runs server-side now; the
+// browser only needs DISCOGS_TAXONOMY for localized display names.
 async function loadModelTaxonomy(model) {
   const src = model ? `/discogs-taxonomy.js?model=${encodeURIComponent(model)}` : "/discogs-taxonomy.js";
   await new Promise((resolve, reject) => {
@@ -342,7 +327,6 @@ async function loadModelTaxonomy(model) {
     script.onerror = () => reject(new Error(t("pl.taxonomy.failed")));
     document.head.appendChild(script);
   });
-  taxonomyBundle = window.GenreCore.buildTaxonomy(window.DISCOGS_TAXONOMY);
 }
 
 modelSelect.addEventListener("change", () => {
@@ -942,67 +926,234 @@ mosaicStage.addEventListener("click", event => {
 });
 
 // ---------------------------------------------------------------------------
-// Single-track analysis pipeline
+// Playlist aggregate job: submit once, then poll for per-track results.
+//
+// Scoring now happens server-side; the client submits the playlist, receives a
+// jobId (kept in the page URL so a backgrounded mobile tab can resume), and
+// polls a status endpoint every POLL_INTERVAL_MS, rendering each track's
+// composition or failure reason as it arrives.
 // ---------------------------------------------------------------------------
-async function analyzeTrack(track, card) {
-  const trackForScore = { title: track.title, artists: (track.artists || []).join(" / ") };
+const POLL_INTERVAL_MS = 10000;
+let jobState = null;
+let pollTimer = null;
+let pollBusy = false;
 
-  setCardStatus(card, t("pl.card.status.download"), "busy");
-  let download;
+// Map a failed track's stage to its status pill and body copy.
+const TRACK_FAIL_TEXT = {
+  download: { status: "pl.card.status.audioNotFound", body: "pl.card.body.audioFail" },
+  essentia: { status: "pl.card.status.analyzeFail", body: "pl.card.body.essentiaFail" },
+  score: { status: "pl.card.status.noResult", body: "pl.card.body.noHit" }
+};
+
+// Render one track result into its card. Returns the composition (or null on
+// failure) so it can be collected for the aggregate charts.
+function renderTrackResult(card, result) {
+  if (!card) return null;
+  if (result.status === "ok") {
+    setCardStatus(card, t("pl.card.status.done"), "done");
+    renderTrackMix(card.body, result.composition);
+    return result.composition;
+  }
+  const map = TRACK_FAIL_TEXT[result.stage] || TRACK_FAIL_TEXT.essentia;
+  setCardStatus(card, t(map.status), "fail");
+  card.body.textContent = result.stage === "score"
+    ? t("pl.card.body.noHit")
+    : t(map.body, { err: result.error || "" });
+  return null;
+}
+
+// Reset all playlist view state before a fresh submit.
+function resetPlaylistView() {
+  resetProgress();
+  trackList.innerHTML = "";
+  sunburstSvg.innerHTML = "";
+  sunburstCenter.innerHTML = "";
+  mosaicStage.innerHTML = "";
+  genreTwoLevel.hidden = true;
+  twoLevelShown = false;
+  lastCompositions = null;
+  lastSummary = null;
+  shareMeta = { title: "", subtitle: "" };
+  if (shareMosaicBtn) shareMosaicBtn.disabled = true;
+  trackCount.textContent = t("pl.count.tracks", { n: 0 });
+  playlistMeta.textContent = t("pl.overview.parsing");
+}
+
+// Persist (or clear) the jobId in the page URL so refresh / app-switch resumes.
+function setJobInUrl(jobId) {
+  const url = new URL(window.location.href);
+  if (jobId) url.searchParams.set("job", jobId);
+  else url.searchParams.delete("job");
+  history.replaceState(null, "", url);
+}
+
+// Render the "analyzing" overview / count / parsed line for a job.
+function renderPlaylistMeta(info) {
+  const name = info.name || t("pl.playlist.fallbackName");
+  const { total } = info;
+  shareMeta = {
+    title: name,
+    subtitle: t("pl.overview.subtitle", { n: total })
+  };
+  playlistMeta.textContent = t("pl.overview.analyzing", { name, n: total });
+  trackCount.textContent = t("pl.count.tracks", { n: total });
+  parsedLine.textContent = t("pl.parsed.start", { name, n: total });
+  return name;
+}
+
+// Build the job's client state (cards + composition slots) from a submit or a
+// resumed status payload.
+function installJob(info) {
+  const name = renderPlaylistMeta(info);
+  const tracks = info.tracks || [];
+  jobState = {
+    jobId: info.jobId,
+    name,
+    total: info.total,
+    cards: tracks.map((track, index) => createTrackCard(track, index)),
+    compositions: new Array(tracks.length).fill(null),
+    applied: 0
+  };
+  return name;
+}
+
+// Apply the newly completed results from a status payload to the cards and
+// aggregate charts.
+function applyResults(data) {
+  for (const result of data.results || []) {
+    jobState.compositions[result.index] = renderTrackResult(jobState.cards[result.index], result);
+  }
+  jobState.applied = data.completed;
+  if (data.results && data.results.length) renderAggregate(jobState.compositions);
+}
+
+function updateJobProgress(data) {
+  if (data.state !== "running") return;
+  const total = jobState.total || data.total || 0;
+  const nth = total ? Math.min(data.completed + 1, total) : 0;
+  const pct = total ? 8 + Math.round((data.completed / total) * 90) : 8;
+  setStatus(t("pl.status.analyzing", { i: nth, n: total }), true);
+  setProgress(t("pl.progress.analyzingNth", { i: nth, n: total }), pct);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function finishJob(data) {
+  stopPolling();
+  const { name, total } = jobState;
+  const ok = data.ok;
+  lastSummary = { name, total, ok };
+  setProgress(t("pl.progress.complete"), 100, t("pl.progress.completeInfo", { ok, n: total }));
+  setStatus(t("pl.status.complete", { ok, n: total }));
+  shareMeta = {
+    title: name,
+    subtitle: t("pl.overview.completeSubtitle", { n: total, ok })
+  };
+  playlistMeta.textContent = t("pl.overview.complete", { name, n: total, ok });
+  running = false;
+  analyzeBtn.disabled = false;
+}
+
+function failJob(message) {
+  stopPolling();
+  setStatus(t("pl.status.error"));
+  playlistMeta.textContent = t("pl.overview.failed", { err: message || "" });
+  logLine(t("pl.log.error", { err: message || "" }));
+  running = false;
+  analyzeBtn.disabled = false;
+}
+
+function expireJob() {
+  stopPolling();
+  setJobInUrl("");
+  setStatus(t("pl.status.error"));
+  playlistMeta.textContent = t("pl.overview.expired");
+  running = false;
+  analyzeBtn.disabled = false;
+}
+
+// Fetch job status. A 404 is surfaced as an "expired" state rather than an
+// error so callers can prompt the user to restart.
+async function fetchJobStatus(jobId, since) {
+  const response = await fetch(`/api/analyze-playlist/status?jobId=${encodeURIComponent(jobId)}&since=${since}`);
+  const data = await response.json();
+  if (response.status === 404) {
+    data.state = "expired";
+    return data;
+  }
+  if (!response.ok) throw new Error(data.error || t("pl.request.failed"));
+  return data;
+}
+
+async function pollOnce() {
+  if (!jobState || pollBusy) return;
+  pollBusy = true;
   try {
-    download = await postJson("/api/download", {
-      url: "",
-      platformUrl: track.sourceUrl || "",
-      platform: "netease-url",
-      title: track.title,
-      artists: trackForScore.artists,
-      query: [`"${track.title}"`, trackForScore.artists ? `"${trackForScore.artists}"` : ""].filter(Boolean).join(" ")
+    const data = await fetchJobStatus(jobState.jobId, jobState.applied);
+    if (data.state === "expired") {
+      expireJob();
+      return;
+    }
+    applyResults(data);
+    updateJobProgress(data);
+    if (data.state === "done") finishJob(data);
+    else if (data.state === "error") failJob(data.error);
+  } catch (error) {
+    // Transient network error (e.g. app briefly backgrounded); keep polling.
+    logLine(t("pl.log.error", { err: error.message }));
+  } finally {
+    pollBusy = false;
+  }
+}
+
+function beginJob(info) {
+  const name = installJob(info);
+  setProgress(t("pl.progress.parse"), 8, t("pl.progress.parsedInfo", { name, n: info.total }));
+  running = true;
+  analyzeBtn.disabled = true;
+  pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
+  pollOnce();
+}
+
+// On page load, resume a job whose id is present in the URL (mobile app-switch
+// or refresh). Unknown / expired ids are cleared with a notice.
+async function resumeJobFromUrl() {
+  const jobId = new URLSearchParams(window.location.search).get("job");
+  if (!jobId) return;
+  try {
+    await loadModelTaxonomy(activeModel);
+    const data = await fetchJobStatus(jobId, 0);
+    if (data.state === "expired") {
+      setJobInUrl("");
+      playlistMeta.textContent = t("pl.overview.expired");
+      return;
+    }
+    resetPlaylistView();
+    installJob({
+      jobId,
+      name: data.name,
+      tracks: data.tracks,
+      total: data.total
     });
+    applyResults(data);
+    updateJobProgress(data);
+    if (data.state === "done") {
+      finishJob(data);
+    } else if (data.state === "error") {
+      failJob(data.error);
+    } else {
+      running = true;
+      analyzeBtn.disabled = true;
+      pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
+    }
   } catch (error) {
-    setCardStatus(card, t("pl.card.status.audioNotFound"), "fail");
-    card.body.textContent = t("pl.card.body.audioFail", { err: error.message });
-    return null;
+    logLine(t("pl.log.error", { err: error.message }));
   }
-
-  setCardStatus(card, t("pl.card.status.essentia"), "busy");
-  let essentia;
-  try {
-    essentia = await postJson("/api/essentia", { fileName: download.fileName, top: 12, model: activeModel });
-  } catch (error) {
-    setCardStatus(card, t("pl.card.status.analyzeFail"), "fail");
-    card.body.textContent = t("pl.card.body.essentiaFail", { err: error.message });
-    return null;
-  }
-
-  setCardStatus(card, t("pl.card.status.queryTags"), "busy");
-  let metadata = null;
-  try {
-    metadata = await postJson("/api/metadata", {
-      title: track.title,
-      artists: trackForScore.artists,
-      album: track.album || "",
-      model: activeModel
-    });
-  } catch (error) {
-    // metadata is optional; Essentia alone still yields a composition
-    logLine(t("pl.log.tagFail", { title: track.title, err: error.message }));
-  }
-
-  const composition = window.GenreCore.scoreTrack(taxonomyBundle, {
-    essentia,
-    metadata,
-    track: trackForScore
-  });
-
-  if (!composition.length) {
-    setCardStatus(card, t("pl.card.status.noResult"), "fail");
-    card.body.textContent = t("pl.card.body.noHit");
-    return null;
-  }
-
-  setCardStatus(card, t("pl.card.status.done"), "done");
-  renderTrackMix(card.body, composition);
-  return composition;
 }
 
 // ---------------------------------------------------------------------------
@@ -1018,92 +1169,27 @@ form.addEventListener("submit", async event => {
   }
 
   running = true;
-  resetProgress();
-  trackList.innerHTML = "";
-  sunburstSvg.innerHTML = "";
-  sunburstCenter.innerHTML = "";
-  mosaicStage.innerHTML = "";
-  genreTwoLevel.hidden = true;
-  twoLevelShown = false;
-  lastCompositions = null;
-  lastSummary = null;
-  shareMeta = { title: "", subtitle: "" };
-  if (shareMosaicBtn) shareMosaicBtn.disabled = true;
-  trackCount.textContent = t("pl.count.tracks", { n: 0 });
-  playlistMeta.textContent = t("pl.overview.parsing");
+  resetPlaylistView();
 
   try {
     setStatus(t("pl.status.parsing"), true);
     await loadModelTaxonomy(activeModel);
     setProgress(t("pl.progress.parse"), 4, t("pl.progress.requesting"));
 
-    const playlist = await postJson("/api/netease-playlist", { url: raw });
-    const allTracks = playlist.tracks || [];
-    const name = playlist.name || t("pl.playlist.fallbackName");
-    const truncated = allTracks.length > MAX_TRACKS;
-    const tracks = truncated ? allTracks.slice(0, MAX_TRACKS) : allTracks;
-    const totalTracks = allTracks.length;
-    if (truncated) {
-      logLine(t("pl.limit.notice", { total: totalTracks, limit: MAX_TRACKS }));
-    }
-    shareMeta = {
-      title: name,
-      subtitle: truncated
-        ? t("pl.overview.subtitleLimited", { total: totalTracks, limit: MAX_TRACKS })
-        : t("pl.overview.subtitle", { n: tracks.length })
-    };
-    playlistMeta.textContent = truncated
-      ? t("pl.overview.analyzingLimited", { name, total: totalTracks, limit: MAX_TRACKS })
-      : t("pl.overview.analyzing", { name, n: tracks.length });
-    trackCount.textContent = truncated
-      ? t("pl.count.trackedOf", { n: tracks.length, total: totalTracks })
-      : t("pl.count.tracks", { n: tracks.length });
-    parsedLine.textContent = truncated
-      ? t("pl.parsed.startLimited", { name, total: totalTracks, limit: MAX_TRACKS })
-      : t("pl.parsed.start", { name, n: tracks.length });
-    setProgress(t("pl.progress.parse"), 8, truncated
-      ? t("pl.progress.parsedInfoLimited", { name, total: totalTracks, limit: MAX_TRACKS })
-      : t("pl.progress.parsedInfo", { name, n: tracks.length }));
-
-    if (!tracks.length) {
+    // Submit the playlist; the server returns a jobId immediately and analyzes
+    // the tracks in the background. Scoring now happens server-side.
+    const info = await postJson("/api/analyze-playlist", { url: raw, model: activeModel });
+    if (!info.tracks || !info.tracks.length) {
       setStatus(t("pl.status.empty"));
       playlistMeta.textContent = t("pl.overview.emptyTracks");
+      running = false;
+      analyzeBtn.disabled = false;
       return;
     }
-
-    const cards = tracks.map((track, index) => createTrackCard(track, index));
-    const compositions = [];
-    for (let i = 0; i < tracks.length; i += 1) {
-      const track = tracks[i];
-      const card = cards[i];
-      const pct = 8 + Math.round(((i + 0.5) / tracks.length) * 90);
-      setStatus(t("pl.status.analyzing", { i: i + 1, n: tracks.length }), true);
-      setProgress(t("pl.progress.analyzingNth", { i: i + 1, n: tracks.length }), pct, `${track.title} - ${(track.artists || []).join(" / ")}`);
-      const composition = await analyzeTrack(track, card);
-      compositions.push(composition);
-      renderAggregate(compositions);
-    }
-
-    const ok = compositions.filter(Boolean).length;
-    lastSummary = { name, analyzed: tracks.length, total: totalTracks, limit: MAX_TRACKS, truncated, ok };
-    setProgress(t("pl.progress.complete"), 100, t("pl.progress.completeInfo", { ok, n: tracks.length }));
-    setStatus(t("pl.status.complete", { ok, n: tracks.length }));
-    shareMeta = {
-      title: name,
-      subtitle: truncated
-        ? t("pl.overview.completeSubtitleLimited", { total: totalTracks, limit: MAX_TRACKS, ok })
-        : t("pl.overview.completeSubtitle", { n: tracks.length, ok })
-    };
-    playlistMeta.textContent = truncated
-      ? t("pl.overview.completeLimited", { name, total: totalTracks, limit: MAX_TRACKS, ok })
-      : t("pl.overview.complete", { name, n: tracks.length, ok });
+    setJobInUrl(info.jobId);
+    beginJob(info);
   } catch (error) {
-    setStatus(t("pl.status.error"));
-    playlistMeta.textContent = t("pl.overview.failed", { err: error.message });
-    logLine(t("pl.log.error", { err: error.message }));
-  } finally {
-    running = false;
-    analyzeBtn.disabled = false;
+    failJob(error.message);
   }
 });
 
@@ -1418,23 +1504,15 @@ function applyLanguage() {
   // Re-localize the finished-analysis summary text (the generic data-i18n loop
   // above reset these back to their idle defaults).
   if (lastSummary) {
-    const { name, analyzed, total, limit, truncated, ok } = lastSummary;
-    trackCount.textContent = truncated
-      ? t("pl.count.trackedOf", { n: analyzed, total })
-      : t("pl.count.tracks", { n: analyzed });
-    parsedLine.textContent = truncated
-      ? t("pl.parsed.startLimited", { name, total, limit })
-      : t("pl.parsed.start", { name, n: analyzed });
-    statusPill.textContent = t("pl.status.complete", { ok, n: analyzed });
+    const { name, total, ok } = lastSummary;
+    trackCount.textContent = t("pl.count.tracks", { n: total });
+    parsedLine.textContent = t("pl.parsed.start", { name, n: total });
+    statusPill.textContent = t("pl.status.complete", { ok, n: total });
     progressLabel.textContent = t("pl.progress.complete");
-    playlistMeta.textContent = truncated
-      ? t("pl.overview.completeLimited", { name, total, limit, ok })
-      : t("pl.overview.complete", { name, n: analyzed, ok });
+    playlistMeta.textContent = t("pl.overview.complete", { name, n: total, ok });
     shareMeta = {
       title: name,
-      subtitle: truncated
-        ? t("pl.overview.completeSubtitleLimited", { total, limit, ok })
-        : t("pl.overview.completeSubtitle", { n: analyzed, ok })
+      subtitle: t("pl.overview.completeSubtitle", { n: total, ok })
     };
   }
 }
@@ -1457,3 +1535,6 @@ if (langToggle) {
 
 applyLanguage();
 initModelSelector();
+// Resume an in-flight / finished job whose id is in the page URL (mobile
+// app-switch or refresh). Runs after the model selector so activeModel is set.
+resumeJobFromUrl();
