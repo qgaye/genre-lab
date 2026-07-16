@@ -1280,6 +1280,61 @@ function drawShareFooter(ctx, x, y, width) {
   ctx.restore();
 }
 
+// Wrap `text` into at most `maxLines` lines that each fit within `maxWidth`,
+// breaking on spaces/hyphens first and falling back to per-character breaks for
+// long unbreakable tokens. The last line is ellipsized if content overflows.
+function wrapCanvasText(ctx, text, maxWidth, maxLines) {
+  const lines = [];
+  let current = "";
+  // Keep separators (space/hyphen) attached to the preceding token so breaks
+  // land after them, e.g. "Synth-" / "pop".
+  const tokens = text.match(/[^\s-]+[\s-]?|[\s-]/g) || [text];
+  const pushChars = (token) => {
+    for (const ch of token) {
+      const next = current + ch;
+      if (ctx.measureText(next).width > maxWidth && current) {
+        lines.push(current);
+        current = ch;
+        if (lines.length >= maxLines) return true;
+      } else {
+        current = next;
+      }
+    }
+    return false;
+  };
+  for (let token of tokens) {
+    const candidate = current + token;
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+    if (current) {
+      lines.push(current.trimEnd());
+      current = "";
+      if (lines.length >= maxLines) break;
+    }
+    if (ctx.measureText(token).width <= maxWidth) {
+      current = token;
+    } else if (pushChars(token)) {
+      current = "";
+      break;
+    }
+  }
+  if (current && lines.length < maxLines) lines.push(current.trimEnd());
+  if (lines.length > maxLines) lines.length = maxLines;
+  // Ellipsize the last line if we ran out of room mid-text.
+  const consumed = lines.join("").replace(/\s/g, "").length;
+  const total = text.replace(/\s/g, "").length;
+  if (lines.length === maxLines && consumed < total) {
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1);
+    }
+    lines[maxLines - 1] = `${last}…`;
+  }
+  return lines;
+}
+
 // Draw the two-level treemap onto the canvas, mirroring the on-screen mosaic:
 // area = share, same color = same genre, child styles differ by opacity.
 function drawShareTreemap(ctx, genres, x, y, width, height) {
@@ -1315,19 +1370,50 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
       const pctText = `${Math.round(style.percent)}%`;
       const pctSize = Math.max(15, Math.min(46, Math.round(11 + Math.sqrt(bw * bh) * 0.08)));
       const nameSize = Math.max(13, Math.round(pctSize * 0.8));
-      if (bw >= 60 && bh >= 40) {
+      // A tall, narrow tile can't fit a horizontal "name %" row, so run the
+      // name top-to-bottom with the percent at the base. Mirrors the DOM
+      // mosaic's is-vertical branch (writing-mode: vertical-rl).
+      const isVertical = bh >= bw * 1.6 && bw < 60 && bh >= 60;
+      if (isVertical) {
+        ctx.save();
+        ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
+        // Percentage sits horizontally at the bottom of the tile.
+        const vPctSize = Math.max(13, Math.min(pctSize, 22));
+        ctx.font = `800 ${vPctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(pctText, bx + bw / 2, by + bh - 6);
+        // Name runs top-to-bottom (rotated 90°), clipped to the tile height.
+        const vNameSize = Math.max(12, Math.min(nameSize, bw - 6));
+        ctx.font = `700 ${vNameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        const avail = bh - vPctSize - 16;
+        let name = style.label;
+        while (name.length > 1 && ctx.measureText(name).width > avail) {
+          name = name.slice(0, -1);
+        }
+        ctx.translate(bx + bw / 2, by + 8);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillText(name, 0, 0);
+        ctx.restore();
+      } else if (bw >= 60 && bh >= 40) {
         ctx.save();
         ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
         ctx.textBaseline = "top";
         ctx.font = `700 ${nameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
-        // Clip name to block width to avoid overflow.
-        let name = style.label;
-        while (name.length > 1 && ctx.measureText(name).width > bw - 16) {
-          name = name.slice(0, -1);
+        // Wrap the name onto as many lines as the tile height allows instead of
+        // clipping it, matching the DOM mosaic (which wraps via --mb-lines).
+        const lineH = nameSize * 1.25 + 2;
+        const maxNameLines = Math.max(1, Math.floor((bh - 10 - pctSize - 6) / lineH));
+        const nameLines = wrapCanvasText(ctx, style.label, bw - 16, maxNameLines);
+        let ny = by + 8;
+        for (const line of nameLines) {
+          ctx.fillText(line, bx + 8, ny);
+          ny += lineH;
         }
-        ctx.fillText(name, bx + 8, by + 8);
         ctx.font = `800 ${pctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
-        ctx.fillText(pctText, bx + 8, by + 8 + nameSize + 6);
+        ctx.fillText(pctText, bx + 8, ny + 4);
         ctx.restore();
       } else if (bw >= 34 && bh >= 20) {
         ctx.save();
