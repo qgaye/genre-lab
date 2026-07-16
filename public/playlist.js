@@ -37,6 +37,11 @@ const langToggle = document.querySelector("#langToggle");
 const styleDialog = document.querySelector("#styleDialog");
 const styleDialogKicker = document.querySelector("#styleDialogKicker");
 const styleDialogTitle = document.querySelector("#styleDialogTitle");
+const styleDialogTrackCount = document.querySelector("#styleDialogTrackCount");
+const styleDialogTrackList = document.querySelector("#styleDialogTrackList");
+const styleDialogInfoToggle = document.querySelector("#styleDialogInfoToggle");
+const styleDialogInfoPanel = document.querySelector("#styleDialogInfoPanel");
+const styleDialogInfoBack = document.querySelector("#styleDialogInfoBack");
 const styleDialogOverview = document.querySelector("#styleDialogOverview");
 const styleDialogFocus = document.querySelector("#styleDialogFocus");
 const styleDialogHistory = document.querySelector("#styleDialogHistory");
@@ -157,7 +162,17 @@ const I18N = {
     "dialog.focus": "风格重点",
     "dialog.history": "发展脉络",
     "dialog.entry": "主流入门音乐",
-    "dialog.close": "关闭风格介绍",
+    "dialog.close": "关闭曲风详情",
+    "dialog.trackCount": "{n} 首关联歌曲 · {percent}%",
+    "dialog.associated": "关联歌曲",
+    "dialog.info.toggle": "展开曲风介绍",
+    "dialog.info.hide": "收起曲风介绍",
+    "dialog.info.back": "返回歌曲",
+    "dialog.infoUnavailable": "暂无曲风介绍",
+    "dialog.albumPrefix": "专辑",
+    "dialog.noAlbum": "未知专辑",
+    "dialog.noCover": "无封面",
+    "dialog.noTracks": "当前分析结果里没有命中这类曲风的歌曲。",
     "dialog.noEntry": "暂无稳定入门曲"
   },
   en: {
@@ -243,7 +258,17 @@ const I18N = {
     "dialog.focus": "Style focus",
     "dialog.history": "History",
     "dialog.entry": "Popular entry track",
-    "dialog.close": "Close style intro",
+    "dialog.close": "Close style details",
+    "dialog.trackCount": "{n} linked tracks · {percent}%",
+    "dialog.associated": "Linked tracks",
+    "dialog.info.toggle": "Show style intro",
+    "dialog.info.hide": "Hide style intro",
+    "dialog.info.back": "Back to tracks",
+    "dialog.infoUnavailable": "No style intro available",
+    "dialog.albumPrefix": "Album",
+    "dialog.noAlbum": "Unknown album",
+    "dialog.noCover": "No cover",
+    "dialog.noTracks": "No analyzed tracks matched this style.",
     "dialog.noEntry": "No stable entry track"
   }
 };
@@ -444,14 +469,134 @@ function profileFor(genreName, styleName) {
 }
 
 let lastStyleInfoTrigger = null;
+let currentStyleDialogData = null;
+let styleAssociations = new Map();
 
-function openStyleDialog(profile, trigger) {
-  if (!profile || !styleDialog) return;
-  lastStyleInfoTrigger = trigger || null;
-  styleDialogKicker.textContent = profile.genre
-    ? t("dialog.kickerGenre", { genre: localizeToken(profile.genre, "genre") })
-    : t("dialog.kicker");
-  styleDialogTitle.textContent = localizeToken(profile.style || profile.title, "style");
+function styleAssociationKey(genreName, styleName) {
+  return `${genreName || ""}---${styleName || ""}`;
+}
+
+function registerStyleAssociations(genres) {
+  styleAssociations = new Map();
+  for (const genre of genres || []) {
+    for (const style of genre.styles || []) {
+      const genreName = style.genre || genre.name;
+      styleAssociations.set(styleAssociationKey(genreName, style.name), {
+        genre: genreName,
+        genreLabel: localizeToken(genreName, "genre"),
+        style: style.name,
+        label: style.label,
+        percent: style.percent,
+        tracks: style.tracks || [],
+        profile: profileFor(genreName, style.name)
+      });
+    }
+  }
+}
+
+function getStyleAssociation(genreName, styleName) {
+  const data = styleAssociations.get(styleAssociationKey(genreName, styleName));
+  if (data) return data;
+  return {
+    genre: genreName,
+    genreLabel: localizeToken(genreName, "genre"),
+    style: styleName,
+    label: localizeToken(styleName, "style"),
+    percent: 0,
+    tracks: [],
+    profile: profileFor(genreName, styleName)
+  };
+}
+
+function setStyleInfoOpen(open) {
+  if (!styleDialogInfoPanel || !styleDialogInfoToggle) return;
+  styleDialogInfoPanel.hidden = !open;
+  styleDialog.querySelector(".style-dialog__panel")?.classList.toggle("is-info-open", open);
+  styleDialogInfoToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  const key = open ? "dialog.info.hide" : "dialog.info.toggle";
+  styleDialogInfoToggle.setAttribute("aria-label", t(key));
+  styleDialogInfoToggle.title = t(key);
+}
+
+function coverImageSrc(url) {
+  return `/api/cover-image?url=${encodeURIComponent(url)}`;
+}
+
+function renderStyleDialogTracks(rows) {
+  if (!styleDialogTrackList) return;
+  styleDialogTrackList.innerHTML = "";
+  if (!rows || !rows.length) {
+    const empty = document.createElement("p");
+    empty.className = "style-dialog__empty";
+    empty.textContent = t("dialog.noTracks");
+    styleDialogTrackList.appendChild(empty);
+    return;
+  }
+
+  for (const row of rows) {
+    const track = row.track || {};
+    const item = document.createElement("article");
+    item.className = "style-dialog__track";
+
+    const cover = document.createElement("div");
+    cover.className = "style-dialog__cover";
+    if (track.albumImage) {
+      const img = document.createElement("img");
+      img.src = coverImageSrc(track.albumImage);
+      img.alt = track.album || track.title || t("dialog.noCover");
+      img.loading = "lazy";
+      cover.appendChild(img);
+    } else {
+      cover.textContent = t("dialog.noCover");
+    }
+    item.appendChild(cover);
+
+    const body = document.createElement("div");
+    body.className = "style-dialog__track-body";
+    const title = document.createElement(track.sourceUrl ? "a" : "strong");
+    title.textContent = track.title || "";
+    if (track.sourceUrl) {
+      title.href = track.sourceUrl;
+      title.target = "_blank";
+      title.rel = "noreferrer";
+    }
+    body.appendChild(title);
+
+    const artist = document.createElement("small");
+    artist.textContent = (track.artists || []).join(" / ") || t("pl.track.unknownArtist");
+    body.appendChild(artist);
+
+    const album = document.createElement("span");
+    album.textContent = `${t("dialog.albumPrefix")} · ${track.album || t("dialog.noAlbum")}`;
+    body.appendChild(album);
+    item.appendChild(body);
+
+    const score = document.createElement("b");
+    score.className = "style-dialog__track-score";
+    score.textContent = `${Math.round(row.percent || 0)}%`;
+    item.appendChild(score);
+    styleDialogTrackList.appendChild(item);
+  }
+}
+
+function renderStyleProfile(profile) {
+  const hasProfile = Boolean(profile);
+  if (styleDialogInfoToggle) {
+    styleDialogInfoToggle.disabled = !hasProfile;
+    styleDialogInfoToggle.textContent = hasProfile ? "i" : "–";
+    if (!hasProfile) {
+      styleDialogInfoToggle.setAttribute("aria-label", t("dialog.infoUnavailable"));
+      styleDialogInfoToggle.title = t("dialog.infoUnavailable");
+    }
+  }
+  if (!hasProfile) {
+    styleDialogOverview.textContent = "";
+    styleDialogHistory.textContent = "";
+    styleDialogFocus.innerHTML = "";
+    styleDialogTrack.textContent = t("dialog.noEntry");
+    styleDialogTrackNote.textContent = "";
+    return;
+  }
   styleDialogOverview.textContent = profile.overview || "";
   styleDialogHistory.textContent = profile.history || "";
   styleDialogFocus.innerHTML = "";
@@ -463,21 +608,59 @@ function openStyleDialog(profile, trigger) {
   const entry = profile.mainstreamEntry || {};
   styleDialogTrack.textContent = [entry.artist, entry.title].filter(Boolean).join(" - ") || t("dialog.noEntry");
   styleDialogTrackNote.textContent = entry.note || "";
+}
+
+function openStyleDialog(styleData, trigger) {
+  if (!styleData || !styleDialog) return;
+  currentStyleDialogData = styleData;
+  lastStyleInfoTrigger = trigger || null;
+  const profile = styleData.profile || null;
+  const genreName = styleData.genre || (profile && profile.genre) || "";
+  styleDialogKicker.textContent = genreName
+    ? t("dialog.kickerGenre", { genre: localizeToken(genreName, "genre") })
+    : t("dialog.kicker");
+  styleDialogTitle.textContent = styleData.label || localizeToken(styleData.style || (profile && profile.style) || "", "style");
+  if (styleDialogTrackCount) {
+    styleDialogTrackCount.textContent = t("dialog.trackCount", {
+      n: (styleData.tracks || []).length,
+      percent: Math.round(styleData.percent || 0)
+    });
+  }
+  renderStyleDialogTracks(styleData.tracks || []);
+  setStyleInfoOpen(false);
+  renderStyleProfile(profile);
   styleDialog.classList.add("is-open");
   styleDialog.setAttribute("aria-hidden", "false");
-  styleDialog.querySelector(".style-dialog__close")?.focus();
+  styleDialogInfoToggle?.focus();
 }
 
 function closeStyleDialog() {
   if (!styleDialog || !styleDialog.classList.contains("is-open")) return;
   styleDialog.classList.remove("is-open");
   styleDialog.setAttribute("aria-hidden", "true");
+  styleDialog.querySelector(".style-dialog__panel")?.classList.remove("is-info-open");
+  currentStyleDialogData = null;
   if (lastStyleInfoTrigger && typeof lastStyleInfoTrigger.focus === "function") lastStyleInfoTrigger.focus();
   lastStyleInfoTrigger = null;
 }
 
 for (const closeControl of document.querySelectorAll("[data-style-dialog-close]")) {
   closeControl.addEventListener("click", closeStyleDialog);
+}
+
+if (styleDialogInfoToggle) {
+  styleDialogInfoToggle.addEventListener("click", () => {
+    if (styleDialogInfoToggle.disabled) return;
+    const open = styleDialogInfoToggle.getAttribute("aria-expanded") !== "true";
+    setStyleInfoOpen(open);
+  });
+}
+
+if (styleDialogInfoBack) {
+  styleDialogInfoBack.addEventListener("click", () => {
+    setStyleInfoOpen(false);
+    styleDialogInfoToggle?.focus();
+  });
 }
 
 
@@ -494,10 +677,10 @@ function localizeToken(token, kind) {
 
 // Build the two-level model: parent genres (each with a color + weight) holding
 // their child styles, all normalized so parent totals sum to 100%.
-function buildTwoLevel(compositions) {
+function buildTwoLevel(compositions, tracks = []) {
   const genreMap = new Map();
   let counted = 0;
-  for (const comp of compositions) {
+  for (const [trackIndex, comp] of compositions.entries()) {
     if (!comp || !comp.length) continue;
     counted += 1;
     for (const item of comp) {
@@ -505,7 +688,15 @@ function buildTwoLevel(compositions) {
       const entry = genreMap.get(genre) || { name: genre, total: 0, styles: new Map() };
       entry.total += item.percent;
       const styleKey = style || genre;
-      entry.styles.set(styleKey, (entry.styles.get(styleKey) || 0) + item.percent);
+      const styleEntry = entry.styles.get(styleKey) || { sum: 0, tracks: [] };
+      styleEntry.sum += item.percent;
+      if (tracks[trackIndex]) {
+        styleEntry.tracks.push({
+          track: tracks[trackIndex],
+          percent: item.percent
+        });
+      }
+      entry.styles.set(styleKey, styleEntry);
       genreMap.set(genre, entry);
     }
   }
@@ -518,11 +709,12 @@ function buildTwoLevel(compositions) {
       label: localizeToken(g.name, "genre"),
       percent: g.total / grand * 100,
       styles: [...g.styles.entries()]
-        .map(([style, sum]) => ({
+        .map(([style, data]) => ({
           name: style,
           genre: g.name,
           label: localizeToken(style, "style"),
-          percent: sum / grand * 100
+          percent: data.sum / grand * 100,
+          tracks: [...data.tracks].sort((a, b) => b.percent - a.percent)
         }))
         .sort((a, b) => b.percent - a.percent)
     }))
@@ -590,7 +782,8 @@ let lastSummary = null;
 
 function renderAggregate(compositions) {
   lastCompositions = compositions;
-  const genres = buildTwoLevel(compositions);
+  const genres = buildTwoLevel(compositions, jobState && jobState.tracks ? jobState.tracks : []);
+  registerStyleAssociations(genres);
   renderSunburst(genres);
   renderMosaic(genres);
   renderNebula(genres);
@@ -759,12 +952,12 @@ sunburstSvg.addEventListener("mouseout", event => {
     setSunburstCenter(sunburstDefault.title, sunburstDefault.desc);
   }
 });
-// Click a style slice to open its genre/style intro (same as the mosaic tiles).
+// Click a style slice to open its linked tracks; the info button reveals the
+// genre/style intro inside the dialog.
 sunburstSvg.addEventListener("click", event => {
   const seg = event.target.closest(".sun-style");
   if (!seg) return;
-  const profile = profileFor(seg.dataset.genre, seg.dataset.style);
-  if (profile) openStyleDialog(profile, seg);
+  openStyleDialog(getStyleAssociation(seg.dataset.genre, seg.dataset.style), seg);
 });
 
 // Mosaic (treemap): every tile's AREA is proportional to its share, so a 4%
@@ -968,12 +1161,12 @@ window.addEventListener("resize", () => {
   });
 });
 
-// Click a mosaic tile to open its genre/style intro (same as the sunburst).
+// Click a mosaic tile to open its linked tracks; the info button reveals the
+// genre/style intro inside the dialog.
 mosaicStage.addEventListener("click", event => {
   const block = event.target.closest(".mosaic-block");
   if (!block) return;
-  const profile = profileFor(block.dataset.genre, block.dataset.style);
-  if (profile) openStyleDialog(profile, block);
+  openStyleDialog(getStyleAssociation(block.dataset.genre, block.dataset.style), block);
 });
 
 // ---------------------------------------------------------------------------
@@ -1166,7 +1359,7 @@ function stopNebula() {
   }
 }
 
-// Click a cluster to open its style intro, mirroring the mosaic/sunburst.
+// Click a cluster to open its linked tracks, mirroring the mosaic/sunburst.
 nebulaCanvas.addEventListener("click", event => {
   if (!nebulaClusters.length) return;
   const rect = nebulaCanvas.getBoundingClientRect();
@@ -1184,8 +1377,7 @@ nebulaCanvas.addEventListener("click", event => {
     }
   }
   if (!hit) return;
-  const profile = profileFor(hit.style.genre || hit.genre.name, hit.style.name);
-  if (profile) openStyleDialog(profile, nebulaCanvas);
+  openStyleDialog(getStyleAssociation(hit.style.genre || hit.genre.name, hit.style.name), nebulaCanvas);
 });
 
 let nebulaResizeQueued = false;
@@ -1245,6 +1437,7 @@ function resetPlaylistView() {
   genreTwoLevel.hidden = true;
   twoLevelShown = false;
   lastCompositions = null;
+  styleAssociations = new Map();
   lastSummary = null;
   shareMeta = { title: "", subtitle: "" };
   if (shareMosaicBtn) shareMosaicBtn.disabled = true;
@@ -1291,6 +1484,7 @@ function installJob(info) {
     total: info.total,
     sampled: Boolean(info.sampled),
     originalCount: info.originalCount || info.total,
+    tracks,
     cards: tracks.map((track, index) => createTrackCard(track, index)),
     compositions: new Array(tracks.length).fill(null),
     applied: 0
@@ -1904,6 +2098,10 @@ function applyLanguage() {
   }
   // Re-render the aggregate charts so genre/style labels re-localize.
   if (lastCompositions) renderAggregate(lastCompositions);
+  if (currentStyleDialogData && styleDialog.classList.contains("is-open")) {
+    const refreshed = getStyleAssociation(currentStyleDialogData.genre, currentStyleDialogData.style);
+    openStyleDialog(refreshed, lastStyleInfoTrigger);
+  }
   // Re-localize the finished-analysis summary text (the generic data-i18n loop
   // above reset these back to their idle defaults).
   if (lastSummary) {

@@ -911,7 +911,7 @@ li strong {
 .style-dialog__panel {
   position: relative;
   z-index: 1;
-  width: min(680px, 100%);
+  width: min(760px, 100%);
   max-height: min(760px, calc(var(--app-height) - 36px));
   overflow: auto;
   border: 1px solid rgba(244, 240, 232, 0.2);
@@ -920,6 +920,10 @@ li strong {
     linear-gradient(180deg, rgba(31, 34, 31, 0.98), rgba(18, 20, 18, 0.98));
   box-shadow: 0 28px 120px rgba(0, 0, 0, 0.58);
   padding: 24px;
+}
+
+.style-dialog__panel.is-info-open {
+  width: min(1120px, 100%);
 }
 
 .style-dialog__close {
@@ -950,9 +954,164 @@ li strong {
 }
 
 .style-dialog h2 {
-  margin: 0 42px 16px 0;
+  margin: 0 42px 14px 0;
   font-size: clamp(34px, 5.5vw, 58px);
   line-height: 0.98;
+}
+
+.style-dialog__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.style-dialog__toolbar span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.style-dialog__info-toggle {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border-color: rgba(99, 210, 255, 0.42);
+  color: var(--blue);
+  background: rgba(99, 210, 255, 0.08);
+  font-size: 17px;
+  font-family: Georgia, Cambria, serif;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.style-dialog__info-toggle:hover,
+.style-dialog__info-toggle:focus-visible {
+  border-color: var(--blue);
+  background: rgba(99, 210, 255, 0.16);
+}
+
+.style-dialog__info-toggle:disabled {
+  cursor: default;
+  border-color: rgba(244, 240, 232, 0.18);
+  color: var(--dim);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.style-dialog__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.style-dialog__panel.is-info-open .style-dialog__content {
+  grid-template-columns: minmax(360px, 0.92fr) minmax(340px, 0.72fr);
+  align-items: start;
+}
+
+.style-dialog__tracks {
+  display: grid;
+  gap: 8px;
+}
+
+.style-dialog__track {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid rgba(244, 240, 232, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.style-dialog__cover {
+  width: 58px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(244, 240, 232, 0.12);
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.style-dialog__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.style-dialog__track-body {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.style-dialog__track-body a,
+.style-dialog__track-body strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.style-dialog__track-body a:hover {
+  color: var(--accent);
+}
+
+.style-dialog__track-body small,
+.style-dialog__track-body span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.style-dialog__track-score {
+  align-self: flex-start;
+  min-width: 38px;
+  padding-top: 2px;
+  color: var(--accent);
+  font-size: 13px;
+  text-align: right;
+}
+
+.style-dialog__empty {
+  padding: 14px;
+  border: 1px dashed rgba(244, 240, 232, 0.18);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.style-dialog__info {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(244, 240, 232, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.style-dialog__back {
+  display: none;
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 14px;
+  border-color: rgba(99, 210, 255, 0.28);
+  color: var(--blue);
+  background: rgba(99, 210, 255, 0.08);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .style-dialog__overview,
@@ -1641,6 +1800,51 @@ a.lang-toggle {
   .style-dialog__panel {
     max-height: calc(var(--app-height) - 20px);
     padding: 18px;
+  }
+
+  .style-dialog__panel.is-info-open {
+    width: min(100%, 430px);
+  }
+
+  .style-dialog h2 {
+    font-size: 36px;
+  }
+
+  .style-dialog__panel.is-info-open .style-dialog__toolbar {
+    display: none;
+  }
+
+  .style-dialog__panel.is-info-open .style-dialog__content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .style-dialog__panel.is-info-open .style-dialog__tracks {
+    display: none;
+  }
+
+  .style-dialog__info {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .style-dialog__back {
+    display: block;
+  }
+
+  .style-dialog__track {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .style-dialog__cover {
+    width: 48px;
+  }
+
+  .style-dialog__track-score {
+    min-width: 34px;
+    font-size: 12px;
   }
 
   .share-preview {

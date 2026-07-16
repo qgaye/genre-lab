@@ -467,6 +467,52 @@ function fetchText(url, headers = {}) {
   });
 }
 
+function fetchBinary(url, headers = {}, limitBytes = 8 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith("https:") ? https : http;
+    const req = lib.get(url, {
+      headers: {
+        "accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "user-agent": "Mozilla/5.0 (compatible; GenreLab/1.0; local research tool)",
+        ...headers
+      },
+      timeout: 12000
+    }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const next = new URL(res.headers.location, url).toString();
+        res.resume();
+        resolve(fetchBinary(next, headers, limitBytes));
+        return;
+      }
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        res.resume();
+        reject(new Error(`图片返回 HTTP ${res.statusCode}`));
+        return;
+      }
+      const chunks = [];
+      let size = 0;
+      res.on("data", chunk => {
+        size += chunk.length;
+        if (size > limitBytes) {
+          req.destroy(new Error("图片过大。"));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      res.on("end", () => {
+        resolve({
+          contentType: String(res.headers["content-type"] || "image/jpeg"),
+          data: Buffer.concat(chunks)
+        });
+      });
+    });
+    req.on("timeout", () => {
+      req.destroy(new Error("Network request timed out."));
+    });
+    req.on("error", reject);
+  });
+}
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -1068,6 +1114,7 @@ async function loadNetEasePlaylist(raw) {
     title: track.name || "",
     artists: ((track.ar || track.artists) || []).map(artist => artist.name).filter(Boolean),
     album: (track.al && track.al.name) || (track.album && track.album.name) || "",
+    albumImage: albumImageFromNetEaseTrack(track),
     sourceUrl: `https://music.163.com/song?id=${track.id}`
   })).filter(track => track.title);
   // Fall back to sampling the already-detailed tracks when trackIds was absent
@@ -1125,6 +1172,28 @@ async function fetchNetEaseSongsByIds(ids) {
   }
   // Preserve the playlist's original ordering.
   return ids.map(id => byId.get(id)).filter(Boolean);
+}
+
+function normalizeAlbumImageUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  let url = raw.startsWith("//") ? `https:${raw}` : raw;
+  url = url.replace(/^http:\/\//i, "https://");
+  try {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.has("param")) parsed.searchParams.set("param", "180y180");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function albumImageFromNetEaseTrack(track) {
+  return normalizeAlbumImageUrl(
+    (track.al && (track.al.picUrl || track.al.blurPicUrl))
+    || (track.album && (track.album.picUrl || track.album.blurPicUrl))
+    || ""
+  );
 }
 
 async function handleQQMusicSong(req, res) {
@@ -1917,6 +1986,25 @@ function getJob(jobId) {
   return job;
 }
 
+async function hydratePlaylistAlbumImages(job) {
+  const tracks = job && Array.isArray(job.tracks) ? job.tracks : [];
+  const missing = tracks
+    .filter(track => track && track.id && !track.albumImage)
+    .map(track => String(track.id));
+  if (!missing.length) return;
+  const details = await fetchNetEaseSongsByIds([...new Set(missing)]);
+  const imageById = new Map(details.map(track => [String(track.id), albumImageFromNetEaseTrack(track)]));
+  let changed = false;
+  for (const track of tracks) {
+    const image = imageById.get(String(track.id || ""));
+    if (image && !track.albumImage) {
+      track.albumImage = image;
+      changed = true;
+    }
+  }
+  if (changed) persistJob(job);
+}
+
 // Register an interrupted job in memory and continue its run from where it
 // stopped. Must set the map entry before awaiting anything (see getJob).
 function resumeJob(job) {
@@ -2081,12 +2169,17 @@ async function handleAnalyzePlaylist(req, res) {
   }
 }
 
-function handlePlaylistStatus(req, res, url) {
+async function handlePlaylistStatus(req, res, url) {
   const jobId = url.searchParams.get("jobId") || "";
   const job = getJob(jobId);
   if (!job) {
     sendJson(res, 404, { error: "分析任务不存在或已过期，请重新发起。", state: "expired" });
     return;
+  }
+  try {
+    await hydratePlaylistAlbumImages(job);
+  } catch (error) {
+    console.warn(`无法补全歌单封面 ${jobId}: ${error.message}`);
   }
   // Incremental delivery: the client passes the count it already has so we only
   // ship newly completed results, which keeps mobile polling payloads small.
@@ -2113,6 +2206,29 @@ function handlePlaylistStatus(req, res, url) {
     results,
     updatedAt: job.updatedAt
   });
+}
+
+async function handleCoverImage(req, res, url) {
+  try {
+    const raw = url.searchParams.get("url") || "";
+    const imageUrl = normalizeAlbumImageUrl(raw);
+    const parsed = new URL(imageUrl);
+    if (parsed.protocol !== "https:" || !/\.music\.126\.net$/i.test(parsed.hostname)) {
+      sendJson(res, 400, { error: "Unsupported image host." });
+      return;
+    }
+    const image = await fetchBinary(imageUrl, {
+      referer: "https://music.163.com/"
+    });
+    res.writeHead(200, {
+      "content-type": image.contentType,
+      "cache-control": "public, max-age=86400",
+      "content-length": image.data.length
+    });
+    res.end(image.data);
+  } catch (error) {
+    sendJson(res, 502, { error: error.message });
+  }
 }
 
 function serveStatic(req, res) {
@@ -2255,7 +2371,11 @@ const server = http.createServer((req, res) => {
   if (req.method === "GET") {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.pathname === "/api/analyze-playlist/status") {
-      handlePlaylistStatus(req, res, url);
+      handlePlaylistStatus(req, res, url).catch(error => sendJson(res, 500, { error: error.message }));
+      return;
+    }
+    if (url.pathname === "/api/cover-image") {
+      handleCoverImage(req, res, url);
       return;
     }
     serveStatic(req, res);
