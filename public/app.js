@@ -1515,7 +1515,7 @@ function renderScores(items) {
 }
 
 // 循环色板：给堆叠条每个风格段分配一个可区分的颜色
-const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be3a3"];
+const MIX_COLORS = ["#1f3fe0", "#ff3d7f", "#0a9d8b", "#e59200", "#7a4fd6", "#111318"];
 
 function renderMix(composition, allScores = composition) {
   genreMix.innerHTML = "";
@@ -1532,7 +1532,7 @@ function renderMix(composition, allScores = composition) {
     color: MIX_COLORS[index % MIX_COLORS.length]
   }));
   if (other > 0) {
-    segments.push({ label: t("mix.other"), percent: other, color: "rgba(255,255,255,0.14)", isOther: true });
+    segments.push({ label: t("mix.other"), percent: other, color: "rgba(23,24,29,0.2)", isOther: true });
   }
 
   // 记录可见风格的颜色，供“最终分”详情区对齐；其余风格使用中性色
@@ -1583,7 +1583,7 @@ function renderMix(composition, allScores = composition) {
     const color = colorByName.get(item.name);
     const dot = document.createElement("i");
     dot.className = "mix-dot";
-    dot.style.background = color || "rgba(255,255,255,0.2)";
+    dot.style.background = color || "rgba(23,24,29,0.2)";
     if (!color) row.classList.add("is-muted");
     row.appendChild(dot);
     row.append(document.createTextNode(displayName(item.name)));
@@ -2266,13 +2266,13 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 
 function drawShareFooter(ctx, x, y, width) {
   ctx.save();
-  ctx.font = "500 18px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.font = "700 18px 'Space Mono', ui-monospace, Menlo, monospace";
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
-  ctx.fillStyle = "#73766c";
+  ctx.fillStyle = "#55585f";
   ctx.fillText(t("share.cardHint"), x, y);
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(115, 118, 108, 0.74)";
+  ctx.fillStyle = "rgba(85, 88, 95, 0.74)";
   ctx.fillText(SHARE_CARD_MARK, x + width, y);
   ctx.restore();
 }
@@ -2287,7 +2287,7 @@ function drawShareMix(ctx, composition, x, y, width) {
     color: MIX_COLORS[index % MIX_COLORS.length]
   }));
   if (other > 0) {
-    segments.push({ label: t("mix.other"), percent: other, color: "rgba(255,255,255,0.16)" });
+    segments.push({ label: t("mix.other"), percent: other, color: "rgba(23,24,29,0.22)" });
   }
 
   const barHeight = 26;
@@ -2295,14 +2295,14 @@ function drawShareMix(ctx, composition, x, y, width) {
   for (const seg of segments) {
     const segWidth = Math.max(0, (seg.percent / 100) * width);
     ctx.fillStyle = seg.color;
-    drawRoundedRect(ctx, cursor, y, Math.max(segWidth - 3, 1), barHeight, 6);
+    drawRoundedRect(ctx, cursor, y, Math.max(segWidth - 3, 1), barHeight, 0);
     ctx.fill();
     cursor += segWidth;
   }
 
   let legendY = y + barHeight + 34;
   let legendX = x;
-  ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
   const rowHeight = 34;
   for (const seg of segments) {
     const label = `${seg.label} ${Math.round(seg.percent)}%`;
@@ -2315,9 +2315,9 @@ function drawShareMix(ctx, composition, x, y, width) {
       legendY += rowHeight;
     }
     ctx.fillStyle = seg.color;
-    drawRoundedRect(ctx, legendX, legendY - 13, dotW, dotW, 4);
+    drawRoundedRect(ctx, legendX, legendY - 13, dotW, dotW, 0);
     ctx.fill();
-    ctx.fillStyle = "#c9cabb";
+    ctx.fillStyle = "#2a2c33";
     ctx.textBaseline = "middle";
     ctx.fillText(label, legendX + dotW + gap, legendY - 4);
     legendX += itemW;
@@ -2336,65 +2336,70 @@ function renderShareCard(verdict) {
   ctx.scale(SHARE_SCALE, SHARE_SCALE);
   ctx.textBaseline = "alphabetic";
 
-  // Background: base panel color + accent gradient wash (mirrors .verdict).
-  ctx.fillStyle = "#181b17";
+  // Background: newsprint paper + faint blue halftone wash, hard ink border.
+  ctx.fillStyle = "#f1eee5";
   ctx.fillRect(0, 0, width, height);
   const wash = ctx.createLinearGradient(0, 0, width * 0.7, height * 0.5);
-  wash.addColorStop(0, "rgba(200, 255, 95, 0.16)");
-  wash.addColorStop(0.4, "rgba(200, 255, 95, 0)");
+  wash.addColorStop(0, "rgba(31, 63, 224, 0.08)");
+  wash.addColorStop(0.5, "rgba(31, 63, 224, 0)");
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "rgba(244, 240, 232, 0.16)";
-  ctx.lineWidth = 2;
-  drawRoundedRect(ctx, 3, 3, width - 6, height - 6, 22);
-  ctx.stroke();
+  ctx.strokeStyle = "#17181d";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
 
   const x = SHARE_CARD_PAD;
   const contentW = width - SHARE_CARD_PAD * 2;
   let y = SHARE_CARD_PAD;
 
-  // Kicker
-  ctx.fillStyle = "#a9aa9d";
-  ctx.font = "600 22px Avenir Next, Helvetica, Arial, sans-serif";
+  // Kicker — printed as a solid blue label chip.
+  const kickerText = t("verdict.mix").toUpperCase();
+  ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
+  const kickerW = ctx.measureText(kickerText).width;
+  ctx.fillStyle = "#1f3fe0";
+  ctx.fillRect(x, y, kickerW + 20, 32);
+  ctx.fillStyle = "#f1eee5";
+  ctx.textBaseline = "middle";
+  ctx.fillText(kickerText, x + 10, y + 17);
   ctx.textBaseline = "top";
-  ctx.fillText(t("verdict.mix"), x, y);
-  y += 44;
+  y += 54;
 
-  // Track pill
+  // Track pill — paper-3 fill with ink border.
   if (verdict.track && verdict.track.title) {
     const title = verdict.track.title;
     const artists = verdict.track.artists || t("track.unknownArtist");
-    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.font = "700 22px 'Space Mono', ui-monospace, Menlo, monospace";
     const titleW = ctx.measureText(title).width;
-    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.font = "400 20px 'Space Mono', ui-monospace, Menlo, monospace";
     const byW = ctx.measureText(`  ·  ${artists}`).width;
     const iconW = 26;
     const pillW = iconW + titleW + byW + 44;
     const pillH = 48;
-    ctx.fillStyle = "rgba(200, 255, 95, 0.10)";
-    ctx.strokeStyle = "rgba(200, 255, 95, 0.4)";
+    ctx.fillStyle = "#dedacd";
+    ctx.strokeStyle = "#17181d";
     ctx.lineWidth = 2;
-    drawRoundedRect(ctx, x, y, Math.min(pillW, contentW), pillH, 24);
+    drawRoundedRect(ctx, x, y, Math.min(pillW, contentW), pillH, 0);
     ctx.fill();
     ctx.stroke();
     let tx = x + 22;
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#c8ff5f";
-    ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#ff3d7f";
+    ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText("♪", tx, y + pillH / 2);
     tx += iconW;
-    ctx.fillStyle = "#f4f0e8";
-    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#17181d";
+    ctx.font = "700 22px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText(title, tx, y + pillH / 2 + 1);
     tx += titleW;
-    ctx.fillStyle = "#a9aa9d";
-    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#55585f";
+    ctx.font = "400 20px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText(`  ·  ${artists}`, tx, y + pillH / 2 + 1);
     ctx.textBaseline = "top";
     y += pillH + 30;
   }
 
-  // Headline: parts with small genre tag + large style word, "+" between.
+  // Headline: mono genre eyebrow + large condensed style word, blue ink with a
+  // pink misregistered ghost, "+" between parts.
   const parts = verdict.titleParts.length ? verdict.titleParts : verdict.composition.slice(0, 1);
   const lead = parts[0].percent || parts[0].score || 1;
   const baseSize = 92;
@@ -2403,8 +2408,8 @@ function renderShareCard(verdict) {
   let maxBottom = y;
   parts.forEach((part, index) => {
     if (index > 0) {
-      ctx.fillStyle = "#a9aa9d";
-      ctx.font = `500 ${Math.round(baseSize * 0.42)}px Georgia, serif`;
+      ctx.fillStyle = "#ff3d7f";
+      ctx.font = `700 ${Math.round(baseSize * 0.42)}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
       ctx.textBaseline = "alphabetic";
       const plusY = headlineTop + baseSize * 0.62;
       ctx.fillText("+", hx + 8, plusY);
@@ -2415,25 +2420,29 @@ function renderShareCard(verdict) {
     const { genre, style } = splitGenreStyle(part.name);
     let colY = headlineTop;
     if (genre) {
-      ctx.fillStyle = "#a9aa9d";
-      ctx.font = `700 ${Math.round(size * 0.2)}px Avenir Next, Helvetica, Arial, sans-serif`;
+      ctx.fillStyle = "#55585f";
+      ctx.font = `700 ${Math.round(size * 0.18)}px 'Space Mono', ui-monospace, Menlo, monospace`;
       ctx.textBaseline = "top";
       ctx.fillText(genre.toUpperCase(), hx, colY);
-      colY += Math.round(size * 0.2) + 10;
+      colY += Math.round(size * 0.18) + 12;
     }
-    ctx.fillStyle = "#f4f0e8";
-    ctx.font = `500 ${size}px Georgia, Cambria, serif`;
+    const styleUpper = style.toUpperCase();
+    ctx.font = `800 ${size}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
     ctx.textBaseline = "top";
-    ctx.fillText(style, hx, colY);
-    const styleW = ctx.measureText(style).width;
+    // Pink ghost offset behind, then blue ink on top (misregistration).
+    ctx.fillStyle = "#ff3d7f";
+    ctx.fillText(styleUpper, hx + 3, colY + 3);
+    ctx.fillStyle = "#1f3fe0";
+    ctx.fillText(styleUpper, hx, colY);
+    const styleW = ctx.measureText(styleUpper).width;
     hx += styleW + 24;
     maxBottom = Math.max(maxBottom, colY + size);
   });
   y = maxBottom + 34;
 
   // Reason (wrapped)
-  ctx.fillStyle = "#a9aa9d";
-  ctx.font = "400 22px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.fillStyle = "#55585f";
+  ctx.font = "400 22px 'Space Mono', ui-monospace, Menlo, monospace";
   ctx.textBaseline = "top";
   y = drawWrappedText(ctx, verdict.reason || "", x, y, contentW, 32);
   y += 30;

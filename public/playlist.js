@@ -47,7 +47,7 @@ if (new URLSearchParams(window.location.search).get("showModel") === "1") {
   document.documentElement.classList.add("show-model-selector");
 }
 
-const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be3a3"];
+const MIX_COLORS = ["#1f3fe0", "#ff3d7f", "#0a9d8b", "#e59200", "#7a4fd6", "#111318"];
 // Genres whose aggregate share falls below this are folded into a single
 // neutral "其他" slice so tiny long-tail genres don't clutter the charts.
 const OTHER_GENRE_THRESHOLD = 5;
@@ -1133,12 +1133,12 @@ function drawNebula() {
     if (cl.R < 20) continue;
     const nameSize = Math.max(11, Math.min(18, cl.R * 0.32));
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.font = `700 ${nameSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
     ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
     ctx.shadowBlur = 6;
     ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
     ctx.fillStyle = cl.genre.color;
-    ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
+    ctx.font = `700 ${Math.max(10, nameSize * 0.82)}px 'Space Mono', ui-monospace, Menlo, monospace`;
     ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
     ctx.shadowBlur = 0;
   }
@@ -1535,13 +1535,13 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 
 function drawShareFooter(ctx, x, y, width) {
   ctx.save();
-  ctx.font = "500 18px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.font = "400 18px 'Space Mono', ui-monospace, Menlo, monospace";
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
-  ctx.fillStyle = "#73766c";
+  ctx.fillStyle = "#55585f";
   ctx.fillText(t("pl.card.footer"), x, y);
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(115, 118, 108, 0.74)";
+  ctx.fillStyle = "rgba(85, 88, 95, 0.74)";
   ctx.fillText(SHARE_CARD_MARK, x + width, y);
   ctx.restore();
 }
@@ -1626,7 +1626,7 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
       ctx.save();
       ctx.globalAlpha = rank === 0 ? 1 : Math.max(0.45, 1 - rank * 0.22);
       ctx.fillStyle = genre.color;
-      drawRoundedRect(ctx, bx, by, bw, bh, 6);
+      drawRoundedRect(ctx, bx, by, bw, bh, 0);
       ctx.fill();
       ctx.restore();
 
@@ -1642,16 +1642,16 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
       const isVertical = bh >= bw * 1.6 && bw < 60 && bh >= 60;
       if (isVertical) {
         ctx.save();
-        ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
+        ctx.fillStyle = "#f1eee5";
         // Percentage sits horizontally at the bottom of the tile.
         const vPctSize = Math.max(13, Math.min(pctSize, 22));
-        ctx.font = `800 ${vPctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${vPctSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
         ctx.fillText(pctText, bx + bw / 2, by + bh - 6);
         // Name runs top-to-bottom (rotated 90°), clipped to the tile height.
         const vNameSize = Math.max(12, Math.min(nameSize, bw - 6));
-        ctx.font = `700 ${vNameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${vNameSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         const avail = bh - vPctSize - 16;
@@ -1665,9 +1665,9 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
         ctx.restore();
       } else if (bw >= 60 && bh >= 40) {
         ctx.save();
-        ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
+        ctx.fillStyle = "#f1eee5";
         ctx.textBaseline = "top";
-        ctx.font = `700 ${nameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${nameSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         // Wrap the name onto as many lines as the tile height allows instead of
         // clipping it, matching the DOM mosaic (which wraps via --mb-lines).
         const lineH = nameSize * 1.25 + 2;
@@ -1678,14 +1678,14 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
           ctx.fillText(line, bx + 8, ny);
           ny += lineH;
         }
-        ctx.font = `800 ${pctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${pctSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.fillText(pctText, bx + 8, ny + 4);
         ctx.restore();
       } else if (bw >= 34 && bh >= 20) {
         ctx.save();
-        ctx.fillStyle = "rgba(15, 17, 15, 0.88)";
+        ctx.fillStyle = "#f1eee5";
         ctx.textBaseline = "top";
-        ctx.font = `800 ${Math.max(13, Math.min(pctSize, 20))}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${Math.max(13, Math.min(pctSize, 20))}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.fillText(pctText, bx + 6, by + 6);
         ctx.restore();
       }
@@ -1702,43 +1702,47 @@ function renderShareCard(genres) {
   const ctx = canvas.getContext("2d");
   ctx.scale(SHARE_SCALE, SHARE_SCALE);
 
-  // Background: base panel color + accent gradient wash (mirrors .verdict).
-  ctx.fillStyle = "#181b17";
+  // Background: newsprint paper + faint blue halftone wash, hard ink border.
+  ctx.fillStyle = "#f1eee5";
   ctx.fillRect(0, 0, width, height);
   const wash = ctx.createLinearGradient(0, 0, width * 0.7, height * 0.5);
-  wash.addColorStop(0, "rgba(200, 255, 95, 0.16)");
-  wash.addColorStop(0.4, "rgba(200, 255, 95, 0)");
+  wash.addColorStop(0, "rgba(31, 63, 224, 0.08)");
+  wash.addColorStop(0.5, "rgba(31, 63, 224, 0)");
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "rgba(244, 240, 232, 0.16)";
-  ctx.lineWidth = 2;
-  drawRoundedRect(ctx, 3, 3, width - 6, height - 6, 22);
-  ctx.stroke();
+  ctx.strokeStyle = "#17181d";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
 
   const x = SHARE_CARD_PAD;
   const contentW = width - SHARE_CARD_PAD * 2;
   let y = SHARE_CARD_PAD;
 
-  // Kicker
-  ctx.fillStyle = "#a9aa9d";
-  ctx.font = "600 22px Avenir Next, Helvetica, Arial, sans-serif";
+  // Kicker — printed as a solid blue label chip.
+  const kickerText = t("pl.card.headline").toUpperCase();
+  ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
+  const kickerW = ctx.measureText(kickerText).width;
+  ctx.fillStyle = "#1f3fe0";
+  ctx.fillRect(x, y, kickerW + 20, 32);
+  ctx.fillStyle = "#f1eee5";
+  ctx.textBaseline = "middle";
+  ctx.fillText(kickerText, x + 10, y + 17);
   ctx.textBaseline = "top";
-  ctx.fillText(t("pl.card.headline"), x, y);
-  y += 44;
+  y += 54;
 
-  // Playlist pill (title + subtitle)
+  // Playlist pill (title + subtitle) — paper-3 fill with ink border.
   if (shareMeta.title) {
-    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.font = "700 24px 'Space Mono', ui-monospace, Menlo, monospace";
     let title = shareMeta.title;
     const subtitle = shareMeta.subtitle ? `  ·  ${shareMeta.subtitle}` : "";
     const iconW = 26;
     let titleW = ctx.measureText(title).width;
-    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.font = "400 20px 'Space Mono', ui-monospace, Menlo, monospace";
     let subW = ctx.measureText(subtitle).width;
     // Clip title if the pill would exceed the content width.
     const maxTitleW = contentW - 44 - iconW - subW;
     if (titleW > maxTitleW) {
-      ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+      ctx.font = "700 24px 'Space Mono', ui-monospace, Menlo, monospace";
       while (title.length > 1 && ctx.measureText(`${title}…`).width > maxTitleW) {
         title = title.slice(0, -1);
       }
@@ -1747,31 +1751,31 @@ function renderShareCard(genres) {
     }
     const pillW = Math.min(contentW, iconW + titleW + subW + 44);
     const pillH = 48;
-    ctx.fillStyle = "rgba(200, 255, 95, 0.10)";
-    ctx.strokeStyle = "rgba(200, 255, 95, 0.4)";
+    ctx.fillStyle = "#dedacd";
+    ctx.strokeStyle = "#17181d";
     ctx.lineWidth = 2;
-    drawRoundedRect(ctx, x, y, pillW, pillH, 24);
+    drawRoundedRect(ctx, x, y, pillW, pillH, 0);
     ctx.fill();
     ctx.stroke();
     let tx = x + 22;
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#c8ff5f";
-    ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#ff3d7f";
+    ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText("♪", tx, y + pillH / 2);
     tx += iconW;
-    ctx.fillStyle = "#f4f0e8";
-    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#17181d";
+    ctx.font = "700 24px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText(title, tx, y + pillH / 2 + 1);
     tx += titleW;
-    ctx.fillStyle = "#a9aa9d";
-    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#55585f";
+    ctx.font = "400 20px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText(subtitle, tx, y + pillH / 2 + 1);
     ctx.textBaseline = "top";
     y += pillH + 30;
   }
 
   // Genre legend (wrapped rows), one entry per parent genre.
-  ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
   let legendX = x;
   let legendY = y;
   const rowHeight = 34;
@@ -1786,9 +1790,9 @@ function renderShareCard(genres) {
       legendY += rowHeight;
     }
     ctx.fillStyle = genre.color;
-    drawRoundedRect(ctx, legendX, legendY, dotW, dotW, 4);
+    drawRoundedRect(ctx, legendX, legendY, dotW, dotW, 0);
     ctx.fill();
-    ctx.fillStyle = "#c9cabb";
+    ctx.fillStyle = "#2a2c33";
     ctx.textBaseline = "middle";
     ctx.fillText(label, legendX + dotW + gap, legendY + dotW / 2);
     ctx.textBaseline = "top";
