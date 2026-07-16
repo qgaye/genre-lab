@@ -541,7 +541,7 @@ function buildTwoLevel(compositions) {
 
   major.forEach((g, index) => {
     g.color = g.name === "__other__" ? OTHER_GENRE_COLOR : MIX_COLORS[index % MIX_COLORS.length];
-    g.styles = foldGenreStyles(g.styles);
+    g.styles = foldGenreStyles(g.styles, g.name === "__other__");
   });
   return major;
 }
@@ -553,10 +553,17 @@ function buildTwoLevel(compositions) {
 // styles are then rescaled so their shares again sum to the parent genre's
 // total, keeping the parent area honest while the mosaic tiles / sunburst arc
 // fill it exactly. Always keeps at least the top style.
-function foldGenreStyles(styles) {
+//
+// The "其他" genre is itself an aggregate of long-tail genres, so each of its
+// styles is tiny in absolute terms and would all fail OTHER_STYLE_THRESHOLD,
+// leaving it with a single tile even when "其他" is large. For it we skip the
+// absolute threshold and just keep the top MAX_STYLES_PER_GENRE styles.
+function foldGenreStyles(styles, isOther = false) {
   const sorted = [...styles].sort((a, b) => b.percent - a.percent);
   const originalTotal = sorted.reduce((sum, style) => sum + style.percent, 0);
-  let kept = sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  let kept = isOther
+    ? sorted.slice(0, MAX_STYLES_PER_GENRE)
+    : sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
   if (!kept.length) kept = sorted.slice(0, 1);
   const keptTotal = kept.reduce((sum, style) => sum + style.percent, 0) || 1;
   const scale = originalTotal / keptTotal;
