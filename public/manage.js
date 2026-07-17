@@ -78,7 +78,7 @@ function renderJobs(jobs) {
 
   for (const job of jobs) {
     const card = jobCardTemplate.content.firstElementChild.cloneNode(true);
-    card.href = `/playlist?jobId=${encodeURIComponent(job.jobId)}`;
+    card.href = `/playlist?job=${encodeURIComponent(job.jobId)}`;
 
     const coverImg = card.querySelector(".job-card-cover img");
     if (job.coverImgUrl) {
