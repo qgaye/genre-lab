@@ -12,8 +12,54 @@ const {
   parseSearchCandidatesPayload,
   rankSearchCandidates,
   selectSearchSources,
-  sourceSearchQuery
+  sourceSearchQuery,
+  summarizeAnalysisLogEntry
 } = require("../server");
+
+test("summarizes analysis logs without exposing request-private fields", () => {
+  const summary = summarizeAnalysisLogEntry({
+    timePoint: "2026-07-17T08:00:00.000Z",
+    ip: "203.0.113.4",
+    userAgent: "private-agent",
+    input: { formatLabel: "网易云音乐链接", raw: "sensitive raw input" },
+    parsedTrack: {
+      title: "测试歌曲",
+      artists: "测试艺人",
+      album: "测试专辑",
+      sourceId: "123",
+      sourceUrl: "https://music.163.com/song?id=123"
+    },
+    audioDownload: { success: true, elapsedSeconds: 2.5, sourcePlatform: "netease" },
+    essentia: { success: true, modelKey: "effnet400", predictionCount: 12, elapsedSeconds: 3.5 },
+    verdict: { genres: [{ name: "Soul", percent: 72 }] },
+    workflow: { allSucceeded: true }
+  }, 7);
+
+  assert.equal(summary.title, "测试歌曲");
+  assert.equal(summary.status, "done");
+  assert.deepEqual(summary.genres, [{ name: "Soul", percent: 72 }]);
+  assert.equal(summary.model, "effnet400");
+  assert.equal("ip" in summary, false);
+  assert.equal("userAgent" in summary, false);
+  assert.equal("raw" in summary, false);
+});
+
+test("reads verdict data from legacy clientPayload analysis logs", () => {
+  const summary = summarizeAnalysisLogEntry({
+    timePoint: "2026-07-17T08:00:00.000Z",
+    parsedTrack: { title: "Legacy" },
+    essentia: {
+      predictions: [{ display: "Electronic / House", score: 0.81 }]
+    },
+    workflow: { allSucceeded: true },
+    clientPayload: {
+      verdict: { genres: [{ name: "Electronic", percent: 81 }] }
+    }
+  });
+
+  assert.deepEqual(summary.genres, [{ name: "Electronic", percent: 81 }]);
+  assert.deepEqual(summary.predictions, [{ display: "Electronic / House", score: 0.81 }]);
+});
 
 test("extracts the short link from a NetEase share sentence", () => {
   const input = "分享DJ Seinfeld/Confidence Man的单曲《Now U Do (Edit)》https://163cn.tv/baXyaqMo (@网易云音乐)";

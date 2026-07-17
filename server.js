@@ -1917,8 +1917,10 @@ async function handleLog(req, res) {
       clientCompletedAt: body.completedAt || "",
       input: body.input || {},
       parsedTrack: body.parsedTrack || {},
+      metadata: body.metadata || {},
       audioDownload: body.audioDownload || {},
       essentia: body.essentia || {},
+      verdict: body.verdict || {},
       workflow: body.workflow || {}
     };
     appendAnalysisLog(entry);
@@ -2287,6 +2289,139 @@ function handleListPlaylistJobs(req, res) {
   }
 }
 
+// Analysis logs are append-only NDJSON. Keep the management API deliberately
+// narrower than the on-disk record: it exposes useful track / analysis facts,
+// but never returns IP addresses, user agents, raw inputs or local audio paths.
+function summarizeAnalysisLogEntry(entry, fallbackIndex = 0) {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+  const legacyPayload = entry.clientPayload && typeof entry.clientPayload === "object"
+    ? entry.clientPayload
+    : {};
+  const track = entry.parsedTrack && typeof entry.parsedTrack === "object"
+    ? entry.parsedTrack
+    : legacyPayload.parsedTrack || {};
+  const input = entry.input && typeof entry.input === "object"
+    ? entry.input
+    : legacyPayload.input || {};
+  const audio = entry.audioDownload && typeof entry.audioDownload === "object"
+    ? entry.audioDownload
+    : legacyPayload.audioDownload || {};
+  const essentia = entry.essentia && typeof entry.essentia === "object"
+    ? entry.essentia
+    : legacyPayload.essentia || {};
+  const verdict = entry.verdict && typeof entry.verdict === "object"
+    ? entry.verdict
+    : legacyPayload.verdict || {};
+  const workflow = entry.workflow && typeof entry.workflow === "object"
+    ? entry.workflow
+    : legacyPayload.workflow || {};
+  const device = entry.device && typeof entry.device === "object" ? entry.device : {};
+  const sourceUrl = /^https?:\/\//i.test(String(track.sourceUrl || "")) ? String(track.sourceUrl) : "";
+  const optionalNumber = value => value !== "" && value != null && Number.isFinite(Number(value))
+    ? Number(value)
+    : null;
+  const genres = Array.isArray(verdict.genres)
+    ? verdict.genres.slice(0, 5).map(item => ({
+      name: String(item && item.name || ""),
+      percent: optionalNumber(item && item.percent)
+    })).filter(item => item.name)
+    : [];
+  const predictions = Array.isArray(essentia.predictions)
+    ? essentia.predictions.slice(0, 5).map(item => ({
+      display: String(item && (item.display || item.label) || ""),
+      score: optionalNumber(item && item.score)
+    })).filter(item => item.display)
+    : [];
+  const timePoint = String(entry.timePoint || entry.clientTimePoint || legacyPayload.timePoint || "");
+  const completedAt = String(entry.clientCompletedAt || legacyPayload.completedAt || "");
+  const allSucceeded = workflow.allSucceeded === true;
+  const hasFailure = workflow.allSucceeded === false || Boolean(workflow.error)
+    || audio.success === false || essentia.success === false;
+
+  return {
+    id: crypto.createHash("sha1").update(`${timePoint}:${fallbackIndex}`).digest("hex").slice(0, 12),
+    timePoint,
+    completedAt,
+    title: String(track.title || ""),
+    artists: String(track.artists || ""),
+    album: String(track.album || ""),
+    sourceId: String(track.sourceId || ""),
+    sourceUrl,
+    inputFormat: String(input.formatLabel || input.format || ""),
+    status: allSucceeded ? "done" : hasFailure ? "error" : "unknown",
+    error: String(workflow.error || audio.error || essentia.error || ""),
+    model: String(essentia.model || essentia.modelKey || ""),
+    predictionCount: Math.max(0, Number(essentia.predictionCount) || predictions.length),
+    essentiaElapsedSeconds: optionalNumber(essentia.elapsedSeconds),
+    audioElapsedSeconds: optionalNumber(audio.elapsedSeconds),
+    audioSource: String(audio.sourcePlatform || audio.source || ""),
+    genres,
+    predictions,
+    device: {
+      os: String(device.os || ""),
+      browser: String(device.browser || ""),
+      formFactor: String(device.formFactor || "")
+    }
+  };
+}
+
+function readAnalysisLogRecords(filePath = ANALYSIS_LOG_FILE) {
+  if (!fs.existsSync(filePath)) return { records: [], malformed: 0 };
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  const records = [];
+  let malformed = 0;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    try {
+      const summary = summarizeAnalysisLogEntry(JSON.parse(line), index);
+      if (summary) records.push(summary);
+      else malformed += 1;
+    } catch {
+      malformed += 1;
+    }
+  }
+  records.sort((a, b) => {
+    const aTime = Date.parse(a.timePoint) || 0;
+    const bTime = Date.parse(b.timePoint) || 0;
+    return bTime - aTime;
+  });
+  return { records, malformed };
+}
+
+function handleListAnalysisLogs(req, res, url) {
+  try {
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get("pageSize")) || 20));
+    const query = String(url.searchParams.get("q") || "").trim().toLocaleLowerCase();
+    const { records, malformed } = readAnalysisLogRecords();
+    const filtered = query
+      ? records.filter(record => [record.title, record.artists, record.album, record.sourceId, record.model]
+        .some(value => String(value).toLocaleLowerCase().includes(query)))
+      : records;
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const start = (currentPage - 1) * pageSize;
+    sendJson(res, 200, {
+      songs: filtered.slice(start, start + pageSize),
+      allTotal: records.length,
+      malformed,
+      query,
+      pagination: {
+        page: currentPage,
+        pageSize,
+        total,
+        totalPages,
+        hasPrev: currentPage > 1,
+        hasNext: currentPage < totalPages
+      }
+    });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
 async function handleCoverImage(req, res, url) {
   try {
     const raw = url.searchParams.get("url") || "";
@@ -2489,6 +2624,10 @@ const server = http.createServer((req, res) => {
       handleListPlaylistJobs(req, res);
       return;
     }
+    if (url.pathname === "/api/analysis-logs") {
+      handleListAnalysisLogs(req, res, url);
+      return;
+    }
     if (url.pathname === "/api/cover-image") {
       handleCoverImage(req, res, url);
       return;
@@ -2551,11 +2690,13 @@ module.exports = {
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
+  readAnalysisLogRecords,
   resolveNetEaseSongId,
   resolveNetEasePlaylistId,
   resolveQQMusicSongMid,
   resolveSpotifyTrackId,
   selectSearchSources,
+  summarizeAnalysisLogEntry,
   sourceSearchQuery,
   server
 };
