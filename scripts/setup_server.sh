@@ -507,11 +507,20 @@ download_file() {
 
   local tmp="${output}.part"
   rm -f "$tmp"
-  curl --fail --location --connect-timeout 20 --max-time 900 --output "$tmp" "$url"
+  if ! curl --fail --location --connect-timeout 20 --max-time 900 --output "$tmp" "$url"; then
+    echo "Download failed: $url"
+    rm -f "$tmp"
+    return 1
+  fi
+  if [ ! -s "$tmp" ]; then
+    echo "Downloaded file is empty: $output"
+    rm -f "$tmp"
+    return 1
+  fi
   local size
   size="$(wc -c <"$tmp" | tr -d ' ')"
   if [ "$size" -lt "$min_bytes" ]; then
-    echo "Downloaded file is too small: $output ($size bytes)"
+    echo "Downloaded file is too small: $output ($size bytes, expected >= $min_bytes)"
     rm -f "$tmp"
     return 1
   fi
@@ -525,30 +534,63 @@ download_models() {
     return 1
   fi
 
+  mkdir -p "$ROOT/models"
+
+  download_file \
+    "$ROOT/models/discogs-effnet-bs64-1.pb" \
+    "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb" \
+    1000000 &&
+
+  download_file \
+    "$ROOT/models/discogs-effnet-bs64-1.json" \
+    "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.json" \
+    1000 &&
+
+  download_file \
+    "$ROOT/models/genre_discogs400-discogs-effnet-1.pb" \
+    "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb" \
+    100000 &&
+
+  download_file \
+    "$ROOT/models/genre_discogs400-discogs-effnet-1.json" \
+    "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.json" \
+    1000 &&
+
+  for mood in mood_happy mood_sad mood_aggressive mood_relaxed mood_party; do
+    download_file \
+      "$ROOT/models/${mood}-discogs-effnet-1.pb" \
+      "https://essentia.upf.edu/models/classification-heads/${mood}/${mood}-discogs-effnet-1.pb" \
+      100000 &&
+    download_file \
+      "$ROOT/models/${mood}-discogs-effnet-1.json" \
+      "https://essentia.upf.edu/models/classification-heads/${mood}/${mood}-discogs-effnet-1.json" \
+      500 || return 1
+  done
+
+  download_file \
+    "$ROOT/models/mtg_jamendo_instrument-discogs-effnet-1.pb" \
+    "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_instrument/mtg_jamendo_instrument-discogs-effnet-1.pb" \
+    100000 &&
+
+  download_file \
+    "$ROOT/models/mtg_jamendo_instrument-discogs-effnet-1.json" \
+    "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_instrument/mtg_jamendo_instrument-discogs-effnet-1.json" \
+    500 &&
+
+  download_file \
+    "$ROOT/models/mtg_jamendo_moodtheme-discogs-effnet-1.pb" \
+    "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_moodtheme/mtg_jamendo_moodtheme-discogs-effnet-1.pb" \
+    100000 &&
+
+  download_file \
+    "$ROOT/models/mtg_jamendo_moodtheme-discogs-effnet-1.json" \
+    "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_moodtheme/mtg_jamendo_moodtheme-discogs-effnet-1.json" \
+    500 || return 1
+
   local target
   for target in $GENRE_MODEL_LIST; do
     echo "== Downloading model files for: $target =="
-    if [ "$target" = "effnet400" ]; then
-      download_file \
-        "$ROOT/models/discogs-effnet-bs64-1.pb" \
-        "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb" \
-        1000000 &&
-
-      download_file \
-        "$ROOT/models/discogs-effnet-bs64-1.json" \
-        "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.json" \
-        1000 &&
-
-      download_file \
-        "$ROOT/models/genre_discogs400-discogs-effnet-1.pb" \
-        "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb" \
-        100000 &&
-
-      download_file \
-        "$ROOT/models/genre_discogs400-discogs-effnet-1.json" \
-        "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.json" \
-        1000 || return 1
-    else
+    if [ "$target" = "maest519" ]; then
       download_file \
         "$ROOT/models/discogs-maest-30s-pw-519l-2.pb" \
         "https://essentia.upf.edu/models/feature-extractors/maest/discogs-maest-30s-pw-519l-2.pb" \

@@ -17,20 +17,19 @@ const progressLog = document.querySelector("#progressLog");
 const playlistMeta = document.querySelector("#playlistMeta");
 const genreTwoLevel = document.querySelector("#genreTwoLevel");
 const viewToggle = document.querySelector("#viewToggle");
-const genreSunburst = document.querySelector("#genreSunburst");
 const genreMosaic = document.querySelector("#genreMosaic");
-const genreNebula = document.querySelector("#genreNebula");
-const sunburstSvg = document.querySelector("#sunburstSvg");
-const sunburstCenter = document.querySelector("#sunburstCenter");
-const sunburstLegend = document.querySelector("#sunburstLegend");
+const mosaicCaption = document.querySelector("#mosaicCaption");
 const mosaicStage = document.querySelector("#mosaicStage");
-const nebulaStage = document.querySelector("#nebulaStage");
-const nebulaCanvas = document.querySelector("#nebulaCanvas");
-const nebulaLegend = document.querySelector("#nebulaLegend");
 const trackList = document.querySelector("#trackList");
 const trackCount = document.querySelector("#trackCount");
+const breakdownRow = document.querySelector("#breakdownRow");
+const genreBreakdownPanel = document.querySelector("#genreBreakdownPanel");
+const genreBreakdownList = document.querySelector("#genreBreakdownList");
+const moodBreakdownPanel = document.querySelector("#moodBreakdownPanel");
+const moodBreakdownList = document.querySelector("#moodBreakdownList");
 const trackCardTemplate = document.querySelector("#trackCardTemplate");
 const shareMosaicBtn = document.querySelector("#shareMosaic");
+const shareLinkBtn = document.querySelector("#shareLinkBtn");
 const sharePreview = document.querySelector("#sharePreview");
 const sharePreviewImage = document.querySelector("#sharePreviewImage");
 const langToggle = document.querySelector("#langToggle");
@@ -52,7 +51,7 @@ if (new URLSearchParams(window.location.search).get("showModel") === "1") {
   document.documentElement.classList.add("show-model-selector");
 }
 
-const MIX_COLORS = ["#c8ff5f", "#63d2ff", "#ff6f3c", "#b985ff", "#ffd23c", "#4be3a3"];
+const MIX_COLORS = ["#1f3fe0", "#ff3d7f", "#0a9d8b", "#e59200", "#7a4fd6", "#111318"];
 // Genres whose aggregate share falls below this are folded into a single
 // neutral "其他" slice so tiny long-tail genres don't clutter the charts.
 const OTHER_GENRE_THRESHOLD = 5;
@@ -63,6 +62,141 @@ const OTHER_GENRE_COLOR = "#6b6e64";
 // playlist spreads across many styles.
 const OTHER_STYLE_THRESHOLD = 2;
 const MAX_STYLES_PER_GENRE = 6;
+// Within the aggregated "其他" parent, every child style is already small in
+// absolute terms (it comes from a genre that was itself < OTHER_GENRE_THRESHOLD),
+// so the absolute OTHER_STYLE_THRESHOLD would reject everything. Instead apply a
+// relative-to-parent threshold: a child must claim at least this fraction of the
+// "其他" block to earn its own tile; the rest are folded into the lead tile via
+// rescaling. 10% of parent lines up with the absolute 2% threshold when the
+// "其他" block is ~20% of the playlist.
+const OTHER_STYLE_REL_THRESHOLD = 0.1;
+
+const MOOD_AXES = [
+  { key: "mood_happy", zh: "明快", en: "Bright", icon: "☀️" },
+  { key: "mood_party", zh: "跃动", en: "Dynamic", icon: "🎶" },
+  { key: "mood_aggressive", zh: "激烈", en: "Intense", icon: "⚡" },
+  { key: "mood_sad", zh: "沉郁", en: "Somber", icon: "🌧️" },
+  { key: "mood_relaxed", zh: "舒缓", en: "Calm", icon: "🌿" }
+];
+const MOOD_AXIS_KEYS = MOOD_AXES.map(a => a.key);
+
+const MOOD_THEME_DENYLIST = new Set([
+  "advertising", "commercial", "corporate",
+  "documentary", "film", "movie", "trailer",
+  "children", "christmas", "holiday",
+  "sport", "game",
+  "nature", "space", "travel", "summer",
+  "soundscape", "background", "ballad"
+]);
+const MOOD_THEME_MIN_SCORE = 0.05;
+const MOOD_THEME_RELATIVE_RATIO = 0.3;
+
+const MOOD_THEME_LABELS = {
+  action: { zh: "动感", en: "Action", icon: "💥" },
+  adventure: { zh: "奔放", en: "Adventurous", icon: "🗺️" },
+  advertising: { zh: "广告感", en: "Advertising", icon: "📢" },
+  background: { zh: "背景音乐", en: "Background", icon: "🎵" },
+  ballad: { zh: "抒情", en: "Ballad", icon: "🎶" },
+  calm: { zh: "平和", en: "Calm", icon: "😌" },
+  children: { zh: "儿童", en: "Children", icon: "🧸" },
+  christmas: { zh: "圣诞", en: "Christmas", icon: "🎄" },
+  commercial: { zh: "商业感", en: "Commercial", icon: "🏪" },
+  cool: { zh: "酷炫", en: "Cool", icon: "😎" },
+  corporate: { zh: "企业感", en: "Corporate", icon: "🏢" },
+  dark: { zh: "暗调", en: "Dark", icon: "🌑" },
+  deep: { zh: "深沉", en: "Deep", icon: "🌊" },
+  documentary: { zh: "纪录感", en: "Documentary", icon: "🎬" },
+  drama: { zh: "戏剧感", en: "Drama", icon: "🎭" },
+  dramatic: { zh: "戏剧张力", en: "Dramatic", icon: "🎭" },
+  dream: { zh: "梦幻", en: "Dreamy", icon: "💭" },
+  emotional: { zh: "深情", en: "Emotional", icon: "💫" },
+  energetic: { zh: "活力", en: "Energetic", icon: "⚡" },
+  epic: { zh: "史诗感", en: "Epic", icon: "🏛️" },
+  fast: { zh: "疾速", en: "Fast", icon: "💨" },
+  film: { zh: "电影感", en: "Film", icon: "🎞️" },
+  fun: { zh: "轻快", en: "Fun", icon: "🎉" },
+  funny: { zh: "俏皮", en: "Playful", icon: "😄" },
+  game: { zh: "游戏", en: "Game", icon: "🎮" },
+  groovy: { zh: "律动", en: "Groovy", icon: "🕺" },
+  happy: { zh: "愉悦", en: "Happy", icon: "😊" },
+  heavy: { zh: "厚重", en: "Heavy", icon: "🪨" },
+  holiday: { zh: "假日", en: "Holiday", icon: "🏖️" },
+  hopeful: { zh: "希冀", en: "Hopeful", icon: "🌅" },
+  inspiring: { zh: "启迪", en: "Inspiring", icon: "✨" },
+  love: { zh: "爱意", en: "Romantic", icon: "❤️" },
+  meditative: { zh: "禅意", en: "Meditative", icon: "🧘" },
+  melancholic: { zh: "惆怅", en: "Melancholic", icon: "🌧️" },
+  melodic: { zh: "旋律优美", en: "Melodic", icon: "🎶" },
+  motivational: { zh: "励志", en: "Motivational", icon: "💪" },
+  movie: { zh: "电影", en: "Movie", icon: "🎥" },
+  nature: { zh: "自然", en: "Nature", icon: "🌿" },
+  party: { zh: "派对感", en: "Party", icon: "🎊" },
+  positive: { zh: "积极", en: "Positive", icon: "☀️" },
+  powerful: { zh: "强劲", en: "Powerful", icon: "💪" },
+  relaxing: { zh: "松弛", en: "Relaxing", icon: "🍃" },
+  retro: { zh: "复古", en: "Retro", icon: "📻" },
+  romantic: { zh: "浪漫", en: "Romantic", icon: "💕" },
+  sad: { zh: "忧伤", en: "Sad", icon: "😢" },
+  sexy: { zh: "魅惑", en: "Sultry", icon: "💋" },
+  slow: { zh: "徐缓", en: "Slow", icon: "🐢" },
+  soft: { zh: "柔和", en: "Soft", icon: "☁️" },
+  soundscape: { zh: "音景", en: "Soundscape", icon: "🌌" },
+  space: { zh: "太空", en: "Space", icon: "🚀" },
+  sport: { zh: "运动", en: "Sport", icon: "🏃" },
+  summer: { zh: "夏日", en: "Summer", icon: "☀️" },
+  trailer: { zh: "预告片感", en: "Trailer", icon: "📺" },
+  travel: { zh: "旅行", en: "Travel", icon: "✈️" },
+  upbeat: { zh: "欢快", en: "Upbeat", icon: "🎶" },
+  uplifting: { zh: "昂扬", en: "Uplifting", icon: "🌈" }
+};
+
+const MOOD_THEME_AXIS_MAP = {
+  action: "mood_aggressive",
+  adventure: "mood_party",
+  calm: "mood_relaxed",
+  cool: "mood_party",
+  dark: "mood_sad",
+  deep: "mood_sad",
+  drama: "mood_sad",
+  dramatic: "mood_sad",
+  dream: "mood_relaxed",
+  emotional: "mood_sad",
+  energetic: "mood_party",
+  epic: "mood_aggressive",
+  fast: "mood_party",
+  fun: "mood_happy",
+  funny: "mood_happy",
+  groovy: "mood_party",
+  happy: "mood_happy",
+  heavy: "mood_aggressive",
+  hopeful: "mood_happy",
+  inspiring: "mood_happy",
+  love: "mood_happy",
+  meditative: "mood_relaxed",
+  melancholic: "mood_sad",
+  melodic: "mood_relaxed",
+  motivational: "mood_aggressive",
+  party: "mood_party",
+  positive: "mood_happy",
+  powerful: "mood_aggressive",
+  relaxing: "mood_relaxed",
+  retro: "mood_party",
+  romantic: "mood_happy",
+  sad: "mood_sad",
+  sexy: "mood_party",
+  slow: "mood_relaxed",
+  soft: "mood_relaxed",
+  upbeat: "mood_happy",
+  uplifting: "mood_happy"
+};
+
+const MOOD_AXIS_COLORS = {
+  mood_happy: "#cc8aa0",
+  mood_party: "#d4a574",
+  mood_aggressive: "#b86464",
+  mood_sad: "#7b97b6",
+  mood_relaxed: "#7ab0a0"
+};
 
 let activeModel = "";
 let running = false;
@@ -93,18 +227,22 @@ const I18N = {
     "pl.progress.ready": "准备就绪",
     "pl.overview": "歌单概览",
     "pl.overview.empty": "粘贴一个网易云歌单链接开始逐曲分析。",
-    "pl.view.aria": "曲风视图切换",
-    "pl.view.sunburst": "旭日图",
-    "pl.view.mosaic": "占比矩阵",
-    "pl.view.nebula": "曲风星云",
-    "pl.sunburst.caption": "曲风构成 · 内环流派 / 外环子风格",
-    "pl.mosaic.caption": "占比矩阵 · 面积即占比 / 同色同流派",
-    "pl.nebula.caption": "曲风星云 · 每簇一个子风格 / 同色同流派",
-    "pl.share.title": "生成占比矩阵图片并预览",
-    "pl.share.button": "分享",
+    "pl.view.aria": "视图切换",
+    "pl.view.genre": "曲风",
+    "pl.view.mood": "情绪",
+    "pl.mosaic.captionGenre": "曲风矩阵 · 面积即占比 / 同色同流派",
+    "pl.mosaic.captionMood": "情绪矩阵 · 面积即权重 / 同色同情绪维度",
+    "pl.share.titleImage": "生成占比矩阵图片并预览",
+    "pl.share.titleLink": "复制分享链接到剪贴板",
+    "pl.share.image": "分享为图片",
+    "pl.share.link": "分享链接",
     "pl.share.busy": "生成中…",
+    "pl.share.copied": "链接已复制",
+    "pl.share.copyFailed": "复制失败",
     "pl.share.error": "分享生成失败",
     "pl.tracks.title": "逐曲曲风占比",
+    "pl.breakdown.genre": "曲风构成",
+    "pl.breakdown.mood": "情绪构成",
     "pl.preview.title": "占比矩阵已生成",
     "pl.preview.close": "关闭占比矩阵预览",
     "pl.preview.alt": "Genre Lab 占比矩阵图片",
@@ -173,7 +311,13 @@ const I18N = {
     "dialog.noAlbum": "未知专辑",
     "dialog.noCover": "无封面",
     "dialog.noTracks": "当前分析结果里没有命中这类曲风的歌曲。",
-    "dialog.noEntry": "暂无稳定入门曲"
+    "dialog.noEntry": "暂无稳定入门曲",
+    "share.title": "歌单分享",
+    "share.nav.analyze": "去分析",
+    "share.loading": "加载中…",
+    "share.notFound": "该歌单分析任务不存在或已过期",
+    "share.failed": "歌单分析失败",
+    "share.incomplete": "歌单正在分析中，仅展示已完成部分"
   },
   en: {
     "lang.toggle": "中",
@@ -189,18 +333,22 @@ const I18N = {
     "pl.progress.ready": "Ready",
     "pl.overview": "Playlist overview",
     "pl.overview.empty": "Paste a NetEase playlist link to start track-by-track analysis.",
-    "pl.view.aria": "Genre view toggle",
-    "pl.view.sunburst": "Sunburst",
-    "pl.view.mosaic": "Mosaic",
-    "pl.view.nebula": "Nebula",
-    "pl.sunburst.caption": "Genre mix · inner ring genre / outer ring style",
-    "pl.mosaic.caption": "Share mosaic · area = share / same color = same genre",
-    "pl.nebula.caption": "Genre nebula · one cluster per style / same color = same genre",
-    "pl.share.title": "Generate a mosaic image and preview it",
-    "pl.share.button": "Share",
+    "pl.view.aria": "View toggle",
+    "pl.view.genre": "Genre",
+    "pl.view.mood": "Mood",
+    "pl.mosaic.captionGenre": "Genre mosaic · area = share / same color = same genre",
+    "pl.mosaic.captionMood": "Mood mosaic · area = weight / same color = same mood axis",
+    "pl.share.titleImage": "Generate a mosaic image and preview it",
+    "pl.share.titleLink": "Copy share link to clipboard",
+    "pl.share.image": "Share as image",
+    "pl.share.link": "Copy link",
     "pl.share.busy": "Generating…",
+    "pl.share.copied": "Link copied",
+    "pl.share.copyFailed": "Copy failed",
     "pl.share.error": "Failed to generate image",
     "pl.tracks.title": "Per-track genre share",
+    "pl.breakdown.genre": "Genre breakdown",
+    "pl.breakdown.mood": "Mood breakdown",
     "pl.preview.title": "Mosaic ready",
     "pl.preview.close": "Close mosaic preview",
     "pl.preview.alt": "Genre Lab mosaic image",
@@ -269,7 +417,13 @@ const I18N = {
     "dialog.noAlbum": "Unknown album",
     "dialog.noCover": "No cover",
     "dialog.noTracks": "No analyzed tracks matched this style.",
-    "dialog.noEntry": "No stable entry track"
+    "dialog.noEntry": "No stable entry track",
+    "share.title": "Shared playlist",
+    "share.nav.analyze": "Analyze",
+    "share.loading": "Loading…",
+    "share.notFound": "This analysis job does not exist or has expired",
+    "share.failed": "Playlist analysis failed",
+    "share.incomplete": "Analysis is still in progress — showing completed tracks only"
   }
 };
 
@@ -300,18 +454,19 @@ async function postJson(url, body) {
 }
 
 function setStatus(text, busy = false) {
-  statusPill.textContent = text;
-  analyzeBtn.disabled = busy;
+  if (statusPill) statusPill.textContent = text;
+  if (analyzeBtn) analyzeBtn.disabled = busy;
 }
 
 function setProgress(label, percent, detail) {
-  progressLabel.textContent = label;
-  progressPercent.textContent = `${Math.round(percent)}%`;
-  progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  if (progressLabel) progressLabel.textContent = label;
+  if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+  if (progressFill) progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
   if (detail) logLine(detail);
 }
 
 function logLine(text) {
+  if (!progressLog) return;
   const li = document.createElement("li");
   li.textContent = text;
   progressLog.appendChild(li);
@@ -319,7 +474,7 @@ function logLine(text) {
 }
 
 function resetProgress() {
-  progressLog.innerHTML = "";
+  if (progressLog) progressLog.innerHTML = "";
   setProgress(t("pl.progress.ready"), 0);
 }
 
@@ -374,9 +529,11 @@ async function loadModelTaxonomy(model) {
   });
 }
 
-modelSelect.addEventListener("change", () => {
-  activeModel = modelSelect.value;
-});
+if (modelSelect) {
+  modelSelect.addEventListener("change", () => {
+    activeModel = modelSelect.value;
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Per-track rendering
@@ -470,6 +627,7 @@ function profileFor(genreName, styleName) {
 
 let lastStyleInfoTrigger = null;
 let currentStyleDialogData = null;
+let currentDialogIsMood = false;
 let styleAssociations = new Map();
 
 function styleAssociationKey(genreName, styleName) {
@@ -610,15 +768,20 @@ function renderStyleProfile(profile) {
   styleDialogTrackNote.textContent = entry.note || "";
 }
 
-function openStyleDialog(styleData, trigger) {
+function openStyleDialog(styleData, trigger, isMood = false) {
   if (!styleData || !styleDialog) return;
   currentStyleDialogData = styleData;
+  currentDialogIsMood = isMood;
   lastStyleInfoTrigger = trigger || null;
-  const profile = styleData.profile || null;
+  const profile = isMood ? null : (styleData.profile || null);
   const genreName = styleData.genre || (profile && profile.genre) || "";
-  styleDialogKicker.textContent = genreName
-    ? t("dialog.kickerGenre", { genre: localizeToken(genreName, "genre") })
-    : t("dialog.kicker");
+  if (isMood) {
+    styleDialogKicker.textContent = styleData.genreLabel || "";
+  } else {
+    styleDialogKicker.textContent = genreName
+      ? t("dialog.kickerGenre", { genre: localizeToken(genreName, "genre") })
+      : t("dialog.kicker");
+  }
   styleDialogTitle.textContent = styleData.label || localizeToken(styleData.style || (profile && profile.style) || "", "style");
   if (styleDialogTrackCount) {
     styleDialogTrackCount.textContent = t("dialog.trackCount", {
@@ -640,6 +803,7 @@ function closeStyleDialog() {
   styleDialog.setAttribute("aria-hidden", "true");
   styleDialog.querySelector(".style-dialog__panel")?.classList.remove("is-info-open");
   currentStyleDialogData = null;
+  currentDialogIsMood = false;
   if (lastStyleInfoTrigger && typeof lastStyleInfoTrigger.focus === "function") lastStyleInfoTrigger.focus();
   lastStyleInfoTrigger = null;
 }
@@ -747,23 +911,26 @@ function buildTwoLevel(compositions, tracks = []) {
 }
 
 // Within one parent genre, keep at most MAX_STYLES_PER_GENRE styles that also
-// clear OTHER_STYLE_THRESHOLD and DROP the long-tail rest entirely — folding
-// them into an "其他" tile would be misleading, since the sum of many tiny
-// styles often outweighs every real style and dominates the chart. The kept
-// styles are then rescaled so their shares again sum to the parent genre's
-// total, keeping the parent area honest while the mosaic tiles / sunburst arc
-// fill it exactly. Always keeps at least the top style.
+// clear OTHER_STYLE_THRESHOLD and drop the long-tail rest entirely — they get
+// absorbed proportionally into the kept tiles via rescaling so the parent area
+// is still filled honestly in the mosaic. Always keeps at least the top style.
 //
-// The "其他" genre is itself an aggregate of long-tail genres, so each of its
-// styles is tiny in absolute terms and would all fail OTHER_STYLE_THRESHOLD,
-// leaving it with a single tile even when "其他" is large. For it we skip the
-// absolute threshold and just keep the top MAX_STYLES_PER_GENRE styles.
+// The "其他" parent is itself an aggregate of long-tail genres, so each of its
+// children is already tiny in absolute terms and would all fail the 2% absolute
+// threshold, leaving a single tile even when "其他" is large. For it we apply
+// a relative-to-parent threshold (>= OTHER_STYLE_REL_THRESHOLD of the "其他"
+// block's total share) while still capping at MAX_STYLES_PER_GENRE.
 function foldGenreStyles(styles, isOther = false) {
   const sorted = [...styles].sort((a, b) => b.percent - a.percent);
   const originalTotal = sorted.reduce((sum, style) => sum + style.percent, 0);
-  let kept = isOther
-    ? sorted.slice(0, MAX_STYLES_PER_GENRE)
-    : sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  let kept;
+  if (isOther) {
+    const minShare = originalTotal * OTHER_STYLE_REL_THRESHOLD;
+    kept = sorted
+      .filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= minShare);
+  } else {
+    kept = sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  }
   if (!kept.length) kept = sorted.slice(0, 1);
   const keptTotal = kept.reduce((sum, style) => sum + style.percent, 0) || 1;
   const scale = originalTotal / keptTotal;
@@ -771,194 +938,220 @@ function foldGenreStyles(styles, isOther = false) {
 }
 
 let twoLevelShown = false;
-// Meta shown on the share card (playlist name + track stats), set as tracks are
-// analyzed so the card matches the on-screen overview.
 let shareMeta = { title: "", subtitle: "" };
-// Latest compositions kept so the charts can be re-rendered on language switch.
 let lastCompositions = null;
-// Snapshot of the finished-analysis summary so the overview/status/count text
-// can be re-localized when the language is switched after analysis.
+let lastDimensions = [];
 let lastSummary = null;
+let lastGenreTwoLevel = null;
+let lastMoodTwoLevel = null;
+let currentMosaicView = "mosaic-genre";
+let mosaicData = [];
 
-function renderAggregate(compositions) {
-  lastCompositions = compositions;
-  const genres = buildTwoLevel(compositions, jobState && jobState.tracks ? jobState.tracks : []);
-  registerStyleAssociations(genres);
-  renderSunburst(genres);
-  renderMosaic(genres);
-  renderNebula(genres);
-  genreTwoLevel.hidden = genres.length === 0;
-  if (shareMosaicBtn) shareMosaicBtn.disabled = genres.length === 0;
-  // Default to the mosaic view the first time the charts appear, without
-  // overriding a view the user may have switched to during analysis.
-  if (genres.length && !twoLevelShown) {
-    twoLevelShown = true;
-    switchView("mosaic");
-  }
+function moodAxisLabel(key) {
+  const ax = MOOD_AXES.find(a => a.key === key);
+  if (!ax) return key;
+  return LANG === "en" ? ax.en : ax.zh;
 }
 
-// Show one view at a time. The toggle acts as a tablist and the inactive
-// figures are hidden so only the selected chart is visible.
+function moodThemeLabel(tag) {
+  const lb = MOOD_THEME_LABELS[tag];
+  if (!lb) return tag;
+  return LANG === "en" ? lb.en : lb.zh;
+}
+
+function buildMoodTwoLevel(dimensionsList, tracks = []) {
+  const axisMap = new Map();
+  let counted = 0;
+  for (const [trackIndex, dims] of dimensionsList.entries()) {
+    if (!dims) continue;
+    counted += 1;
+    const radar = dims.mood_radar && dims.mood_radar.axes;
+    const theme = dims.mtg_jamendo_moodtheme && dims.mtg_jamendo_moodtheme.predictions;
+    const track = tracks[trackIndex];
+    const axisScores = {};
+    if (radar) {
+      for (const ax of radar) {
+        const s = Math.max(0, Math.min(1, Number(ax.score) || 0));
+        axisScores[ax.key] = s;
+        const entry = axisMap.get(ax.key) || { key: ax.key, total: 0, tags: new Map() };
+        entry.total += s;
+        axisMap.set(ax.key, entry);
+      }
+    }
+    if (theme) {
+      const candidates = theme
+        .filter(p => !MOOD_THEME_DENYLIST.has(p.label))
+        .map(p => ({ label: p.label, _score: Math.max(0, Math.min(1, Number(p.score) || 0)) }));
+      const globalMax = candidates.reduce((m, p) => Math.max(m, p._score), 0);
+      const relThreshold = Math.max(MOOD_THEME_MIN_SCORE, globalMax * MOOD_THEME_RELATIVE_RATIO);
+      const items = candidates.filter(p => p._score >= relThreshold);
+      for (const item of items) {
+        const axisKey = MOOD_THEME_AXIS_MAP[item.label];
+        if (!axisKey || axisScores[axisKey] == null) continue;
+        const weight = item._score * (axisScores[axisKey] > 0.3 ? 1 : 0.5);
+        const entry = axisMap.get(axisKey);
+        if (!entry) continue;
+        const tagEntry = entry.tags.get(item.label) || { sum: 0, tracks: [] };
+        tagEntry.sum += weight;
+        if (track) tagEntry.tracks.push({ track, percent: item._score * 100 });
+        entry.tags.set(item.label, tagEntry);
+      }
+    }
+  }
+  if (!counted) return [];
+  const grand = [...axisMap.values()].reduce((sum, a) => sum + a.total, 0) || 1;
+  const axes = [...axisMap.entries()]
+    .map(([key, data]) => {
+      const ax = MOOD_AXES.find(a => a.key === key);
+      const axisIcon = ax ? ax.icon : "🎵";
+      const axisLabelText = ax ? (LANG === "en" ? ax.en : ax.zh) : key;
+      const label = `${axisIcon} ${axisLabelText}`;
+      const axisPercent = data.total / grand * 100;
+      let tags = [...data.tags.entries()]
+        .map(([tag, td]) => {
+          const lb = MOOD_THEME_LABELS[tag];
+          const ic = lb ? lb.icon : "🎵";
+          return {
+            name: tag,
+            genre: key,
+            label: `${ic} ${moodThemeLabel(tag)}`,
+            percent: td.sum / grand * 100,
+            tracks: [...td.tracks].sort((a, b) => b.percent - a.percent)
+          };
+        })
+        .sort((a, b) => b.percent - a.percent);
+      tags = foldMoodStyles(tags, axisPercent);
+      if (!tags.length || tags[0].name === "__axis__") {
+        tags = [{
+          name: key,
+          genre: key,
+          label,
+          percent: axisPercent,
+          tracks: tags.length && tags[0].name === "__axis__" ? tags[0].tracks : []
+        }];
+      }
+      return {
+        name: key,
+        label,
+        percent: axisPercent,
+        color: MOOD_AXIS_COLORS[key] || "#6b6e64",
+        styles: tags
+      };
+    })
+    .filter(a => a.percent >= 3)
+    .sort((a, b) => b.percent - a.percent);
+  return axes;
+}
+
+function foldMoodStyles(tags, axisPercent) {
+  const MAX_TAGS = 5;
+  const MIN_TAG_PCT_REL = 0.02;
+  const sorted = [...tags].sort((a, b) => b.percent - a.percent);
+  const rawTotal = sorted.reduce((sum, t) => sum + t.percent, 0);
+  let kept;
+  if (rawTotal > 0) {
+    const minAbs = axisPercent * MIN_TAG_PCT_REL;
+    kept = sorted.filter((t, i) => i < MAX_TAGS && t.percent >= minAbs);
+    if (!kept.length) kept = sorted.slice(0, 1);
+  } else {
+    kept = [];
+  }
+  if (!kept.length) return [];
+  const keptTotal = kept.reduce((sum, t) => sum + t.percent, 0) || 1;
+  const scale = axisPercent / keptTotal;
+  return kept.map(t => ({ ...t, percent: t.percent * scale }));
+}
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderBreakdownPanel(listEl, twoLevel) {
+  if (!twoLevel || !twoLevel.length) {
+    listEl.innerHTML = "";
+    return false;
+  }
+  const maxParent = Math.max(...twoLevel.map(g => g.percent), 1);
+  const html = twoLevel.map(parent => {
+    const pct = Math.round(parent.percent);
+    const color = parent.color || "#6b6e64";
+    const barW = Math.max(2, (parent.percent / maxParent) * 100);
+    const children = (parent.styles || [])
+      .filter(s => !(s.name && s.name.startsWith("__")) && s.name !== parent.name);
+    const chips = children.length
+      ? `<div class="breakdown-chips">${children.map(c => `<span class="breakdown-chip" style="--c:${color}">${escapeHtml(c.label)} <em>${Math.round(c.percent)}%</em></span>`).join("")}</div>`
+      : "";
+    return `<div class="breakdown-item">
+      <div class="breakdown-item-head">
+        <span class="breakdown-dot" style="background:${color}"></span>
+        <span class="breakdown-item-name">${escapeHtml(parent.label)}</span>
+        <span class="breakdown-item-pct">${pct}%</span>
+      </div>
+      <div class="breakdown-item-bar"><span style="width:${barW}%;background:${color}"></span></div>
+      ${chips}
+    </div>`;
+  }).join("");
+  listEl.innerHTML = html;
+  return true;
+}
+
+function renderBreakdowns() {
+  const hasGenre = renderBreakdownPanel(genreBreakdownList, lastGenreTwoLevel);
+  const hasMood = renderBreakdownPanel(moodBreakdownList, lastMoodTwoLevel);
+  breakdownRow.hidden = !(hasGenre || hasMood);
+}
+
+function renderAggregate(compositions, dimensionsList) {
+  lastCompositions = compositions;
+  lastDimensions = dimensionsList || [];
+  const tracks = jobState && jobState.tracks ? jobState.tracks : [];
+  lastGenreTwoLevel = buildTwoLevel(compositions, tracks);
+  lastMoodTwoLevel = buildMoodTwoLevel(lastDimensions, tracks);
+  registerStyleAssociations(lastGenreTwoLevel);
+  const hasAny = lastGenreTwoLevel.length > 0 || lastMoodTwoLevel.length > 0;
+  genreTwoLevel.hidden = !hasAny;
+  if (shareMosaicBtn) shareMosaicBtn.disabled = !hasAny;
+  if (shareLinkBtn) shareLinkBtn.disabled = !hasAny;
+  if (hasAny && !twoLevelShown) {
+    twoLevelShown = true;
+    switchView("mosaic-genre");
+  } else if (hasAny) {
+    showMosaic(currentMosaicView);
+  }
+  renderBreakdowns();
+}
+
+function showMosaic(view) {
+  const isMood = view === "mosaic-mood";
+  const data = isMood ? lastMoodTwoLevel : lastGenreTwoLevel;
+  mosaicData = data || [];
+  mosaicCaption.textContent = isMood ? t("pl.mosaic.captionMood") : t("pl.mosaic.captionGenre");
+  genreMosaic.hidden = false;
+  renderMosaicTiles(mosaicData);
+  requestAnimationFrame(() => layoutMosaicTree());
+}
+
 function switchView(view) {
-  genreSunburst.hidden = view !== "sunburst";
-  genreMosaic.hidden = view !== "mosaic";
-  genreNebula.hidden = view !== "nebula";
+  currentMosaicView = view;
   for (const btn of viewToggle.querySelectorAll(".view-toggle-btn")) {
     const active = btn.dataset.view === view;
     btn.classList.toggle("is-active", active);
     btn.setAttribute("aria-selected", active ? "true" : "false");
   }
-  // The mosaic figure has zero size while hidden, so lay it out only once it
-  // becomes visible (and thus measurable).
-  if (view === "mosaic") layoutMosaicTree();
-  // The nebula canvas likewise can't be sized while hidden; only run its
-  // animation loop while it's the visible view to avoid wasting frames.
-  if (view === "nebula") startNebula();
-  else stopNebula();
+  showMosaic(view);
 }
 
-viewToggle.addEventListener("click", event => {
-  const btn = event.target.closest(".view-toggle-btn");
-  if (btn) switchView(btn.dataset.view);
-});
-
-// Sunburst: inner ring = parent genre share, outer ring = child style share.
-// Child slices share the parent hue, differentiated by opacity.
-function renderSunburst(genres) {
-  const NS = "http://www.w3.org/2000/svg";
-  sunburstSvg.innerHTML = "";
-  sunburstCenter.innerHTML = "";
-  sunburstLegend.innerHTML = "";
-  if (!genres.length) return;
-
-  const cx = 112;
-  const cy = 112;
-  const rGenreIn = 42;
-  const rGenreOut = 78;
-  const rStyleIn = 81;
-  const rStyleOut = 106;
-  const GAP = 0.014;
-
-  const point = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  const sector = (rInner, rOuter, a0, a1) => {
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    const o0 = point(rOuter, a0);
-    const o1 = point(rOuter, a1);
-    const i1 = point(rInner, a1);
-    const i0 = point(rInner, a0);
-    return `M${o0[0].toFixed(2)} ${o0[1].toFixed(2)} A${rOuter} ${rOuter} 0 ${large} 1 ${o1[0].toFixed(2)} ${o1[1].toFixed(2)} L${i1[0].toFixed(2)} ${i1[1].toFixed(2)} A${rInner} ${rInner} 0 ${large} 0 ${i0[0].toFixed(2)} ${i0[1].toFixed(2)} Z`;
-  };
-
-  let angle = -Math.PI / 2;
-  for (const genre of genres) {
-    const sweep = genre.percent / 100 * Math.PI * 2;
-    const a0 = angle;
-    const a1 = angle + sweep;
-
-    const gPath = document.createElementNS(NS, "path");
-    gPath.setAttribute("d", sector(rGenreIn, rGenreOut, a0, Math.max(a0, a1 - GAP)));
-    gPath.setAttribute("fill", genre.color);
-    gPath.setAttribute("class", "sun-genre");
-    gPath.dataset.title = genre.label;
-    gPath.dataset.desc = t("pl.sunburst.genre", { percent: Math.round(genre.percent) });
-    const gTitle = document.createElementNS(NS, "title");
-    gTitle.textContent = `${genre.label} ${Math.round(genre.percent)}%`;
-    gPath.appendChild(gTitle);
-    sunburstSvg.appendChild(gPath);
-
-    let sa = a0;
-    for (const [si, style] of genre.styles.entries()) {
-      const ssw = genre.percent > 0 ? style.percent / genre.percent * sweep : 0;
-      const sPath = document.createElementNS(NS, "path");
-      sPath.setAttribute("d", sector(rStyleIn, rStyleOut, sa, Math.max(sa, sa + ssw - GAP)));
-      sPath.setAttribute("fill", genre.color);
-      sPath.setAttribute("fill-opacity", si === 0 ? "0.9" : String(Math.max(0.4, 0.9 - si * 0.22)));
-      sPath.setAttribute("class", "sun-style");
-      sPath.dataset.title = style.label;
-      sPath.dataset.desc = `${genre.label} · ${Math.round(style.percent)}%`;
-      sPath.dataset.genre = style.genre || genre.name;
-      sPath.dataset.style = style.name;
-      const sTitle = document.createElementNS(NS, "title");
-      sTitle.textContent = `${genre.label} / ${style.label} ${Math.round(style.percent)}%`;
-      sPath.appendChild(sTitle);
-      sunburstSvg.appendChild(sPath);
-
-      if (style.percent >= 11) {
-        const mid = sa + ssw / 2;
-        const lp = point((rStyleIn + rStyleOut) / 2, mid);
-        const text = document.createElementNS(NS, "text");
-        text.setAttribute("x", lp[0].toFixed(1));
-        text.setAttribute("y", (lp[1] + 3).toFixed(1));
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("class", "sun-label");
-        text.textContent = `${Math.round(style.percent)}%`;
-        sunburstSvg.appendChild(text);
-      }
-      sa += ssw;
-    }
-    angle = a1;
-  }
-
-  // Default center: dominant genre. Hovering a sector swaps in its own label so
-  // every ring segment can reveal the music style/genre it represents.
-  const top = genres[0];
-  sunburstDefault.title = top.label;
-  sunburstDefault.desc = t("pl.sunburst.dominant", { percent: Math.round(top.percent) });
-  setSunburstCenter(sunburstDefault.title, sunburstDefault.desc);
-
-  // Vertical genre legend beside the ring: one row per parent genre, stacked
-  // top-to-bottom so the color mapping reads cleanly on narrow layouts.
-  for (const genre of genres) {
-    const item = document.createElement("span");
-    item.className = "sunburst-legend-item";
-    const dot = document.createElement("i");
-    dot.className = "mosaic-dot";
-    dot.style.background = genre.color;
-    item.appendChild(dot);
-    const name = document.createElement("span");
-    name.className = "sunburst-legend-name";
-    name.textContent = genre.label;
-    item.appendChild(name);
-    const pct = document.createElement("b");
-    pct.textContent = `${Math.round(genre.percent)}%`;
-    item.appendChild(pct);
-    sunburstLegend.appendChild(item);
-  }
+if (viewToggle) {
+  viewToggle.addEventListener("click", event => {
+    const btn = event.target.closest(".view-toggle-btn");
+    if (btn) switchView(btn.dataset.view);
+  });
 }
-
-// Center label state, shared between render and the once-bound hover handlers.
-const sunburstDefault = { title: "", desc: "" };
-function setSunburstCenter(title, desc) {
-  sunburstCenter.innerHTML = "";
-  const name = document.createElement("strong");
-  name.textContent = title;
-  const meta = document.createElement("span");
-  meta.textContent = desc;
-  sunburstCenter.appendChild(name);
-  sunburstCenter.appendChild(meta);
-}
-sunburstSvg.addEventListener("mouseover", event => {
-  const seg = event.target.closest(".sun-genre, .sun-style");
-  if (!seg) return;
-  sunburstSvg.classList.add("is-hovering");
-  seg.classList.add("is-active");
-  setSunburstCenter(seg.dataset.title, seg.dataset.desc);
-});
-sunburstSvg.addEventListener("mouseout", event => {
-  const seg = event.target.closest(".sun-genre, .sun-style");
-  if (seg) seg.classList.remove("is-active");
-  if (!sunburstSvg.querySelector(".is-active")) {
-    sunburstSvg.classList.remove("is-hovering");
-    setSunburstCenter(sunburstDefault.title, sunburstDefault.desc);
-  }
-});
-// Click a style slice to open its linked tracks; the info button reveals the
-// genre/style intro inside the dialog.
-sunburstSvg.addEventListener("click", event => {
-  const seg = event.target.closest(".sun-style");
-  if (!seg) return;
-  openStyleDialog(getStyleAssociation(seg.dataset.genre, seg.dataset.style), seg);
-});
 
 // Mosaic (treemap): every tile's AREA is proportional to its share, so a 4%
 // style is genuinely small in both dimensions. Genres are nested regions (not
@@ -1029,25 +1222,23 @@ function squarifyTreemap(items, x, y, w, h) {
   return out;
 }
 
-let mosaicGenres = [];
-
-function renderMosaic(genres) {
-  mosaicGenres = genres;
+function renderMosaicTiles(data) {
+  mosaicData = data || [];
   mosaicStage.innerHTML = "";
-  if (!genres.length) return;
+  if (!mosaicData.length) return;
 
   const legend = document.createElement("div");
   legend.className = "mosaic-legend";
-  for (const genre of genres) {
+  for (const g of mosaicData) {
     const item = document.createElement("span");
     item.className = "mosaic-legend-item";
     const dot = document.createElement("i");
     dot.className = "mosaic-dot";
-    dot.style.background = genre.color;
+    dot.style.background = g.color;
     item.appendChild(dot);
-    item.append(document.createTextNode(genre.label));
+    item.append(document.createTextNode(g.label));
     const pct = document.createElement("b");
-    pct.textContent = `${Math.round(genre.percent)}%`;
+    pct.textContent = `${Math.round(g.percent)}%`;
     item.appendChild(pct);
     legend.appendChild(item);
   }
@@ -1056,8 +1247,6 @@ function renderMosaic(genres) {
   const tree = document.createElement("div");
   tree.className = "mosaic-tree";
   mosaicStage.appendChild(tree);
-
-  layoutMosaicTree();
 }
 
 // Scale a tile's label font size to its area so a genre/style that takes up a
@@ -1073,7 +1262,7 @@ function mosaicFontSizes(bw, bh) {
 // time (the sunburst is the default view).
 function layoutMosaicTree() {
   const tree = mosaicStage.querySelector(".mosaic-tree");
-  if (!tree || !mosaicGenres.length) return;
+  if (!tree || !mosaicData.length) return;
   const W = tree.clientWidth;
   const H = tree.clientHeight;
   if (!W || !H) return;
@@ -1081,7 +1270,7 @@ function layoutMosaicTree() {
   tree.innerHTML = "";
   const GAP = 3;
   const genreRects = squarifyTreemap(
-    mosaicGenres.map(g => ({ value: g.percent, genre: g })),
+    mosaicData.map(g => ({ value: g.percent, genre: g })),
     0, 0, W, H
   );
   for (const gr of genreRects) {
@@ -1102,7 +1291,8 @@ function layoutMosaicTree() {
       block.style.width = `${bw}px`;
       block.style.height = `${bh}px`;
       block.style.background = genre.color;
-      block.style.opacity = rank === 0 ? "1" : String(Math.max(0.45, 1 - rank * 0.22));
+      const minOpacity = currentMosaicView === "mosaic-mood" ? 0.65 : 0.45;
+      block.style.opacity = rank === 0 ? "1" : String(Math.max(minOpacity, 1 - rank * (currentMosaicView === "mosaic-mood" ? 0.12 : 0.22)));
       block.title = `${genre.label} / ${style.label} ${Math.round(style.percent)}%`;
       block.dataset.genre = style.genre || genre.name;
       block.dataset.style = style.name;
@@ -1161,234 +1351,37 @@ window.addEventListener("resize", () => {
   });
 });
 
-// Click a mosaic tile to open its linked tracks; the info button reveals the
-// genre/style intro inside the dialog.
 mosaicStage.addEventListener("click", event => {
   const block = event.target.closest(".mosaic-block");
   if (!block) return;
-  openStyleDialog(getStyleAssociation(block.dataset.genre, block.dataset.style), block);
+  const genreKey = block.dataset.genre;
+  const styleKey = block.dataset.style;
+  if (currentMosaicView === "mosaic-mood") {
+    openMoodDialog(genreKey, styleKey, block);
+  } else {
+    openStyleDialog(getStyleAssociation(genreKey, styleKey), block);
+  }
 });
 
-// ---------------------------------------------------------------------------
-// Nebula view: a canvas "galaxy" of the same two-level data. Each style is a
-// small drifting cluster of particles (≈ one particle per track-share point),
-// clusters are placed inside their parent genre's treemap region and share the
-// genre color, so same-genre styles read as one constellation. Its area still
-// tracks share (cluster radius ∝ √percent), and clicking a cluster opens the
-// same style intro dialog as the other views.
-// ---------------------------------------------------------------------------
-let nebulaGenres = [];
-let nebulaClusters = [];
-let nebulaRaf = null;
-let nebulaTick = 0;
-let nebulaW = 0;
-let nebulaH = 0;
-const nebulaReduceMotion =
-  window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-function nebulaRand(a, b) {
-  return a + Math.random() * (b - a);
-}
-
-// Turn a #rrggbb hex plus alpha into an rgba() string for the canvas.
-function nebulaRgba(hex, alpha) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
-}
-
-function renderNebula(genres) {
-  nebulaGenres = genres;
-  // Legend mirrors the mosaic's: one round key per parent genre.
-  nebulaLegend.innerHTML = "";
-  for (const genre of genres) {
-    const item = document.createElement("span");
-    item.className = "nebula-legend-item";
-    const key = document.createElement("i");
-    key.className = "nebula-key";
-    key.style.background = genre.color;
-    key.style.color = genre.color;
-    item.appendChild(key);
-    item.append(document.createTextNode(`${genre.label} `));
-    const pct = document.createElement("b");
-    pct.textContent = `${Math.round(genre.percent)}%`;
-    item.appendChild(pct);
-    nebulaLegend.appendChild(item);
-  }
-  // Defer particle layout until the canvas is visible (and measurable).
-  if (!genreNebula.hidden) buildNebula();
-}
-
-// Build one particle cluster per style, positioned inside its parent genre's
-// treemap region so same-genre clusters sit together. Deferred until the canvas
-// has a measurable size (the nebula may be hidden behind another view).
-function buildNebula() {
-  const rect = nebulaStage.getBoundingClientRect();
-  nebulaW = rect.width;
-  nebulaH = rect.height;
-  if (!nebulaW || !nebulaH || !nebulaGenres.length) {
-    nebulaClusters = [];
-    return;
-  }
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  nebulaCanvas.width = Math.round(nebulaW * dpr);
-  nebulaCanvas.height = Math.round(nebulaH * dpr);
-  const ctx = nebulaCanvas.getContext("2d");
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  nebulaClusters = [];
-  const genreRects = squarifyTreemap(
-    nebulaGenres.map(g => ({ value: g.percent, genre: g })),
-    0, 0, nebulaW, nebulaH
-  );
-  for (const gr of genreRects) {
-    const genre = gr.ref.genre;
-    const styleRects = squarifyTreemap(
-      genre.styles.map(s => ({ value: s.percent, style: s })),
-      gr.x, gr.y, gr.w, gr.h
-    );
-    for (const sr of styleRects) {
-      const style = sr.ref.style;
-      // Radius fills most of the style's region but stays circular, so clusters
-      // read as blobs rather than tiling the rectangle.
-      const R = Math.max(10, Math.min(sr.w, sr.h) * 0.46);
-      const cx = sr.x + sr.w / 2;
-      const cy = sr.y + sr.h / 2;
-      const count = Math.max(5, Math.round(style.percent * 3));
-      const parts = [];
-      for (let i = 0; i < count; i++) {
-        const baseRad = R * Math.sqrt(Math.random());
-        parts.push({
-          ang: nebulaRand(0, Math.PI * 2),
-          baseRad,
-          spin: nebulaRand(-0.006, 0.006) * (1 - (baseRad / R) * 0.4),
-          osc: nebulaRand(0, Math.PI * 2),
-          oscSpd: nebulaRand(0.004, 0.012),
-          oscAmp: nebulaRand(1.5, 6),
-          size: nebulaRand(0.9, 2.4),
-          twk: nebulaRand(0, Math.PI * 2)
-        });
-      }
-      nebulaClusters.push({
-        genre,
-        style,
-        cx,
-        cy,
-        R,
-        parts,
-        drift: nebulaRand(0, Math.PI * 2)
-      });
+function findMoodStyle(genreKey, styleKey) {
+  for (const axis of lastMoodTwoLevel || []) {
+    if (axis.name !== genreKey) continue;
+    for (const tag of axis.styles || []) {
+      if (tag.name === styleKey) return { axis, tag };
     }
+    if (!styleKey) return { axis, tag: null };
   }
+  return { axis: null, tag: null };
 }
 
-function drawNebula() {
-  const ctx = nebulaCanvas.getContext("2d");
-  nebulaTick += 1;
-  ctx.clearRect(0, 0, nebulaW, nebulaH);
-
-  // Particles + halos are drawn additively so overlaps glow like a real nebula.
-  ctx.globalCompositeOperation = "lighter";
-  for (const cl of nebulaClusters) {
-    const dx = Math.sin(nebulaTick * 0.004 + cl.drift) * cl.R * 0.05;
-    const dy = Math.cos(nebulaTick * 0.005 + cl.drift) * cl.R * 0.05;
-    const cx = cl.cx + dx;
-    const cy = cl.cy + dy;
-    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, cl.R * 1.15);
-    halo.addColorStop(0, nebulaRgba(cl.genre.color, 0.16));
-    halo.addColorStop(1, nebulaRgba(cl.genre.color, 0));
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(cx, cy, cl.R * 1.15, 0, Math.PI * 2);
-    ctx.fill();
-    cl.drawCx = cx;
-    cl.drawCy = cy;
-    for (const p of cl.parts) {
-      if (!nebulaReduceMotion) {
-        p.ang += p.spin;
-        p.osc += p.oscSpd;
-        p.twk += 0.05;
-      }
-      const rad = p.baseRad + Math.sin(p.osc) * p.oscAmp;
-      const x = cx + Math.cos(p.ang) * rad;
-      const y = cy + Math.sin(p.ang) * rad;
-      const tw = 0.55 + 0.45 * Math.sin(p.twk);
-      ctx.fillStyle = nebulaRgba(cl.genre.color, 0.5 + 0.4 * tw);
-      ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Labels sit on top, opaque, so style names stay readable over the glow.
-  ctx.globalCompositeOperation = "source-over";
-  ctx.textAlign = "center";
-  for (const cl of nebulaClusters) {
-    if (cl.R < 20) continue;
-    const nameSize = Math.max(11, Math.min(18, cl.R * 0.32));
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.font = `800 ${nameSize}px "Avenir Next", Helvetica, Arial, sans-serif`;
-    ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(cl.style.label, cl.drawCx, cl.drawCy - 2);
-    ctx.fillStyle = cl.genre.color;
-    ctx.font = `800 ${Math.max(10, nameSize * 0.82)}px "Avenir Next", Helvetica, Arial, sans-serif`;
-    ctx.fillText(`${Math.round(cl.style.percent)}%`, cl.drawCx, cl.drawCy + nameSize);
-    ctx.shadowBlur = 0;
-  }
-
-  if (nebulaRaf !== null && !nebulaReduceMotion) {
-    nebulaRaf = requestAnimationFrame(drawNebula);
-  }
+function openMoodDialog(genreKey, styleKey, trigger) {
+  const { axis, tag } = findMoodStyle(genreKey, styleKey);
+  if (!axis) return;
+  const data = tag
+    ? { genre: axis.name, genreLabel: axis.label, style: tag.name, label: tag.label, percent: tag.percent, tracks: tag.tracks || [], profile: null }
+    : { genre: axis.name, genreLabel: axis.label, style: axis.name, label: axis.label, percent: axis.percent, tracks: [], profile: null };
+  openStyleDialog(data, trigger, true);
 }
-
-function startNebula() {
-  buildNebula();
-  if (!nebulaClusters.length) return;
-  if (nebulaReduceMotion) {
-    drawNebula();
-    return;
-  }
-  if (nebulaRaf !== null) cancelAnimationFrame(nebulaRaf);
-  nebulaRaf = requestAnimationFrame(drawNebula);
-}
-
-function stopNebula() {
-  if (nebulaRaf !== null) {
-    cancelAnimationFrame(nebulaRaf);
-    nebulaRaf = null;
-  }
-}
-
-// Click a cluster to open its linked tracks, mirroring the mosaic/sunburst.
-nebulaCanvas.addEventListener("click", event => {
-  if (!nebulaClusters.length) return;
-  const rect = nebulaCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  let hit = null;
-  let best = Infinity;
-  for (const cl of nebulaClusters) {
-    const cx = cl.drawCx != null ? cl.drawCx : cl.cx;
-    const cy = cl.drawCy != null ? cl.drawCy : cl.cy;
-    const d = Math.hypot(x - cx, y - cy);
-    if (d <= cl.R * 1.15 && d < best) {
-      best = d;
-      hit = cl;
-    }
-  }
-  if (!hit) return;
-  openStyleDialog(getStyleAssociation(hit.style.genre || hit.genre.name, hit.style.name), nebulaCanvas);
-});
-
-let nebulaResizeQueued = false;
-window.addEventListener("resize", () => {
-  if (nebulaResizeQueued || genreNebula.hidden) return;
-  nebulaResizeQueued = true;
-  requestAnimationFrame(() => {
-    nebulaResizeQueued = false;
-    startNebula();
-  });
-});
 
 // ---------------------------------------------------------------------------
 // Playlist aggregate job: submit once, then poll for per-track results.
@@ -1410,39 +1403,51 @@ const TRACK_FAIL_TEXT = {
   score: { status: "pl.card.status.noResult", body: "pl.card.body.noHit" }
 };
 
-// Render one track result into its card. Returns the composition (or null on
-// failure) so it can be collected for the aggregate charts.
+// Render one track result into its card. Returns { composition, dimensions }
+// so both can be collected for the aggregate charts.
 function renderTrackResult(card, result) {
-  if (!card) return null;
+  if (!card) return { composition: null, dimensions: null };
   if (result.status === "ok") {
     setCardStatus(card, t("pl.card.status.done"), "done");
     renderTrackMix(card.body, result.composition);
-    return result.composition;
+    return { composition: result.composition, dimensions: result.dimensions || null };
   }
   const map = TRACK_FAIL_TEXT[result.stage] || TRACK_FAIL_TEXT.essentia;
   setCardStatus(card, t(map.status), "fail");
   card.body.textContent = result.stage === "score"
     ? t("pl.card.body.noHit")
     : t(map.body, { err: result.error || "" });
-  return null;
+  return { composition: null, dimensions: result.dimensions || null };
 }
 
 // Reset all playlist view state before a fresh submit.
 function resetPlaylistView() {
   resetProgress();
   trackList.innerHTML = "";
-  sunburstSvg.innerHTML = "";
-  sunburstCenter.innerHTML = "";
   mosaicStage.innerHTML = "";
+  genreBreakdownList.innerHTML = "";
+  moodBreakdownList.innerHTML = "";
+  breakdownRow.hidden = true;
   genreTwoLevel.hidden = true;
   twoLevelShown = false;
   lastCompositions = null;
+  lastDimensions = [];
+  lastGenreTwoLevel = null;
+  lastMoodTwoLevel = null;
+  currentMosaicView = "mosaic-genre";
+  mosaicData = [];
   styleAssociations = new Map();
   lastSummary = null;
   shareMeta = { title: "", subtitle: "" };
   if (shareMosaicBtn) shareMosaicBtn.disabled = true;
+  if (shareLinkBtn) shareLinkBtn.disabled = true;
   trackCount.textContent = t("pl.count.tracks", { n: 0 });
   playlistMeta.textContent = t("pl.overview.parsing");
+  for (const btn of viewToggle.querySelectorAll(".view-toggle-btn")) {
+    const active = btn.dataset.view === "mosaic-genre";
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-selected", active ? "true" : "false");
+  }
 }
 
 // Persist (or clear) the jobId in the page URL so refresh / app-switch resumes.
@@ -1487,6 +1492,7 @@ function installJob(info) {
     tracks,
     cards: tracks.map((track, index) => createTrackCard(track, index)),
     compositions: new Array(tracks.length).fill(null),
+    dimensions: new Array(tracks.length).fill(null),
     applied: 0
   };
   return name;
@@ -1501,14 +1507,16 @@ function applyResults(data, silent = false) {
   const total = jobState.total || data.total || 0;
   for (const result of data.results || []) {
     const card = jobState.cards[result.index];
-    jobState.compositions[result.index] = renderTrackResult(card, result);
+    const rendered = renderTrackResult(card, result);
+    jobState.compositions[result.index] = rendered.composition;
+    jobState.dimensions[result.index] = rendered.dimensions;
     if (silent) continue;
     const title = (card && card.title) || "";
     const key = result.status === "ok" ? "pl.log.trackDone" : "pl.log.trackFail";
     logLine(t(key, { title, i: result.index + 1, n: total }));
   }
   jobState.applied = data.completed;
-  if (data.results && data.results.length) renderAggregate(jobState.compositions);
+  if (data.results && data.results.length) renderAggregate(jobState.compositions, jobState.dimensions);
 }
 
 function updateJobProgress(data) {
@@ -1670,6 +1678,7 @@ async function resumeJobFromUrl() {
 // ---------------------------------------------------------------------------
 // Workflow
 // ---------------------------------------------------------------------------
+if (form) {
 form.addEventListener("submit", async event => {
   event.preventDefault();
   if (running) return;
@@ -1703,6 +1712,7 @@ form.addEventListener("submit", async event => {
     failJob(error.message);
   }
 });
+}
 
 // ---------------------------------------------------------------------------
 // Share card: render the current mosaic (占比矩阵) into a standalone PNG on a
@@ -1729,13 +1739,13 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 
 function drawShareFooter(ctx, x, y, width) {
   ctx.save();
-  ctx.font = "500 18px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.font = "400 18px 'Space Mono', ui-monospace, Menlo, monospace";
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
-  ctx.fillStyle = "#73766c";
+  ctx.fillStyle = "#55585f";
   ctx.fillText(t("pl.card.footer"), x, y);
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(115, 118, 108, 0.74)";
+  ctx.fillStyle = "rgba(85, 88, 95, 0.74)";
   ctx.fillText(SHARE_CARD_MARK, x + width, y);
   ctx.restore();
 }
@@ -1799,9 +1809,18 @@ function wrapCanvasText(ctx, text, maxWidth, maxLines) {
 // area = share, same color = same genre, child styles differ by opacity.
 function drawShareTreemap(ctx, genres, x, y, width, height) {
   const GAP = 4;
+  const BW = 1.5;
+  const moodColorSet = new Set(Object.values(MOOD_AXIS_COLORS));
+  const isMood = genres.some(g => moodColorSet.has(g.color));
+  const minAlpha = isMood ? 0.65 : 0.45;
+  const alphaStep = isMood ? 0.12 : 0.22;
+  const ix = x + BW;
+  const iy = y + BW;
+  const iw = width - BW * 2;
+  const ih = height - BW * 2;
   const genreRects = squarifyTreemap(
     genres.map(g => ({ value: g.percent, genre: g })),
-    x, y, width, height
+    ix, iy, iw, ih
   );
   for (const gr of genreRects) {
     const genre = gr.ref.genre;
@@ -1818,9 +1837,9 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
       const bx = sr.x + GAP / 2;
       const by = sr.y + GAP / 2;
       ctx.save();
-      ctx.globalAlpha = rank === 0 ? 1 : Math.max(0.45, 1 - rank * 0.22);
+      ctx.globalAlpha = rank === 0 ? 1 : Math.max(minAlpha, 1 - rank * alphaStep);
       ctx.fillStyle = genre.color;
-      drawRoundedRect(ctx, bx, by, bw, bh, 6);
+      drawRoundedRect(ctx, bx, by, bw, bh, 0);
       ctx.fill();
       ctx.restore();
 
@@ -1836,16 +1855,16 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
       const isVertical = bh >= bw * 1.6 && bw < 60 && bh >= 60;
       if (isVertical) {
         ctx.save();
-        ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
+        ctx.fillStyle = "#f1eee5";
         // Percentage sits horizontally at the bottom of the tile.
         const vPctSize = Math.max(13, Math.min(pctSize, 22));
-        ctx.font = `800 ${vPctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${vPctSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
         ctx.fillText(pctText, bx + bw / 2, by + bh - 6);
         // Name runs top-to-bottom (rotated 90°), clipped to the tile height.
         const vNameSize = Math.max(12, Math.min(nameSize, bw - 6));
-        ctx.font = `700 ${vNameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${vNameSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         const avail = bh - vPctSize - 16;
@@ -1859,9 +1878,9 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
         ctx.restore();
       } else if (bw >= 60 && bh >= 40) {
         ctx.save();
-        ctx.fillStyle = "rgba(15, 17, 15, 0.9)";
+        ctx.fillStyle = "#f1eee5";
         ctx.textBaseline = "top";
-        ctx.font = `700 ${nameSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${nameSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         // Wrap the name onto as many lines as the tile height allows instead of
         // clipping it, matching the DOM mosaic (which wraps via --mb-lines).
         const lineH = nameSize * 1.25 + 2;
@@ -1872,19 +1891,27 @@ function drawShareTreemap(ctx, genres, x, y, width, height) {
           ctx.fillText(line, bx + 8, ny);
           ny += lineH;
         }
-        ctx.font = `800 ${pctSize}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${pctSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.fillText(pctText, bx + 8, ny + 4);
         ctx.restore();
       } else if (bw >= 34 && bh >= 20) {
         ctx.save();
-        ctx.fillStyle = "rgba(15, 17, 15, 0.88)";
+        ctx.fillStyle = "#f1eee5";
         ctx.textBaseline = "top";
-        ctx.font = `800 ${Math.max(13, Math.min(pctSize, 20))}px Avenir Next, Helvetica, Arial, sans-serif`;
+        ctx.font = `700 ${Math.max(13, Math.min(pctSize, 20))}px 'Space Mono', ui-monospace, Menlo, monospace`;
         ctx.fillText(pctText, bx + 6, by + 6);
         ctx.restore();
       }
     }
   }
+  // Outer border matching the page .mosaic-tree { border: 1.5px solid --line } (border-box).
+  ctx.save();
+  ctx.fillStyle = "#17181d";
+  ctx.fillRect(x, y, width, BW);
+  ctx.fillRect(x, y + height - BW, width, BW);
+  ctx.fillRect(x, y, BW, height);
+  ctx.fillRect(x + width - BW, y, BW, height);
+  ctx.restore();
 }
 
 function renderShareCard(genres) {
@@ -1896,43 +1923,47 @@ function renderShareCard(genres) {
   const ctx = canvas.getContext("2d");
   ctx.scale(SHARE_SCALE, SHARE_SCALE);
 
-  // Background: base panel color + accent gradient wash (mirrors .verdict).
-  ctx.fillStyle = "#181b17";
+  // Background: newsprint paper + faint blue halftone wash, hard ink border.
+  ctx.fillStyle = "#f1eee5";
   ctx.fillRect(0, 0, width, height);
   const wash = ctx.createLinearGradient(0, 0, width * 0.7, height * 0.5);
-  wash.addColorStop(0, "rgba(200, 255, 95, 0.16)");
-  wash.addColorStop(0.4, "rgba(200, 255, 95, 0)");
+  wash.addColorStop(0, "rgba(31, 63, 224, 0.08)");
+  wash.addColorStop(0.5, "rgba(31, 63, 224, 0)");
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "rgba(244, 240, 232, 0.16)";
-  ctx.lineWidth = 2;
-  drawRoundedRect(ctx, 3, 3, width - 6, height - 6, 22);
-  ctx.stroke();
+  ctx.strokeStyle = "#17181d";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
 
   const x = SHARE_CARD_PAD;
   const contentW = width - SHARE_CARD_PAD * 2;
   let y = SHARE_CARD_PAD;
 
-  // Kicker
-  ctx.fillStyle = "#a9aa9d";
-  ctx.font = "600 22px Avenir Next, Helvetica, Arial, sans-serif";
+  // Kicker — printed as a solid blue label chip.
+  const kickerText = t("pl.card.headline").toUpperCase();
+  ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
+  const kickerW = ctx.measureText(kickerText).width;
+  ctx.fillStyle = "#1f3fe0";
+  ctx.fillRect(x, y, kickerW + 20, 32);
+  ctx.fillStyle = "#f1eee5";
+  ctx.textBaseline = "middle";
+  ctx.fillText(kickerText, x + 10, y + 17);
   ctx.textBaseline = "top";
-  ctx.fillText(t("pl.card.headline"), x, y);
-  y += 44;
+  y += 54;
 
-  // Playlist pill (title + subtitle)
+  // Playlist pill (title + subtitle) — paper-3 fill with ink border.
   if (shareMeta.title) {
-    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.font = "700 24px 'Space Mono', ui-monospace, Menlo, monospace";
     let title = shareMeta.title;
     const subtitle = shareMeta.subtitle ? `  ·  ${shareMeta.subtitle}` : "";
     const iconW = 26;
     let titleW = ctx.measureText(title).width;
-    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.font = "400 20px 'Space Mono', ui-monospace, Menlo, monospace";
     let subW = ctx.measureText(subtitle).width;
     // Clip title if the pill would exceed the content width.
     const maxTitleW = contentW - 44 - iconW - subW;
     if (titleW > maxTitleW) {
-      ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+      ctx.font = "700 24px 'Space Mono', ui-monospace, Menlo, monospace";
       while (title.length > 1 && ctx.measureText(`${title}…`).width > maxTitleW) {
         title = title.slice(0, -1);
       }
@@ -1941,31 +1972,31 @@ function renderShareCard(genres) {
     }
     const pillW = Math.min(contentW, iconW + titleW + subW + 44);
     const pillH = 48;
-    ctx.fillStyle = "rgba(200, 255, 95, 0.10)";
-    ctx.strokeStyle = "rgba(200, 255, 95, 0.4)";
+    ctx.fillStyle = "#dedacd";
+    ctx.strokeStyle = "#17181d";
     ctx.lineWidth = 2;
-    drawRoundedRect(ctx, x, y, pillW, pillH, 24);
+    drawRoundedRect(ctx, x, y, pillW, pillH, 0);
     ctx.fill();
     ctx.stroke();
     let tx = x + 22;
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#c8ff5f";
-    ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#ff3d7f";
+    ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText("♪", tx, y + pillH / 2);
     tx += iconW;
-    ctx.fillStyle = "#f4f0e8";
-    ctx.font = "800 24px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#17181d";
+    ctx.font = "700 24px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText(title, tx, y + pillH / 2 + 1);
     tx += titleW;
-    ctx.fillStyle = "#a9aa9d";
-    ctx.font = "500 20px Avenir Next, Helvetica, Arial, sans-serif";
+    ctx.fillStyle = "#55585f";
+    ctx.font = "400 20px 'Space Mono', ui-monospace, Menlo, monospace";
     ctx.fillText(subtitle, tx, y + pillH / 2 + 1);
     ctx.textBaseline = "top";
     y += pillH + 30;
   }
 
   // Genre legend (wrapped rows), one entry per parent genre.
-  ctx.font = "600 20px Avenir Next, Helvetica, Arial, sans-serif";
+  ctx.font = "700 20px 'Space Mono', ui-monospace, Menlo, monospace";
   let legendX = x;
   let legendY = y;
   const rowHeight = 34;
@@ -1980,9 +2011,9 @@ function renderShareCard(genres) {
       legendY += rowHeight;
     }
     ctx.fillStyle = genre.color;
-    drawRoundedRect(ctx, legendX, legendY, dotW, dotW, 4);
+    drawRoundedRect(ctx, legendX, legendY, dotW, dotW, 0);
     ctx.fill();
-    ctx.fillStyle = "#c9cabb";
+    ctx.fillStyle = "#2a2c33";
     ctx.textBaseline = "middle";
     ctx.fillText(label, legendX + dotW + gap, legendY + dotW / 2);
     ctx.textBaseline = "top";
@@ -2035,14 +2066,15 @@ function closeSharePreview() {
 }
 
 async function handleShareMosaic() {
-  if (!mosaicGenres.length || !shareMosaicBtn) return;
+  if (!mosaicData.length || !shareMosaicBtn) return;
   const label = shareMosaicBtn.querySelector(".verdict-share-label");
   const originalLabel = label ? label.textContent : "";
   shareMosaicBtn.classList.add("is-busy");
   shareMosaicBtn.disabled = true;
+  if (shareLinkBtn) shareLinkBtn.disabled = true;
   if (label) label.textContent = t("pl.share.busy");
   try {
-    const canvas = renderShareCard(mosaicGenres);
+    const canvas = renderShareCard(mosaicData);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("toBlob failed");
     const url = URL.createObjectURL(blob);
@@ -2051,8 +2083,9 @@ async function handleShareMosaic() {
     setStatus(t("pl.share.error"));
   } finally {
     shareMosaicBtn.classList.remove("is-busy");
-    shareMosaicBtn.disabled = mosaicGenres.length === 0;
-    if (label) label.textContent = originalLabel || t("pl.share.button");
+    shareMosaicBtn.disabled = mosaicData.length === 0;
+    if (shareLinkBtn) shareLinkBtn.disabled = mosaicData.length === 0;
+    if (label) label.textContent = originalLabel || t("pl.share.image");
   }
 }
 
@@ -2063,6 +2096,38 @@ if (shareMosaicBtn) {
 if (sharePreview) {
   sharePreview.addEventListener("click", event => {
     if (event.target.matches("[data-share-preview-close]")) closeSharePreview();
+  });
+}
+
+if (shareLinkBtn) {
+  shareLinkBtn.addEventListener("click", async () => {
+    if (!jobState || !jobState.jobId) return;
+    const label = shareLinkBtn.querySelector(".verdict-share-label");
+    const originalLabel = label ? label.textContent : "";
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/share?job=${encodeURIComponent(jobState.jobId)}`;
+    let copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        copied = true;
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = shareUrl;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+    } catch (error) {
+      copied = false;
+    }
+    if (label) label.textContent = copied ? t("pl.share.copied") : t("pl.share.copyFailed");
+    setTimeout(() => {
+      if (label) label.textContent = originalLabel || t("pl.share.link");
+    }, 1800);
   });
 }
 
@@ -2097,22 +2162,28 @@ function applyLanguage() {
     el.alt = t(el.dataset.i18nAlt);
   }
   // Re-render the aggregate charts so genre/style labels re-localize.
-  if (lastCompositions) renderAggregate(lastCompositions);
+  if (lastCompositions) renderAggregate(lastCompositions, lastDimensions);
   if (currentStyleDialogData && styleDialog.classList.contains("is-open")) {
-    const refreshed = getStyleAssociation(currentStyleDialogData.genre, currentStyleDialogData.style);
-    openStyleDialog(refreshed, lastStyleInfoTrigger);
+    if (currentDialogIsMood) {
+      openMoodDialog(currentStyleDialogData.genre, currentStyleDialogData.style, lastStyleInfoTrigger);
+    } else {
+      const refreshed = getStyleAssociation(currentStyleDialogData.genre, currentStyleDialogData.style);
+      openStyleDialog(refreshed, lastStyleInfoTrigger);
+    }
   }
   // Re-localize the finished-analysis summary text (the generic data-i18n loop
   // above reset these back to their idle defaults).
   if (lastSummary) {
     const { name, total, ok, sampled, originalCount } = lastSummary;
-    trackCount.textContent = t("pl.count.tracks", { n: total });
-    parsedLine.textContent = sampled
-      ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
-      : t("pl.parsed.start", { name, n: total });
-    statusPill.textContent = t("pl.status.complete", { ok, n: total });
-    progressLabel.textContent = t("pl.progress.complete");
-    playlistMeta.textContent = name;
+    if (trackCount) trackCount.textContent = t("pl.count.tracks", { n: total });
+    if (parsedLine) {
+      parsedLine.textContent = sampled
+        ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
+        : t("pl.parsed.start", { name, n: total });
+    }
+    if (statusPill) statusPill.textContent = t("pl.status.complete", { ok, n: total });
+    if (progressLabel) progressLabel.textContent = t("pl.progress.complete");
+    if (playlistMeta) playlistMeta.textContent = name;
     shareMeta = {
       title: name,
       subtitle: ""
@@ -2137,7 +2208,43 @@ if (langToggle) {
 }
 
 applyLanguage();
-initModelSelector();
-// Resume an in-flight / finished job whose id is in the page URL (mobile
-// app-switch or refresh). Runs after the model selector so activeModel is set.
-resumeJobFromUrl();
+// The form/progress/track-list elements only exist on the full playlist page.
+// The share page reuses this file for rendering but ships a minimal DOM, so we
+// skip the model selector, URL-resume and form wiring there.
+if (form) {
+  initModelSelector();
+  // Resume an in-flight / finished job whose id is in the page URL (mobile
+  // app-switch or refresh). Runs after the model selector so activeModel is set.
+  resumeJobFromUrl();
+}
+
+// Expose a small bootstrap hook for share.js / other lightweight pages that
+// reuse this file as a rendering library but want to drive the data flow
+// themselves (e.g. /share?job=xxx fetches job data and calls setSharedState).
+window.playlistRender = {
+  renderAggregate,
+  showMosaic,
+  switchView,
+  resetPlaylistView,
+  setJobState(state) { jobState = state; },
+  setLastSummary(summary) { lastSummary = summary; },
+  setShareMeta(meta) { shareMeta = meta; },
+  populatePlaylistMeta(name, total, ok, sampled, originalCount, sourceUrl) {
+    if (!playlistMeta) return;
+    playlistMeta.textContent = name || "";
+    if (typeof total === "number" && trackCount) {
+      trackCount.textContent = t("pl.count.tracks", { n: total });
+    }
+    if (parsedLine && typeof total === "number") {
+      parsedLine.textContent = sampled
+        ? t("pl.parsed.start.sampled", { name: name || "", n: total, total: originalCount || total })
+        : t("pl.parsed.start", { name: name || "", n: total });
+    }
+    if (statusPill && typeof ok === "number" && typeof total === "number") {
+      statusPill.textContent = t("pl.status.complete", { ok, n: total });
+    }
+    if (progressLabel) progressLabel.textContent = t("pl.progress.complete");
+  },
+  t,
+  setLang
+};

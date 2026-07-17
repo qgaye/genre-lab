@@ -3,7 +3,7 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 // The DOM-free genre scoring core is shared with the playlist frontend. The
 // aggregate playlist job scores every track server-side instead of relaying
 // raw Essentia/metadata payloads back to the browser. The module assigns to
@@ -1753,10 +1753,8 @@ let essentiaWorker = null;
 let essentiaQueue = Promise.resolve();
 let essentiaRequestId = 0;
 
-function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
-  const run = essentiaQueue.then(() => runEssentiaOnWorker(filePath, top, modelName));
-  // Keep the chain alive regardless of this run's outcome so a failure doesn't
-  // wedge the queue for everyone behind it.
+function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME, includeDims = false) {
+  const run = essentiaQueue.then(() => runEssentiaOnWorker(filePath, top, modelName, includeDims));
   essentiaQueue = run.then(() => {}, () => {});
   return run;
 }
@@ -1840,7 +1838,7 @@ function startEssentiaWorker() {
   return worker;
 }
 
-function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
+function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME, includeDims = false) {
   return new Promise((resolve, reject) => {
     let worker;
     try {
@@ -1851,21 +1849,17 @@ function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
       reject(error);
       return;
     }
-    // A request is arriving: cancel any pending idle shutdown so the worker
-    // isn't killed out from under us.
     clearTimeout(worker.idleTimer);
     const id = ++essentiaRequestId;
     const timer = setTimeout(() => {
-      // The worker processes one request at a time, so a stuck request means
-      // the whole worker is wedged: kill it and let the next call respawn.
       clearTimeout(worker.idleTimer);
       if (essentiaWorker === worker) essentiaWorker = null;
       worker.current = null;
       try { worker.child.kill("SIGTERM"); } catch (error) { void error; }
-      reject(new Error("Essentia 曲风分析超时。"));
+      reject(new Error("Essentia 分析超时。"));
     }, ESSENTIA_REQUEST_TIMEOUT);
     worker.current = { id, resolve, reject, timer };
-    const payload = JSON.stringify({ id, audio: filePath, top, model: modelName }) + "\n";
+    const payload = JSON.stringify({ id, audio: filePath, top, model: modelName, includeDimensions: includeDims }) + "\n";
     try {
       worker.child.stdin.write(payload);
     } catch (error) {
@@ -1889,7 +1883,13 @@ async function handleEssentia(req, res) {
       return;
     }
     cleanupPath = filePath;
-    const result = await analyzeWithEssentia(filePath, Math.max(1, Math.min(30, Number(body.top || 12))), modelName);
+    const includeDims = body.includeDimensions !== false;
+    const result = await analyzeWithEssentia(
+      filePath,
+      Math.max(1, Math.min(30, Number(body.top || 12))),
+      modelName,
+      includeDims
+    );
     const deletedAudio = await deleteLocalAudio(filePath);
     cleanupPath = "";
     sendJson(res, 200, {
@@ -2050,7 +2050,7 @@ async function analyzePlaylistTrack(track, modelName, bundle) {
 
   let essentia;
   try {
-    essentia = await analyzeWithEssentia(download.filePath, 12, modelName);
+    essentia = await analyzeWithEssentia(download.filePath, 12, modelName, true);
   } catch (error) {
     await deleteLocalAudio(download.filePath);
     return { status: "failed", stage: "essentia", error: error.message };
@@ -2071,10 +2071,12 @@ async function analyzePlaylistTrack(track, modelName, bundle) {
     track: { title: track.title, artists }
   });
 
+  const dimensions = (essentia && essentia.dimensions) || null;
+
   if (!composition.length) {
-    return { status: "failed", stage: "score", error: "没有匹配到曲风。" };
+    return { status: "failed", stage: "score", error: "没有匹配到曲风。", dimensions };
   }
-  return { status: "ok", composition };
+  return { status: "ok", composition, dimensions };
 }
 
 // Background driver: walks the job's tracks serially and records each result,
@@ -2208,6 +2210,83 @@ async function handlePlaylistStatus(req, res, url) {
   });
 }
 
+function getPlaylistJobFiles() {
+  fs.mkdirSync(PLAYLIST_JOBS_DIR, { recursive: true });
+  const files = fs.readdirSync(PLAYLIST_JOBS_DIR);
+  const jobFiles = [];
+  for (const file of files) {
+    if (!file.endsWith(".json")) continue;
+    const filePath = path.join(PLAYLIST_JOBS_DIR, file);
+    try {
+      const stat = fs.statSync(filePath);
+      jobFiles.push({
+        file,
+        filePath,
+        jobId: file.replace(/\.json$/, ""),
+        mtimeMs: stat.mtimeMs
+      });
+    } catch (error) {
+      console.warn(`无法读取任务文件状态 ${file}: ${error.message}`);
+    }
+  }
+  jobFiles.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return jobFiles;
+}
+
+function readPlaylistJobMeta(filePath, fallbackJobId) {
+  try {
+    const job = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return {
+      jobId: job.jobId || fallbackJobId,
+      name: job.name || "未命名歌单",
+      state: job.state || "unknown",
+      total: job.total || 0,
+      completed: job.completed || 0,
+      ok: job.ok || 0,
+      createdAt: job.createdAt || 0,
+      updatedAt: job.updatedAt || 0,
+      coverImgUrl: job.coverImgUrl || "",
+      creator: job.creator || "",
+      modelName: job.modelName || GENRE_MODEL_NAME
+    };
+  } catch (error) {
+    console.warn(`无法读取任务文件 ${filePath}: ${error.message}`);
+    return null;
+  }
+}
+
+function handleListPlaylistJobs(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get("pageSize")) || 20));
+    const allJobFiles = getPlaylistJobFiles();
+    const total = allJobFiles.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const start = (currentPage - 1) * pageSize;
+    const pageFiles = allJobFiles.slice(start, start + pageSize);
+    const jobs = [];
+    for (const f of pageFiles) {
+      const meta = readPlaylistJobMeta(f.filePath, f.jobId);
+      if (meta) jobs.push(meta);
+    }
+    sendJson(res, 200, {
+      jobs,
+      pagination: {
+        page: currentPage,
+        pageSize,
+        total,
+        totalPages,
+        hasPrev: currentPage > 1,
+        hasNext: currentPage < totalPages
+      }
+    });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
 async function handleCoverImage(req, res, url) {
   try {
     const raw = url.searchParams.get("url") || "";
@@ -2235,6 +2314,16 @@ function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
+
+  const PAGE_ALIASES = {
+    "/index": "/index.html",
+    "/playlist": "/playlist.html",
+    "/manage": "/manage.html",
+    "/share": "/share.html"
+  };
+  if (PAGE_ALIASES[pathname]) {
+    pathname = PAGE_ALIASES[pathname];
+  }
 
   // Per-model config files. taxonomy is a per-model JSON config under
   // data/<model>/. The frontend requests it as a JS global and may pass
@@ -2288,10 +2377,10 @@ function serveStatic(req, res) {
   }
 
   const baseDir = pathname.startsWith("/downloads/") ? DOWNLOAD_DIR : PUBLIC_DIR;
-  const relativePath = pathname.startsWith("/downloads/")
+  let relativePath = pathname.startsWith("/downloads/")
     ? pathname.replace(/^\/downloads\//, "")
     : pathname.replace(/^\//, "");
-  const filePath = path.normalize(path.join(baseDir, relativePath));
+  let filePath = path.normalize(path.join(baseDir, relativePath));
 
   if (!filePath.startsWith(baseDir)) {
     res.writeHead(403);
@@ -2299,21 +2388,43 @@ function serveStatic(req, res) {
     return;
   }
 
-  fs.readFile(filePath, (error, data) => {
-    if (error) {
+  const tryServeFile = (targetPath, callback) => {
+    fs.readFile(targetPath, (error, data) => {
+      if (!error) {
+        const ext = path.extname(targetPath).toLowerCase();
+        const headers = {
+          "content-type": MIME[ext] || "application/octet-stream"
+        };
+        if ([".html", ".css", ".js"].includes(ext)) {
+          headers["cache-control"] = "no-cache, must-revalidate";
+        }
+        res.writeHead(200, headers);
+        res.end(data);
+        return;
+      }
+      callback();
+    });
+  };
+
+  tryServeFile(filePath, () => {
+    if (pathname.startsWith("/downloads/")) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
       res.end("Not found");
       return;
     }
     const ext = path.extname(filePath).toLowerCase();
-    const headers = {
-      "content-type": MIME[ext] || "application/octet-stream"
-    };
-    if ([".html", ".css", ".js"].includes(ext)) {
-      headers["cache-control"] = "no-cache, must-revalidate";
+    if (!ext) {
+      const htmlPath = filePath + ".html";
+      if (htmlPath.startsWith(baseDir)) {
+        tryServeFile(htmlPath, () => {
+          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+          res.end("Not found");
+        });
+        return;
+      }
     }
-    res.writeHead(200, headers);
-    res.end(data);
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("Not found");
   });
 }
 
@@ -2374,6 +2485,10 @@ const server = http.createServer((req, res) => {
       handlePlaylistStatus(req, res, url).catch(error => sendJson(res, 500, { error: error.message }));
       return;
     }
+    if (url.pathname === "/api/playlist-jobs") {
+      handleListPlaylistJobs(req, res);
+      return;
+    }
     if (url.pathname === "/api/cover-image") {
       handleCoverImage(req, res, url);
       return;
@@ -2384,7 +2499,32 @@ const server = http.createServer((req, res) => {
   sendJson(res, 405, { error: "Method not allowed" });
 });
 
+function findProcessOnPort(port) {
+  try {
+    const output = execSync(`lsof -ti:${port}`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return output || "";
+  } catch {
+    return "";
+  }
+}
+
 if (require.main === module) {
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
+      const pid = findProcessOnPort(PORT);
+      console.error(`\n  错误: 端口 ${PORT} 已被占用。`);
+      if (pid) {
+        console.error(`  占用进程 PID: ${pid}`);
+        console.error(`  可运行: kill ${pid}  来结束该进程后重试\n`);
+      } else {
+        console.error(`  请检查是否有其他程序在使用该端口，或设置 PORT 环境变量使用其他端口。\n`);
+      }
+      process.exit(1);
+    }
+    console.error("服务器启动失败:", error.message);
+    process.exit(1);
+  });
+
   server.listen(PORT, HOST, () => {
     console.log(`Genre Lab running at http://${HOST}:${PORT}`);
   });

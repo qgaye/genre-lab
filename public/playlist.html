@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 歌单曲风分析</title>
-    <link rel="stylesheet" href="/styles.css?v=20260716-cover-proxy">
+    <link rel="stylesheet" href="/styles.css?v=20260717-share-btns2">
   </head>
   <body>
     <main class="shell shell-playlist">
@@ -16,7 +16,7 @@
           </div>
           <div class="mast-actions">
             <div class="mast-buttons">
-              <a class="lang-toggle" href="/index.html" data-i18n="pl.nav.single">单曲</a>
+              <a class="lang-toggle" href="/index" data-i18n="pl.nav.single">单曲</a>
               <button type="button" class="lang-toggle" id="langToggle" data-i18n="lang.toggle">EN</button>
             </div>
             <div class="status-pill" id="statusPill" data-i18n="pl.status.waiting">等待输入</div>
@@ -54,42 +54,43 @@
           </div>
           <p id="playlistMeta" class="playlist-meta" data-i18n="pl.overview.empty">粘贴一个网易云歌单链接开始逐曲分析。</p>
           <div class="genre-2l" id="genreTwoLevel" hidden>
-            <div class="view-toggle" id="viewToggle" role="tablist" aria-label="曲风视图切换" data-i18n-aria="pl.view.aria">
-              <button type="button" class="view-toggle-btn" data-view="sunburst" role="tab" aria-selected="false" data-i18n="pl.view.sunburst">旭日图</button>
-              <button type="button" class="view-toggle-btn is-active" data-view="mosaic" role="tab" aria-selected="true" data-i18n="pl.view.mosaic">占比矩阵</button>
-              <button type="button" class="view-toggle-btn" data-view="nebula" role="tab" aria-selected="false" data-i18n="pl.view.nebula">曲风星云</button>
+            <div class="view-toggle" id="viewToggle" role="tablist" aria-label="视图切换" data-i18n-aria="pl.view.aria">
+              <button type="button" class="view-toggle-btn is-active" data-view="mosaic-genre" role="tab" aria-selected="true" data-i18n="pl.view.genre">曲风</button>
+              <button type="button" class="view-toggle-btn" data-view="mosaic-mood" role="tab" aria-selected="false" data-i18n="pl.view.mood">情绪</button>
             </div>
-            <figure class="genre-sunburst" id="genreSunburst" hidden>
-              <figcaption data-i18n="pl.sunburst.caption">曲风构成 · 内环流派 / 外环子风格</figcaption>
-              <div class="sunburst-layout">
-                <div class="sunburst-stage">
-                  <svg viewBox="0 0 224 224" id="sunburstSvg" aria-hidden="true"></svg>
-                  <div class="sunburst-center" id="sunburstCenter"></div>
-                </div>
-                <div class="sunburst-legend" id="sunburstLegend"></div>
-              </div>
-            </figure>
             <figure class="genre-mosaic" id="genreMosaic">
               <figcaption class="mosaic-caption">
-                <span data-i18n="pl.mosaic.caption">占比矩阵 · 面积即占比 / 同色同流派</span>
-                <button type="button" id="shareMosaic" class="verdict-share" title="生成占比矩阵图片并预览" data-i18n-title="pl.share.title" disabled>
-                  <span class="verdict-share-icon" aria-hidden="true">↗</span>
-                  <span class="verdict-share-label" data-i18n="pl.share.button">分享</span>
-                </button>
+                <span id="mosaicCaption">占比矩阵 · 面积即占比 / 同色同流派</span>
+                <div class="mosaic-share-group" id="mosaicShareGroup">
+                  <button type="button" id="shareMosaic" class="verdict-share" title="生成占比矩阵图片并预览" data-i18n-title="pl.share.titleImage" disabled>
+                    <span class="verdict-share-icon" aria-hidden="true">🖼</span>
+                    <span class="verdict-share-label" data-i18n="pl.share.image">分享为图片</span>
+                  </button>
+                  <button type="button" id="shareLinkBtn" class="verdict-share verdict-share--link" title="复制分享链接" data-i18n-title="pl.share.titleLink" disabled>
+                    <span class="verdict-share-icon" aria-hidden="true">🔗</span>
+                    <span class="verdict-share-label" data-i18n="pl.share.link">分享链接</span>
+                  </button>
+                </div>
               </figcaption>
               <div class="mosaic-stage" id="mosaicStage"></div>
             </figure>
-            <figure class="genre-nebula" id="genreNebula" hidden>
-              <figcaption class="nebula-caption">
-                <span data-i18n="pl.nebula.caption">曲风星云 · 每簇一个子风格 / 同色同流派</span>
-              </figcaption>
-              <div class="nebula-stage" id="nebulaStage">
-                <canvas id="nebulaCanvas"></canvas>
-                <div class="nebula-legend" id="nebulaLegend"></div>
-              </div>
-            </figure>
           </div>
         </article>
+
+        <div class="breakdown-row" id="breakdownRow" hidden>
+          <article class="panel breakdown-panel" id="genreBreakdownPanel">
+            <div class="panel-head">
+              <h3 data-i18n="pl.breakdown.genre">曲风构成</h3>
+            </div>
+            <div class="breakdown-list" id="genreBreakdownList"></div>
+          </article>
+          <article class="panel breakdown-panel" id="moodBreakdownPanel">
+            <div class="panel-head">
+              <h3 data-i18n="pl.breakdown.mood">情绪构成</h3>
+            </div>
+            <div class="breakdown-list" id="moodBreakdownList"></div>
+          </article>
+        </div>
 
         <article class="panel playlist-panel">
           <div class="panel-head">
@@ -170,6 +171,6 @@
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
     <script src="/genre-core.js"></script>
-    <script src="/playlist.js?v=20260716-cover-proxy"></script>
+    <script src="/playlist.js?v=20260717-share-btns"></script>
   </body>
 </html>

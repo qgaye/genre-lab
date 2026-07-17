@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Genre Lab · 歌单管理</title>
+    <link rel="stylesheet" href="/styles.css?v=20260717-manage-page">
+  </head>
+  <body>
+    <main class="shell shell-manage">
+      <section class="console console-manage" aria-label="歌单管理">
+        <header class="mast">
+          <div>
+            <p class="kicker">Genre Lab</p>
+            <h1>歌单管理</h1>
+          </div>
+          <div class="mast-actions">
+            <div class="mast-buttons">
+              <a class="lang-toggle" href="/index">单曲</a>
+              <a class="lang-toggle" href="/playlist">歌单</a>
+            </div>
+            <div class="status-pill" id="statusPill">加载中</div>
+          </div>
+        </header>
+
+        <div class="manage-intro" id="manageIntro">
+          查看所有历史歌单分析任务，点击可跳转至对应的歌单分析页面。
+        </div>
+
+        <div class="refresh-bar">
+          <button type="button" class="lang-toggle" id="refreshBtn">刷新列表</button>
+          <span class="job-count" id="jobCount"></span>
+        </div>
+      </section>
+
+      <section class="result-board result-board-manage" id="resultBoard">
+        <article class="panel jobs-panel">
+          <div class="panel-head">
+            <h3>分析任务列表</h3>
+            <span id="jobCountHead">0 个任务</span>
+          </div>
+          <div class="job-list" id="jobList">
+            <div class="empty-state" id="emptyState">
+              <p>暂无歌单分析任务</p>
+              <a href="/playlist" class="primary new-job-btn">去分析歌单</a>
+            </div>
+          </div>
+          <div class="pagination" id="pagination" style="display:none;">
+            <button type="button" class="page-btn" id="prevBtn" disabled>上一页</button>
+            <span class="page-info" id="pageInfo"></span>
+            <button type="button" class="page-btn" id="nextBtn" disabled>下一页</button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <template id="jobCardTemplate">
+      <a class="job-card" href="">
+        <div class="job-card-cover">
+          <img alt="">
+        </div>
+        <div class="job-card-body">
+          <div class="job-card-head">
+            <strong class="job-card-name"></strong>
+            <span class="job-status"></span>
+          </div>
+          <div class="job-card-meta">
+            <span class="job-card-creator"></span>
+            <span class="job-card-time"></span>
+          </div>
+          <div class="job-card-progress">
+            <div class="job-progress-bar">
+              <span></span>
+            </div>
+            <small class="job-progress-text"></small>
+          </div>
+          <div class="job-card-id"></div>
+        </div>
+      </a>
+    </template>
+
+    <script src="/manage.js?v=20260717-manage-page"></script>
+  </body>
+</html>

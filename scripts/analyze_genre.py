@@ -22,12 +22,6 @@ ROOT = Path(__file__).resolve().parents[1]
 MODELS = ROOT / "models"
 
 
-# Model registry. Each entry is self-contained so the server can switch between
-# genre models by name without any hardcoded class list: the label taxonomy is
-# always read from the model's own metadata json.
-#
-# effnet400: two-stage pipeline (Discogs-EffNet embedding -> Discogs400 head).
-# maest519 : single-stage MAEST transformer that outputs Discogs style logits.
 MODEL_REGISTRY = {
     "effnet400": {
         "type": "effnet",
@@ -43,15 +37,64 @@ MODEL_REGISTRY = {
         "type": "maest",
         "label": "Essentia MAEST - 519 styles, finer/slower",
         "graph": "discogs-maest-30s-pw-519l-2.pb",
-        # Classification activations output node of the MAEST graph. The
-        # embeddings node is "PartitionedCall/Identity_7"; the classification
-        # head activations are exposed on a different node. This can be
-        # overridden with MAEST_OUTPUT_NODE after inspecting the downloaded
-        # model, without touching code.
         "output": "PartitionedCall/Identity",
         "classes_metadata": "discogs-maest-30s-pw-519l-2.json",
     },
 }
+
+
+AUDIO_DIM_HEADS = {
+    "mood_happy": {
+        "type": "binary",
+        "graph": "mood_happy-discogs-effnet-1.pb",
+        "metadata": "mood_happy-discogs-effnet-1.json",
+        "label_cn": "明快",
+        "label_en": "Bright",
+    },
+    "mood_sad": {
+        "type": "binary",
+        "graph": "mood_sad-discogs-effnet-1.pb",
+        "metadata": "mood_sad-discogs-effnet-1.json",
+        "label_cn": "沉郁",
+        "label_en": "Somber",
+    },
+    "mood_aggressive": {
+        "type": "binary",
+        "graph": "mood_aggressive-discogs-effnet-1.pb",
+        "metadata": "mood_aggressive-discogs-effnet-1.json",
+        "label_cn": "激烈",
+        "label_en": "Intense",
+    },
+    "mood_relaxed": {
+        "type": "binary",
+        "graph": "mood_relaxed-discogs-effnet-1.pb",
+        "metadata": "mood_relaxed-discogs-effnet-1.json",
+        "label_cn": "舒缓",
+        "label_en": "Calm",
+    },
+    "mood_party": {
+        "type": "binary",
+        "graph": "mood_party-discogs-effnet-1.pb",
+        "metadata": "mood_party-discogs-effnet-1.json",
+        "label_cn": "跃动",
+        "label_en": "Dynamic",
+    },
+    "mtg_jamendo_instrument": {
+        "type": "multilabel",
+        "graph": "mtg_jamendo_instrument-discogs-effnet-1.pb",
+        "metadata": "mtg_jamendo_instrument-discogs-effnet-1.json",
+        "label": "MTG Jamendo Instruments",
+    },
+    "mtg_jamendo_moodtheme": {
+        "type": "multilabel",
+        "graph": "mtg_jamendo_moodtheme-discogs-effnet-1.pb",
+        "metadata": "mtg_jamendo_moodtheme-discogs-effnet-1.json",
+        "label": "MTG Jamendo Mood/Theme",
+    },
+}
+
+
+MOOD_RADAR_ORDER = ["mood_happy", "mood_party", "mood_aggressive", "mood_sad", "mood_relaxed"]
 
 
 def resolve_model(name):
@@ -62,123 +105,266 @@ def resolve_model(name):
     return MODEL_REGISTRY[name]
 
 
-# Loading a TensorFlow graph and parsing the label taxonomy are the dominant
-# per-analysis costs. In serve mode the same model is reused for every track, so
-# both are built once and cached, keyed by model config / metadata file.
+def resolve_head(name):
+    if name not in AUDIO_DIM_HEADS:
+        raise SystemExit(
+            f"Unknown dimension head '{name}'. Available: {', '.join(AUDIO_DIM_HEADS)}"
+        )
+    return AUDIO_DIM_HEADS[name]
+
+
 _MODEL_CACHE = {}
-_CLASSES_CACHE = {}
+_METADATA_CACHE = {}
 
 
-def load_classes(metadata_path):
-    # The label taxonomy never changes between tracks, so cache the parsed list
-    # per metadata file instead of re-reading and re-parsing the JSON each call.
+def load_metadata(metadata_path):
     key = str(metadata_path)
-    cached = _CLASSES_CACHE.get(key)
+    cached = _METADATA_CACHE.get(key)
     if cached is None:
         with metadata_path.open("r", encoding="utf-8") as f:
-            metadata = json.load(f)
-        cached = metadata["classes"]
-        _CLASSES_CACHE[key] = cached
+            cached = json.load(f)
+        _METADATA_CACHE[key] = cached
     return cached
 
 
 def summarize_predictions(predictions):
     values = np.asarray(predictions)
-    # MAEST/EffNet return one row of activations per analyzed audio patch; the
-    # whole track is summarized by averaging across all patches.
     if values.ndim > 1:
         return values.reshape(values.shape[0], -1).mean(axis=0)
     return values.reshape(-1)
 
 
-def analyze_effnet(audio, config):
-    embedding_model, classifier = _effnet_models(config)
+def get_effnet_embedding_model():
+    key = ("effnet_embed",)
+    cached = _MODEL_CACHE.get(key)
+    if cached is None:
+        cached = TensorflowPredictEffnetDiscogs(
+            graphFilename=str(MODELS / "discogs-effnet-bs64-1.pb"),
+            output="PartitionedCall:1",
+        )
+        _MODEL_CACHE[key] = cached
+    return cached
+
+
+def _resolve_io_names(config):
+    metadata = load_metadata(MODELS / config["metadata"])
+    schema = metadata.get("schema", {})
+    inputs = schema.get("inputs", [])
+    outputs = schema.get("outputs", [])
+    input_name = inputs[0]["name"] if inputs else "model/Placeholder"
+    pred_output = None
+    for out in outputs:
+        if out.get("output_purpose") == "predictions":
+            pred_output = out["name"]
+            break
+    if pred_output is None and outputs:
+        pred_output = outputs[0]["name"]
+    output_name = pred_output or "model/Sigmoid"
+    return input_name, output_name
+
+
+def get_classifier_head(head_name):
+    config = resolve_head(head_name)
+    key = ("head", head_name)
+    cached = _MODEL_CACHE.get(key)
+    if cached is None:
+        graph_path = MODELS / config["graph"]
+        if not graph_path.exists() or graph_path.stat().st_size < 10000:
+            return None
+        input_name, output_name = _resolve_io_names(config)
+        try:
+            cached = TensorflowPredict2D(
+                graphFilename=str(graph_path),
+                input=input_name,
+                output=output_name,
+            )
+        except Exception as e:
+            sys.stderr.write(f"Warning: failed to load dimension head '{head_name}': {e}\n")
+            sys.stderr.flush()
+            return None
+        _MODEL_CACHE[key] = cached
+    return cached
+
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-float(x)))
+
+
+def build_dim_result(dim_name, config, values):
+    result = {}
+    if config["type"] == "binary":
+        flat = values.flatten()
+        if flat.size >= 2:
+            score = float(flat[1])
+        else:
+            raw = float(flat[0])
+            score = sigmoid(raw) if (raw < 0.0 or raw > 1.0) else raw
+        score = max(0.0, min(1.0, score))
+        result[dim_name] = {
+            "type": "binary",
+            "label_cn": config["label_cn"],
+            "label_en": config["label_en"],
+            "score": round(score, 4),
+        }
+    elif config["type"] == "multilabel":
+        metadata = load_metadata(MODELS / config["metadata"])
+        classes = metadata.get("classes", metadata.get("outputs", [{}])[0].get("classes", []))
+        if isinstance(classes, list) and len(classes) > 0 and isinstance(classes[0], dict):
+            classes = [c.get("name", str(c)) for c in classes]
+        scores = [float(v) for v in values.flatten()]
+        if len(classes) != len(scores):
+            classes = [f"class_{i}" for i in range(len(scores))]
+        pairs = sorted(zip(classes, scores), key=lambda x: x[1], reverse=True)
+        result[dim_name] = {
+            "type": "multilabel",
+            "predictions": [
+                {"label": label, "score": round(score, 4)}
+                for label, score in pairs[:10]
+            ],
+        }
+    return result
+
+
+def run_effnet_dimensions(audio, dims):
+    embedding_model = get_effnet_embedding_model()
     embeddings = embedding_model(audio)
-    return summarize_predictions(classifier(embeddings))
+
+    result = {}
+    for dim_name in dims:
+        dim_config = resolve_head(dim_name)
+        head = get_classifier_head(dim_name)
+        if head is None:
+            continue
+        raw = head(embeddings)
+        values = summarize_predictions(raw)
+        result.update(build_dim_result(dim_name, dim_config, values))
+
+    if all(k in result for k in MOOD_RADAR_ORDER):
+        radar_axes = []
+        for mood_key in MOOD_RADAR_ORDER:
+            m = result[mood_key]
+            radar_axes.append({
+                "key": mood_key,
+                "label_cn": m["label_cn"],
+                "label_en": m["label_en"],
+                "score": m["score"],
+            })
+        result["mood_radar"] = {
+            "type": "radar",
+            "axes": radar_axes,
+        }
+
+    return result
 
 
 def analyze_maest(audio, config):
-    model = _maest_model(config)
+    output_node = os.environ.get("MAEST_OUTPUT_NODE", config["output"]).strip()
+    model = TensorflowPredictMAEST(
+        graphFilename=str(MODELS / config["graph"]),
+        output=output_node,
+    )
     scores = summarize_predictions(model(audio))
-    # MAEST classification activations may come out as raw logits; map to a
-    # 0..1 range with a sigmoid when the values fall outside that range.
     if scores.size and (scores.min() < 0.0 or scores.max() > 1.0):
         scores = 1.0 / (1.0 + np.exp(-scores))
     return scores
 
 
-def _effnet_models(config):
-    key = ("effnet", config["embedding_graph"], config["classifier_graph"])
+def _effnet_genre_classifier(config):
+    key = ("effnet_genre_cls", config["classifier_graph"])
     cached = _MODEL_CACHE.get(key)
     if cached is None:
-        embedding_model = TensorflowPredictEffnetDiscogs(
-            graphFilename=str(MODELS / config["embedding_graph"]),
-            output=config["embedding_output"],
-        )
-        classifier = TensorflowPredict2D(
+        cached = TensorflowPredict2D(
             graphFilename=str(MODELS / config["classifier_graph"]),
             input=config["classifier_input"],
             output=config["classifier_output"],
         )
-        cached = (embedding_model, classifier)
         _MODEL_CACHE[key] = cached
     return cached
 
 
-def _maest_model(config):
-    # MAEST's TensorFlow model is huge (~4GB resident). Unlike effnet we do NOT
-    # cache it: keeping it alive between requests would pin that memory for the
-    # whole worker lifetime and OOM small hosts. Build it fresh each call so it
-    # can be garbage-collected once the analysis returns.
-    output_node = os.environ.get("MAEST_OUTPUT_NODE", config["output"]).strip()
-    return TensorflowPredictMAEST(
-        graphFilename=str(MODELS / config["graph"]),
-        output=output_node,
-    )
-
-
-def analyze(audio_path, top_n, model_name):
-    config = resolve_model(model_name)
-    audio = MonoLoader(filename=str(audio_path), sampleRate=16000, resampleQuality=4)()
-
-    if config["type"] == "maest":
-        scores = analyze_maest(audio, config)
-    else:
-        scores = analyze_effnet(audio, config)
-
-    classes = load_classes(MODELS / config["classes_metadata"])
-    if len(classes) != len(scores):
-        raise SystemExit(
-            f"Model '{model_name}' returned {len(scores)} scores but metadata "
-            f"has {len(classes)} classes. Check the model output node / metadata."
-        )
-
+def build_genre_payload(config, classes, scores, top_n):
     ranked = sorted(zip(classes, scores), key=lambda item: float(item[1]), reverse=True)
-    return config, [(label, float(score)) for label, score in ranked[:top_n]]
-
-
-def build_payload(audio_path, top_n, model_name):
-    config, predictions = analyze(audio_path, top_n, model_name)
     return {
-        "audio": str(audio_path),
         "model": config["label"],
-        "modelKey": model_name,
+        "modelKey": None,
         "predictions": [
-            {"label": label, "score": score}
-            for label, score in predictions
+            {"label": label, "score": round(float(score), 4)}
+            for label, score in ranked[:top_n]
         ],
     }
 
 
+def analyze(audio_path, top_n, model_name, include_dims=False):
+    audio = MonoLoader(filename=str(audio_path), sampleRate=16000, resampleQuality=4)()
+
+    if model_name == "effnet400":
+        embedding_model = get_effnet_embedding_model()
+        embeddings = embedding_model(audio)
+        genre_config = resolve_model(model_name)
+        classifier = _effnet_genre_classifier(genre_config)
+        genre_scores = summarize_predictions(classifier(embeddings))
+
+        genre_metadata = load_metadata(MODELS / genre_config["classes_metadata"])
+        genre_classes = genre_metadata.get("classes", genre_metadata.get("outputs", [{}])[0].get("classes", []))
+        if isinstance(genre_classes, list) and len(genre_classes) > 0 and isinstance(genre_classes[0], dict):
+            genre_classes = [c.get("name", str(c)) for c in genre_classes]
+        genre_config_resolved = genre_config
+
+        dimensions = {}
+        if include_dims:
+            for dim_name in AUDIO_DIM_HEADS:
+                dim_config = resolve_head(dim_name)
+                head = get_classifier_head(dim_name)
+                if head is None:
+                    continue
+                raw = head(embeddings)
+                values = summarize_predictions(raw)
+                dimensions.update(build_dim_result(dim_name, dim_config, values))
+            if all(k in dimensions for k in MOOD_RADAR_ORDER):
+                radar_axes = []
+                for mood_key in MOOD_RADAR_ORDER:
+                    m = dimensions[mood_key]
+                    radar_axes.append({
+                        "key": mood_key,
+                        "label_cn": m["label_cn"],
+                        "label_en": m["label_en"],
+                        "score": m["score"],
+                    })
+                dimensions["mood_radar"] = {"type": "radar", "axes": radar_axes}
+    else:
+        scores = analyze_maest(audio, resolve_model(model_name))
+        genre_config = resolve_model(model_name)
+        genre_metadata = load_metadata(MODELS / genre_config["classes_metadata"])
+        genre_classes = genre_metadata.get("classes", genre_metadata.get("outputs", [{}])[0].get("classes", []))
+        if isinstance(genre_classes, list) and len(genre_classes) > 0 and isinstance(genre_classes[0], dict):
+            genre_classes = [c.get("name", str(c)) for c in genre_classes]
+        genre_scores = scores
+        genre_config_resolved = genre_config
+
+        dimensions = {}
+        if include_dims:
+            dimensions = run_effnet_dimensions(audio, list(AUDIO_DIM_HEADS.keys()))
+
+    if len(genre_classes) != len(genre_scores):
+        raise SystemExit(
+            f"Model '{model_name}' returned {len(genre_scores)} scores but metadata "
+            f"has {len(genre_classes)} classes."
+        )
+
+    genre_payload = build_genre_payload(genre_config_resolved, genre_classes, genre_scores, top_n)
+    return genre_config_resolved, genre_payload, dimensions
+
+
+def build_payload(audio_path, top_n, model_name, include_dims=False):
+    config, genre_payload, dimensions = analyze(audio_path, top_n, model_name, include_dims=include_dims)
+    genre_payload["audio"] = str(audio_path)
+    genre_payload["modelKey"] = model_name
+    if include_dims:
+        genre_payload["dimensions"] = dimensions
+    return genre_payload
+
+
 def serve_loop():
-    # Long-lived worker mode: read one JSON request per line from stdin and emit
-    # one JSON response per line on stdout. The heavy TensorFlow/model load is
-    # paid once (lazily, on the first request) for effnet400 and reused for every
-    # later track. maest519 is deliberately not cached (see _maest_model), so its
-    # large model is rebuilt per request and freed afterwards.
-    # Request : {"id": <any>, "audio": <path>, "top": <int>, "model": <name>}
-    # Response: {"id": <any>, "ok": true, "result": {...}}
-    #        or {"id": <any>, "ok": false, "error": "..."}
     sys.stdout.write(json.dumps({"ready": True}) + "\n")
     sys.stdout.flush()
     for line in sys.stdin:
@@ -194,9 +380,10 @@ def serve_loop():
                 raise ValueError(f"Audio file not found: {audio_path}")
             top_n = int(req.get("top", 12))
             model_name = req.get("model") or os.environ.get("GENRE_MODEL", "effnet400")
-            payload = build_payload(audio_path, top_n, model_name)
+            include_dims = bool(req.get("includeDimensions", req.get("dimensions", False)))
+            payload = build_payload(audio_path, top_n, model_name, include_dims=include_dims)
             response = {"id": req_id, "ok": True, "result": payload}
-        except Exception as error:  # noqa: BLE001 - report any failure per request
+        except Exception as error:
             response = {
                 "id": req_id,
                 "ok": False,
@@ -206,26 +393,25 @@ def serve_loop():
             sys.stderr.flush()
         sys.stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
         sys.stdout.flush()
-        # Reclaim the memory of any uncached model (maest519) before idling so the
-        # worker doesn't sit on ~4GB between requests.
         gc.collect()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Analyze music genre/style tags with Essentia Discogs models.")
+    parser = argparse.ArgumentParser(description="Analyze music with Essentia models (genre + audio dimensions).")
     parser.add_argument("audio", type=Path, nargs="?", help="Audio file path, e.g. mp3/wav/flac.")
-    parser.add_argument("--top", type=int, default=12, help="Number of labels to show.")
+    parser.add_argument("--top", type=int, default=12, help="Number of genre labels to show.")
     parser.add_argument(
         "--model",
         default=os.environ.get("GENRE_MODEL", "effnet400"),
         choices=list(MODEL_REGISTRY),
-        help="Genre model to run (default from GENRE_MODEL env or effnet400).",
+        help="Genre model to run.",
     )
+    parser.add_argument("--dims", action="store_true", help="Include audio dimensions (mood, instruments).")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     parser.add_argument(
         "--serve",
         action="store_true",
-        help="Run as a long-lived worker: read JSON requests from stdin, one per line.",
+        help="Run as a long-lived worker.",
     )
     args = parser.parse_args()
 
@@ -239,7 +425,7 @@ def main():
     if not args.audio.exists():
         raise SystemExit(f"Audio file not found: {args.audio}")
 
-    payload = build_payload(args.audio, args.top, args.model)
+    payload = build_payload(args.audio, args.top, args.model, include_dims=args.dims)
     if args.json:
         print(json.dumps(payload, ensure_ascii=False))
         return
@@ -248,7 +434,20 @@ def main():
     print(f"Model: {payload['model']}")
     print("Top genre/style predictions:")
     for item in payload["predictions"]:
-        print(f"{item['score']:0.4f}  {item['label']}")
+        print(f"  {item['score']:0.4f}  {item['label']}")
+
+    if args.dims and payload.get("dimensions"):
+        dims = payload["dimensions"]
+        radar = dims.get("mood_radar")
+        if radar:
+            print(f"\nMood profile:")
+            for ax in radar["axes"]:
+                print(f"  {ax['score']:0.4f}  {ax['label_cn']} ({ax['label_en']})")
+        inst = dims.get("mtg_jamendo_instrument")
+        if inst:
+            print(f"\nInstruments:")
+            for item in inst["predictions"]:
+                print(f"  {item['score']:0.4f}  {item['label']}")
 
 
 if __name__ == "__main__":
