@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 歌单曲风分析</title>
-    <link rel="stylesheet" href="/styles.css?v=20260717-neutral-labels">
+    <link rel="stylesheet" href="/styles.css?v=20260717-other-threshold">
   </head>
   <body>
     <main class="shell shell-playlist">
@@ -16,7 +16,7 @@
           </div>
           <div class="mast-actions">
             <div class="mast-buttons">
-              <a class="lang-toggle" href="/index.html" data-i18n="pl.nav.single">单曲</a>
+              <a class="lang-toggle" href="/index" data-i18n="pl.nav.single">单曲</a>
               <button type="button" class="lang-toggle" id="langToggle" data-i18n="lang.toggle">EN</button>
             </div>
             <div class="status-pill" id="statusPill" data-i18n="pl.status.waiting">等待输入</div>
@@ -70,6 +70,21 @@
             </figure>
           </div>
         </article>
+
+        <div class="breakdown-row" id="breakdownRow" hidden>
+          <article class="panel breakdown-panel" id="genreBreakdownPanel">
+            <div class="panel-head">
+              <h3 data-i18n="pl.breakdown.genre">曲风构成</h3>
+            </div>
+            <div class="breakdown-list" id="genreBreakdownList"></div>
+          </article>
+          <article class="panel breakdown-panel" id="moodBreakdownPanel">
+            <div class="panel-head">
+              <h3 data-i18n="pl.breakdown.mood">情绪构成</h3>
+            </div>
+            <div class="breakdown-list" id="moodBreakdownList"></div>
+          </article>
+        </div>
 
         <article class="panel playlist-panel">
           <div class="panel-head">
@@ -150,6 +165,6 @@
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
     <script src="/genre-core.js"></script>
-    <script src="/playlist.js?v=20260717-neutral-labels"></script>
+    <script src="/playlist.js?v=20260717-other-threshold"></script>
   </body>
 </html>

@@ -22,6 +22,11 @@ const mosaicCaption = document.querySelector("#mosaicCaption");
 const mosaicStage = document.querySelector("#mosaicStage");
 const trackList = document.querySelector("#trackList");
 const trackCount = document.querySelector("#trackCount");
+const breakdownRow = document.querySelector("#breakdownRow");
+const genreBreakdownPanel = document.querySelector("#genreBreakdownPanel");
+const genreBreakdownList = document.querySelector("#genreBreakdownList");
+const moodBreakdownPanel = document.querySelector("#moodBreakdownPanel");
+const moodBreakdownList = document.querySelector("#moodBreakdownList");
 const trackCardTemplate = document.querySelector("#trackCardTemplate");
 const shareMosaicBtn = document.querySelector("#shareMosaic");
 const sharePreview = document.querySelector("#sharePreview");
@@ -56,6 +61,14 @@ const OTHER_GENRE_COLOR = "#6b6e64";
 // playlist spreads across many styles.
 const OTHER_STYLE_THRESHOLD = 2;
 const MAX_STYLES_PER_GENRE = 6;
+// Within the aggregated "其他" parent, every child style is already small in
+// absolute terms (it comes from a genre that was itself < OTHER_GENRE_THRESHOLD),
+// so the absolute OTHER_STYLE_THRESHOLD would reject everything. Instead apply a
+// relative-to-parent threshold: a child must claim at least this fraction of the
+// "其他" block to earn its own tile; the rest are folded into the lead tile via
+// rescaling. 10% of parent lines up with the absolute 2% threshold when the
+// "其他" block is ~20% of the playlist.
+const OTHER_STYLE_REL_THRESHOLD = 0.1;
 
 const MOOD_AXES = [
   { key: "mood_happy", zh: "明快", en: "Bright", icon: "☀️" },
@@ -223,6 +236,8 @@ const I18N = {
     "pl.share.busy": "生成中…",
     "pl.share.error": "分享生成失败",
     "pl.tracks.title": "逐曲曲风占比",
+    "pl.breakdown.genre": "曲风构成",
+    "pl.breakdown.mood": "情绪构成",
     "pl.preview.title": "占比矩阵已生成",
     "pl.preview.close": "关闭占比矩阵预览",
     "pl.preview.alt": "Genre Lab 占比矩阵图片",
@@ -317,6 +332,8 @@ const I18N = {
     "pl.share.busy": "Generating…",
     "pl.share.error": "Failed to generate image",
     "pl.tracks.title": "Per-track genre share",
+    "pl.breakdown.genre": "Genre breakdown",
+    "pl.breakdown.mood": "Mood breakdown",
     "pl.preview.title": "Mosaic ready",
     "pl.preview.close": "Close mosaic preview",
     "pl.preview.alt": "Genre Lab mosaic image",
@@ -870,23 +887,26 @@ function buildTwoLevel(compositions, tracks = []) {
 }
 
 // Within one parent genre, keep at most MAX_STYLES_PER_GENRE styles that also
-// clear OTHER_STYLE_THRESHOLD and DROP the long-tail rest entirely — folding
-// them into an "其他" tile would be misleading, since the sum of many tiny
-// styles often outweighs every real style and dominates the chart. The kept
-// styles are then rescaled so their shares again sum to the parent genre's
-// total, keeping the parent area honest while the mosaic tiles / sunburst arc
-// fill it exactly. Always keeps at least the top style.
+// clear OTHER_STYLE_THRESHOLD and drop the long-tail rest entirely — they get
+// absorbed proportionally into the kept tiles via rescaling so the parent area
+// is still filled honestly in the mosaic. Always keeps at least the top style.
 //
-// The "其他" genre is itself an aggregate of long-tail genres, so each of its
-// styles is tiny in absolute terms and would all fail OTHER_STYLE_THRESHOLD,
-// leaving it with a single tile even when "其他" is large. For it we skip the
-// absolute threshold and just keep the top MAX_STYLES_PER_GENRE styles.
+// The "其他" parent is itself an aggregate of long-tail genres, so each of its
+// children is already tiny in absolute terms and would all fail the 2% absolute
+// threshold, leaving a single tile even when "其他" is large. For it we apply
+// a relative-to-parent threshold (>= OTHER_STYLE_REL_THRESHOLD of the "其他"
+// block's total share) while still capping at MAX_STYLES_PER_GENRE.
 function foldGenreStyles(styles, isOther = false) {
   const sorted = [...styles].sort((a, b) => b.percent - a.percent);
   const originalTotal = sorted.reduce((sum, style) => sum + style.percent, 0);
-  let kept = isOther
-    ? sorted.slice(0, MAX_STYLES_PER_GENRE)
-    : sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  let kept;
+  if (isOther) {
+    const minShare = originalTotal * OTHER_STYLE_REL_THRESHOLD;
+    kept = sorted
+      .filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= minShare);
+  } else {
+    kept = sorted.filter((style, i) => i < MAX_STYLES_PER_GENRE && style.percent >= OTHER_STYLE_THRESHOLD);
+  }
   if (!kept.length) kept = sorted.slice(0, 1);
   const keptTotal = kept.reduce((sum, style) => sum + style.percent, 0) || 1;
   const scale = originalTotal / keptTotal;
@@ -1018,6 +1038,50 @@ function foldMoodStyles(tags, axisPercent) {
   return kept.map(t => ({ ...t, percent: t.percent * scale }));
 }
 
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderBreakdownPanel(listEl, twoLevel) {
+  if (!twoLevel || !twoLevel.length) {
+    listEl.innerHTML = "";
+    return false;
+  }
+  const maxParent = Math.max(...twoLevel.map(g => g.percent), 1);
+  const html = twoLevel.map(parent => {
+    const pct = Math.round(parent.percent);
+    const color = parent.color || "#6b6e64";
+    const barW = Math.max(2, (parent.percent / maxParent) * 100);
+    const children = (parent.styles || [])
+      .filter(s => !(s.name && s.name.startsWith("__")) && s.name !== parent.name);
+    const chips = children.length
+      ? `<div class="breakdown-chips">${children.map(c => `<span class="breakdown-chip" style="--c:${color}">${escapeHtml(c.label)} <em>${Math.round(c.percent)}%</em></span>`).join("")}</div>`
+      : "";
+    return `<div class="breakdown-item">
+      <div class="breakdown-item-head">
+        <span class="breakdown-dot" style="background:${color}"></span>
+        <span class="breakdown-item-name">${escapeHtml(parent.label)}</span>
+        <span class="breakdown-item-pct">${pct}%</span>
+      </div>
+      <div class="breakdown-item-bar"><span style="width:${barW}%;background:${color}"></span></div>
+      ${chips}
+    </div>`;
+  }).join("");
+  listEl.innerHTML = html;
+  return true;
+}
+
+function renderBreakdowns() {
+  const hasGenre = renderBreakdownPanel(genreBreakdownList, lastGenreTwoLevel);
+  const hasMood = renderBreakdownPanel(moodBreakdownList, lastMoodTwoLevel);
+  breakdownRow.hidden = !(hasGenre || hasMood);
+}
+
 function renderAggregate(compositions, dimensionsList) {
   lastCompositions = compositions;
   lastDimensions = dimensionsList || [];
@@ -1034,6 +1098,7 @@ function renderAggregate(compositions, dimensionsList) {
   } else if (hasAny) {
     showMosaic(currentMosaicView);
   }
+  renderBreakdowns();
 }
 
 function showMosaic(view) {
@@ -1333,6 +1398,9 @@ function resetPlaylistView() {
   resetProgress();
   trackList.innerHTML = "";
   mosaicStage.innerHTML = "";
+  genreBreakdownList.innerHTML = "";
+  moodBreakdownList.innerHTML = "";
+  breakdownRow.hidden = true;
   genreTwoLevel.hidden = true;
   twoLevelShown = false;
   lastCompositions = null;

@@ -2210,6 +2210,83 @@ async function handlePlaylistStatus(req, res, url) {
   });
 }
 
+function getPlaylistJobFiles() {
+  fs.mkdirSync(PLAYLIST_JOBS_DIR, { recursive: true });
+  const files = fs.readdirSync(PLAYLIST_JOBS_DIR);
+  const jobFiles = [];
+  for (const file of files) {
+    if (!file.endsWith(".json")) continue;
+    const filePath = path.join(PLAYLIST_JOBS_DIR, file);
+    try {
+      const stat = fs.statSync(filePath);
+      jobFiles.push({
+        file,
+        filePath,
+        jobId: file.replace(/\.json$/, ""),
+        mtimeMs: stat.mtimeMs
+      });
+    } catch (error) {
+      console.warn(`无法读取任务文件状态 ${file}: ${error.message}`);
+    }
+  }
+  jobFiles.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return jobFiles;
+}
+
+function readPlaylistJobMeta(filePath, fallbackJobId) {
+  try {
+    const job = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return {
+      jobId: job.jobId || fallbackJobId,
+      name: job.name || "未命名歌单",
+      state: job.state || "unknown",
+      total: job.total || 0,
+      completed: job.completed || 0,
+      ok: job.ok || 0,
+      createdAt: job.createdAt || 0,
+      updatedAt: job.updatedAt || 0,
+      coverImgUrl: job.coverImgUrl || "",
+      creator: job.creator || "",
+      modelName: job.modelName || GENRE_MODEL_NAME
+    };
+  } catch (error) {
+    console.warn(`无法读取任务文件 ${filePath}: ${error.message}`);
+    return null;
+  }
+}
+
+function handleListPlaylistJobs(req, res) {
+  try {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get("pageSize")) || 20));
+    const allJobFiles = getPlaylistJobFiles();
+    const total = allJobFiles.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const start = (currentPage - 1) * pageSize;
+    const pageFiles = allJobFiles.slice(start, start + pageSize);
+    const jobs = [];
+    for (const f of pageFiles) {
+      const meta = readPlaylistJobMeta(f.filePath, f.jobId);
+      if (meta) jobs.push(meta);
+    }
+    sendJson(res, 200, {
+      jobs,
+      pagination: {
+        page: currentPage,
+        pageSize,
+        total,
+        totalPages,
+        hasPrev: currentPage > 1,
+        hasNext: currentPage < totalPages
+      }
+    });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
 async function handleCoverImage(req, res, url) {
   try {
     const raw = url.searchParams.get("url") || "";
@@ -2237,6 +2314,15 @@ function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === "/") pathname = "/index.html";
+
+  const PAGE_ALIASES = {
+    "/index": "/index.html",
+    "/playlist": "/playlist.html",
+    "/manage": "/manage.html"
+  };
+  if (PAGE_ALIASES[pathname]) {
+    pathname = PAGE_ALIASES[pathname];
+  }
 
   // Per-model config files. taxonomy is a per-model JSON config under
   // data/<model>/. The frontend requests it as a JS global and may pass
@@ -2290,10 +2376,10 @@ function serveStatic(req, res) {
   }
 
   const baseDir = pathname.startsWith("/downloads/") ? DOWNLOAD_DIR : PUBLIC_DIR;
-  const relativePath = pathname.startsWith("/downloads/")
+  let relativePath = pathname.startsWith("/downloads/")
     ? pathname.replace(/^\/downloads\//, "")
     : pathname.replace(/^\//, "");
-  const filePath = path.normalize(path.join(baseDir, relativePath));
+  let filePath = path.normalize(path.join(baseDir, relativePath));
 
   if (!filePath.startsWith(baseDir)) {
     res.writeHead(403);
@@ -2301,21 +2387,43 @@ function serveStatic(req, res) {
     return;
   }
 
-  fs.readFile(filePath, (error, data) => {
-    if (error) {
+  const tryServeFile = (targetPath, callback) => {
+    fs.readFile(targetPath, (error, data) => {
+      if (!error) {
+        const ext = path.extname(targetPath).toLowerCase();
+        const headers = {
+          "content-type": MIME[ext] || "application/octet-stream"
+        };
+        if ([".html", ".css", ".js"].includes(ext)) {
+          headers["cache-control"] = "no-cache, must-revalidate";
+        }
+        res.writeHead(200, headers);
+        res.end(data);
+        return;
+      }
+      callback();
+    });
+  };
+
+  tryServeFile(filePath, () => {
+    if (pathname.startsWith("/downloads/")) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
       res.end("Not found");
       return;
     }
     const ext = path.extname(filePath).toLowerCase();
-    const headers = {
-      "content-type": MIME[ext] || "application/octet-stream"
-    };
-    if ([".html", ".css", ".js"].includes(ext)) {
-      headers["cache-control"] = "no-cache, must-revalidate";
+    if (!ext) {
+      const htmlPath = filePath + ".html";
+      if (htmlPath.startsWith(baseDir)) {
+        tryServeFile(htmlPath, () => {
+          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+          res.end("Not found");
+        });
+        return;
+      }
     }
-    res.writeHead(200, headers);
-    res.end(data);
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("Not found");
   });
 }
 
@@ -2374,6 +2482,10 @@ const server = http.createServer((req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.pathname === "/api/analyze-playlist/status") {
       handlePlaylistStatus(req, res, url).catch(error => sendJson(res, 500, { error: error.message }));
+      return;
+    }
+    if (url.pathname === "/api/playlist-jobs") {
+      handleListPlaylistJobs(req, res);
       return;
     }
     if (url.pathname === "/api/cover-image") {
