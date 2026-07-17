@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab</title>
-    <link rel="stylesheet" href="/styles.css?v=20260715-share-preview-center">
+    <link rel="stylesheet" href="/styles.css?v=20260717-inst-bar-style">
   </head>
   <body>
     <main class="shell">
@@ -103,6 +103,24 @@
           <div class="score-list" id="scoreList"></div>
         </article>
 
+        <article class="panel mood-panel" id="moodPanel" hidden>
+          <div class="panel-head">
+            <h3 data-i18n="dim.moodProfile">情绪画像</h3>
+            <span id="moodState"></span>
+          </div>
+          <div class="mood-radar-wrap">
+            <svg id="moodRadar" viewBox="0 0 320 310" class="mood-radar" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+        </article>
+
+        <article class="panel inst-panel" id="instPanel" hidden>
+          <div class="panel-head">
+            <h3 data-i18n="dim.instrument">乐器识别</h3>
+            <span id="instState"></span>
+          </div>
+          <div class="instrument-list" id="instrumentList"></div>
+        </article>
+
         <article class="panel">
           <div class="panel-head">
             <h3 data-i18n="panel.audio">音频特征</h3>
@@ -176,6 +194,6 @@
 
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
-    <script src="/app.js?v=20260714-share-preview"></script>
+    <script src="/app.js?v=20260717-dim-split"></script>
   </body>
 </html>

@@ -3,7 +3,7 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 // The DOM-free genre scoring core is shared with the playlist frontend. The
 // aggregate playlist job scores every track server-side instead of relaying
 // raw Essentia/metadata payloads back to the browser. The module assigns to
@@ -1753,10 +1753,8 @@ let essentiaWorker = null;
 let essentiaQueue = Promise.resolve();
 let essentiaRequestId = 0;
 
-function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
-  const run = essentiaQueue.then(() => runEssentiaOnWorker(filePath, top, modelName));
-  // Keep the chain alive regardless of this run's outcome so a failure doesn't
-  // wedge the queue for everyone behind it.
+function analyzeWithEssentia(filePath, top = 12, modelName = GENRE_MODEL_NAME, includeDims = false) {
+  const run = essentiaQueue.then(() => runEssentiaOnWorker(filePath, top, modelName, includeDims));
   essentiaQueue = run.then(() => {}, () => {});
   return run;
 }
@@ -1840,7 +1838,7 @@ function startEssentiaWorker() {
   return worker;
 }
 
-function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
+function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME, includeDims = false) {
   return new Promise((resolve, reject) => {
     let worker;
     try {
@@ -1851,21 +1849,17 @@ function runEssentiaOnWorker(filePath, top = 12, modelName = GENRE_MODEL_NAME) {
       reject(error);
       return;
     }
-    // A request is arriving: cancel any pending idle shutdown so the worker
-    // isn't killed out from under us.
     clearTimeout(worker.idleTimer);
     const id = ++essentiaRequestId;
     const timer = setTimeout(() => {
-      // The worker processes one request at a time, so a stuck request means
-      // the whole worker is wedged: kill it and let the next call respawn.
       clearTimeout(worker.idleTimer);
       if (essentiaWorker === worker) essentiaWorker = null;
       worker.current = null;
       try { worker.child.kill("SIGTERM"); } catch (error) { void error; }
-      reject(new Error("Essentia 曲风分析超时。"));
+      reject(new Error("Essentia 分析超时。"));
     }, ESSENTIA_REQUEST_TIMEOUT);
     worker.current = { id, resolve, reject, timer };
-    const payload = JSON.stringify({ id, audio: filePath, top, model: modelName }) + "\n";
+    const payload = JSON.stringify({ id, audio: filePath, top, model: modelName, includeDimensions: includeDims }) + "\n";
     try {
       worker.child.stdin.write(payload);
     } catch (error) {
@@ -1889,7 +1883,13 @@ async function handleEssentia(req, res) {
       return;
     }
     cleanupPath = filePath;
-    const result = await analyzeWithEssentia(filePath, Math.max(1, Math.min(30, Number(body.top || 12))), modelName);
+    const includeDims = body.includeDimensions !== false;
+    const result = await analyzeWithEssentia(
+      filePath,
+      Math.max(1, Math.min(30, Number(body.top || 12))),
+      modelName,
+      includeDims
+    );
     const deletedAudio = await deleteLocalAudio(filePath);
     cleanupPath = "";
     sendJson(res, 200, {
@@ -2384,7 +2384,32 @@ const server = http.createServer((req, res) => {
   sendJson(res, 405, { error: "Method not allowed" });
 });
 
+function findProcessOnPort(port) {
+  try {
+    const output = execSync(`lsof -ti:${port}`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return output || "";
+  } catch {
+    return "";
+  }
+}
+
 if (require.main === module) {
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
+      const pid = findProcessOnPort(PORT);
+      console.error(`\n  错误: 端口 ${PORT} 已被占用。`);
+      if (pid) {
+        console.error(`  占用进程 PID: ${pid}`);
+        console.error(`  可运行: kill ${pid}  来结束该进程后重试\n`);
+      } else {
+        console.error(`  请检查是否有其他程序在使用该端口，或设置 PORT 环境变量使用其他端口。\n`);
+      }
+      process.exit(1);
+    }
+    console.error("服务器启动失败:", error.message);
+    process.exit(1);
+  });
+
   server.listen(PORT, HOST, () => {
     console.log(`Genre Lab running at http://${HOST}:${PORT}`);
   });

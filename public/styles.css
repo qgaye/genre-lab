@@ -1981,15 +1981,18 @@ a.lang-toggle {
   .actions,
   .feature-grid,
   .score-row,
+  .inst-row,
   .progress-steps {
     grid-template-columns: 1fr;
   }
 
-  .score-row b {
+  .score-row b,
+  .inst-score {
     text-align: left;
   }
 
-  .score-row .bar {
+  .score-row .bar,
+  .inst-bar {
     order: 3;
   }
 
@@ -2178,3 +2181,94 @@ a.lang-toggle {
     font-size: clamp(28px, 8.6vw, 38px);
   }
 }
+
+.mood-radar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.mood-panel {
+  min-height: auto;
+}
+
+.mood-radar {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  display: block;
+}
+
+.instrument-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.inst-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(120px, 1.35fr) 42px;
+  gap: 12px;
+  align-items: center;
+}
+
+.inst-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-family: var(--condensed);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inst-name .inst-icon {
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.inst-bar {
+  height: 12px;
+  border: 1.5px solid var(--line);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 11px, var(--hairline) 11px 12px),
+    var(--paper-3);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.inst-bar i {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  transition: width 0.4s ease;
+}
+
+.inst-score {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.dim-empty {
+  padding: 24px;
+  color: var(--dim);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .mood-radar {
+    max-width: 300px;
+  }
+}
+

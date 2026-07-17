@@ -39,6 +39,12 @@ const styleDialogHistory = document.querySelector("#styleDialogHistory");
 const styleDialogTrack = document.querySelector("#styleDialogTrack");
 const styleDialogTrackNote = document.querySelector("#styleDialogTrackNote");
 const langToggle = document.querySelector("#langToggle");
+const moodPanel = document.querySelector("#moodPanel");
+const moodState = document.querySelector("#moodState");
+const instPanel = document.querySelector("#instPanel");
+const instState = document.querySelector("#instState");
+const moodRadar = document.querySelector("#moodRadar");
+const instrumentList = document.querySelector("#instrumentList");
 
 // ---------------------------------------------------------------------------
 // i18n: full bilingual UI. LANG is "zh" (default) or "en", persisted in
@@ -100,7 +106,12 @@ const I18N = {
     "verdict.notAnalyzed": "尚未分析",
     "verdict.intro": "输入歌曲信息，并尽量提供音频。只有元信息时会给出“倾向判断”；加入音频后会提升证据质量。",
     "panel.ratio": "各曲风占比",
+    "panel.dimensions": "多维分析",
     "panel.audio": "音频特征",
+    "dim.loading": "分析中…",
+    "dim.done": "已完成",
+    "dim.moodProfile": "情绪画像",
+    "dim.instrument": "乐器识别",
     "audio.notRead": "未读取",
     "panel.evidence": "证据链",
     "dialog.kicker": "Discogs Style",
@@ -303,7 +314,12 @@ const I18N = {
     "verdict.notAnalyzed": "Not analyzed yet",
     "verdict.intro": "Enter track info and provide audio if possible. Metadata alone gives a \u201Ctendency\u201D; adding audio improves evidence quality.",
     "panel.ratio": "Genre breakdown",
+    "panel.dimensions": "Multi-dim analysis",
     "panel.audio": "Audio features",
+    "dim.loading": "Analyzing…",
+    "dim.done": "Done",
+    "dim.moodProfile": "Mood profile",
+    "dim.instrument": "Instruments",
     "audio.notRead": "Not read",
     "panel.evidence": "Evidence chain",
     "dialog.kicker": "Discogs Style",
@@ -489,6 +505,8 @@ let analysisStartedAt = "";
 // i18n key for the audio-diagnostics pill, so it can be re-rendered on language
 // switch. Defaults to the "not read" state.
 let audioStateKey = "audio.notRead";
+let moodStateKey = "dim.loading";
+let instStateKey = "dim.loading";
 // Evidence lines that depend on the active language are stored as builder
 // closures instead of baked strings, so they re-translate when LANG changes.
 let downloadEvidenceBuilder = null;
@@ -1468,6 +1486,7 @@ function analyzeEvidence() {
   renderMix(composition, sorted);
   renderEvidence(evidence, composition);
   renderFeatures(audioFeatures);
+  renderDimensions(essentiaAnalysis);
 
   renderVerdictTrack(track);
   renderVerdictTitle(titleParts);
@@ -1655,6 +1674,173 @@ function renderFeatures(features) {
       });
     }
     featureGrid.appendChild(card);
+  }
+}
+
+function renderDimensions(essentia) {
+  const dims = essentia && essentia.dimensions;
+  const hasMood = dims && dims.mood_radar;
+  const hasInst = dims && dims.mtg_jamendo_instrument;
+
+  if (hasMood) {
+    moodPanel.hidden = false;
+    moodStateKey = "dim.done";
+    moodState.textContent = t(moodStateKey);
+    renderMoodRadar(dims.mood_radar);
+  } else {
+    moodPanel.hidden = true;
+  }
+
+  if (hasInst) {
+    instPanel.hidden = false;
+    instStateKey = "dim.done";
+    instState.textContent = t(instStateKey);
+    renderInstruments(dims.mtg_jamendo_instrument);
+  } else {
+    instPanel.hidden = true;
+  }
+}
+
+function renderMoodRadar(data) {
+  moodRadar.innerHTML = "";
+  const svgns = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    const node = document.createElementNS(svgns, tag);
+    for (const [k, val] of Object.entries(attrs || {})) node.setAttribute(k, val);
+    return node;
+  }
+  const cx = 160, cy = 152, r = 82;
+  const axes = data && Array.isArray(data.axes) ? data.axes : [];
+  const n = 5;
+  const defaultLabels = ["Happy", "Party", "Aggressive", "Sad", "Relaxed"];
+  const labels = axes.length === n
+    ? axes.map(a => LANG === "zh" ? a.label_cn : a.label_en)
+    : defaultLabels;
+  const scores = axes.length === n
+    ? axes.map(a => Math.max(0, Math.min(1, Number(a.score) || 0)))
+    : defaultLabels.map(() => 0);
+
+  const angles = labels.map((_, i) => -Math.PI / 2 + (2 * Math.PI * i) / n);
+
+  for (let ring = 1; ring <= 4; ring++) {
+    const rr = (r * ring) / 4;
+    const points = angles.map(ang => `${cx + Math.cos(ang) * rr},${cy + Math.sin(ang) * rr}`).join(" ");
+    moodRadar.appendChild(el("polygon", { points, fill: "none", stroke: "#e3e6ec", "stroke-width": 1 }));
+  }
+  for (const ang of angles) {
+    moodRadar.appendChild(el("line", {
+      x1: cx, y1: cy,
+      x2: cx + Math.cos(ang) * r, y2: cy + Math.sin(ang) * r,
+      stroke: "#d7dbe3", "stroke-width": 1
+    }));
+  }
+
+  if (scores.some(s => s > 0)) {
+    const points = angles.map((ang, i) => `${cx + Math.cos(ang) * r * scores[i]},${cy + Math.sin(ang) * r * scores[i]}`).join(" ");
+    moodRadar.appendChild(el("polygon", { points, fill: "rgba(31,63,224,0.18)", stroke: "#1f3fe0", "stroke-width": 2 }));
+    angles.forEach((ang, i) => {
+      moodRadar.appendChild(el("circle", {
+        cx: cx + Math.cos(ang) * r * scores[i],
+        cy: cy + Math.sin(ang) * r * scores[i],
+        r: 4, fill: "#1f3fe0", stroke: "#fff", "stroke-width": 1.5
+      }));
+    });
+  }
+
+  angles.forEach((ang, i) => {
+    const lx = cx + Math.cos(ang) * (r + 26);
+    const ly = cy + Math.sin(ang) * (r + 26);
+    const t = el("text", {
+      x: lx, y: ly, "text-anchor": "middle", "dominant-baseline": "middle",
+      fill: "#4a4f5c", "font-size": "12", "font-weight": "600"
+    });
+    t.textContent = labels[i];
+    moodRadar.appendChild(t);
+    if (scores[i] > 0) {
+      const sx = cx + Math.cos(ang) * (r + 46);
+      const sy = cy + Math.sin(ang) * (r + 46);
+      const st = el("text", {
+        x: sx, y: sy, "text-anchor": "middle", "dominant-baseline": "middle",
+        fill: "#1f3fe0", "font-size": "11", "font-weight": "700"
+      });
+      st.textContent = Math.round(scores[i] * 100) + "%";
+      moodRadar.appendChild(st);
+    }
+  });
+
+  if (!scores.some(s => s > 0)) {
+    const t = el("text", { x: cx, y: cy, "text-anchor": "middle", "dominant-baseline": "middle", fill: "#8a8f9b", "font-size": "13" });
+    t.textContent = LANG === "zh" ? "无数据" : "No data";
+    moodRadar.appendChild(t);
+  }
+}
+
+const INSTRUMENT_LABELS = {
+  accordion: { zh: "手风琴", en: "Accordion", icon: "🎵" },
+  acousticbassguitar: { zh: "原声贝斯", en: "Acoustic Bass", icon: "🎸" },
+  acousticguitar: { zh: "原声吉他", en: "Acoustic Guitar", icon: "🎸" },
+  bass: { zh: "贝斯", en: "Bass", icon: "🎸" },
+  beat: { zh: "节拍", en: "Beat", icon: "🥁" },
+  bell: { zh: "铃声", en: "Bell", icon: "🔔" },
+  bongo: { zh: "邦戈鼓", en: "Bongo", icon: "🥁" },
+  brass: { zh: "铜管乐", en: "Brass", icon: "🎺" },
+  cello: { zh: "大提琴", en: "Cello", icon: "🎻" },
+  clarinet: { zh: "单簧管", en: "Clarinet", icon: "🎵" },
+  classicalguitar: { zh: "古典吉他", en: "Classical Guitar", icon: "🎸" },
+  computer: { zh: "电子音效", en: "Computer", icon: "💻" },
+  doublebass: { zh: "低音提琴", en: "Double Bass", icon: "🎻" },
+  drummachine: { zh: "鼓机", en: "Drum Machine", icon: "🥁" },
+  drums: { zh: "鼓", en: "Drums", icon: "🥁" },
+  electricguitar: { zh: "电吉他", en: "Electric Guitar", icon: "🎸" },
+  electricpiano: { zh: "电钢琴", en: "Electric Piano", icon: "🎹" },
+  flute: { zh: "长笛", en: "Flute", icon: "🎶" },
+  guitar: { zh: "吉他", en: "Guitar", icon: "🎸" },
+  harmonica: { zh: "口琴", en: "Harmonica", icon: "🎵" },
+  harp: { zh: "竖琴", en: "Harp", icon: "🎵" },
+  horn: { zh: "圆号", en: "Horn", icon: "📯" },
+  keyboard: { zh: "键盘", en: "Keyboard", icon: "🎹" },
+  oboe: { zh: "双簧管", en: "Oboe", icon: "🎵" },
+  orchestra: { zh: "管弦乐", en: "Orchestra", icon: "🎼" },
+  organ: { zh: "风琴", en: "Organ", icon: "🎹" },
+  pad: { zh: "合成垫音", en: "Synth Pad", icon: "🎛️" },
+  percussion: { zh: "打击乐", en: "Percussion", icon: "🥁" },
+  piano: { zh: "钢琴", en: "Piano", icon: "🎹" },
+  pipeorgan: { zh: "管风琴", en: "Pipe Organ", icon: "🎹" },
+  rhodes: { zh: "罗德钢琴", en: "Rhodes", icon: "🎹" },
+  sampler: { zh: "采样器", en: "Sampler", icon: "🎛️" },
+  saxophone: { zh: "萨克斯", en: "Saxophone", icon: "🎷" },
+  strings: { zh: "弦乐", en: "Strings", icon: "🎻" },
+  synthesizer: { zh: "合成器", en: "Synthesizer", icon: "🎛️" },
+  trombone: { zh: "长号", en: "Trombone", icon: "🎺" },
+  trumpet: { zh: "小号", en: "Trumpet", icon: "🎺" },
+  viola: { zh: "中提琴", en: "Viola", icon: "🎻" },
+  violin: { zh: "小提琴", en: "Violin", icon: "🎻" },
+  voice: { zh: "人声", en: "Voice", icon: "🎤" }
+};
+
+function renderInstruments(data) {
+  instrumentList.innerHTML = "";
+  if (!data || !Array.isArray(data.predictions) || !data.predictions.length) {
+    instrumentList.innerHTML = `<div class="dim-empty">${LANG === "zh" ? "无数据" : "No data"}</div>`;
+    return;
+  }
+  const items = data.predictions.slice(0, 10);
+  const maxScore = Math.max(...items.map(i => Number(i.score) || 0), 0.001);
+  for (const item of items) {
+    const score = Math.max(0, Math.min(1, Number(item.score) || 0));
+    const pct = Math.round(score / maxScore * 100);
+    const rawPct = Math.round(score * 100);
+    const labelMap = INSTRUMENT_LABELS[item.label];
+    const displayName = labelMap ? (LANG === "zh" ? labelMap.zh : labelMap.en) : item.label;
+    const icon = labelMap ? labelMap.icon : "🎵";
+    const row = document.createElement("div");
+    row.className = "inst-row";
+    row.innerHTML = `
+      <span class="inst-name"><span class="inst-icon">${icon}</span>${escapeHtml(displayName)}</span>
+      <span class="inst-bar"><i style="width:${pct}%"></i></span>
+      <span class="inst-score">${rawPct}%</span>
+    `;
+    instrumentList.appendChild(row);
   }
 }
 
@@ -2135,6 +2321,8 @@ form.addEventListener("submit", async event => {
     downloadEvidenceBuilder = null;
     activeTrack = null;
     parseEvidenceBuilder = null;
+    moodPanel.hidden = true;
+    instPanel.hidden = true;
     setProgress("parse", t("progress.parse.input"), 10, t("progress.parse.inputDetail", { fmt: formatLabel() }));
     if (selectedFormat() === "netease-url") {
       await resolveNetEaseSong();
@@ -2206,6 +2394,8 @@ function applyLanguage() {
     el.alt = t(el.dataset.i18nAlt);
   }
   audioState.textContent = t(audioStateKey);
+  moodState.textContent = t(moodStateKey);
+  instState.textContent = t(instStateKey);
   const chosenFile = fileInput.files[0];
   fileName.textContent = chosenFile ? chosenFile.name : t("file.none");
   updateInputPlaceholder();
