@@ -77,7 +77,7 @@ function setView(view, { updateUrl = true } = {}) {
   searchForm.hidden = !isSongs;
   listTitle.textContent = isSongs ? "单曲分析记录" : "分析任务列表";
   manageIntro.textContent = isSongs
-    ? "单曲记录来自 .runtime/analysis-log.ndjson。展开卡片可查看模型、耗时、来源与曲风结果。"
+    ? "单曲记录来自 .runtime/song-analysis-log.ndjson。点击记录可直接恢复完整结果，无需重复计算。"
     : "查看所有历史歌单分析任务，点击可跳转至对应的歌单分析页面。";
   if (updateUrl) {
     const url = new URL(location.href);
@@ -211,8 +211,15 @@ function renderSongs(songs, pag) {
   songs.forEach((song, index) => {
     const card = songCardTemplate.content.firstElementChild.cloneNode(true);
     card.querySelector(".song-log-index").textContent = String((pag.page - 1) * pag.pageSize + index + 1).padStart(2, "0");
-    card.querySelector(".song-log-eyebrow").textContent = [song.inputFormat, song.sourceId ? `#${song.sourceId}` : ""].filter(Boolean).join(" · ") || "单曲分析";
-    card.querySelector(".song-log-title").textContent = song.title || "未识别歌曲";
+    const titleLink = card.querySelector(".song-log-title-link");
+    titleLink.textContent = song.title || "未识别歌曲";
+    if (song.resumable && song.jobId) {
+      titleLink.href = `/index?job=${encodeURIComponent(song.jobId)}`;
+    } else {
+      titleLink.classList.add("is-disabled");
+      titleLink.title = "这条记录未保存完整渲染快照";
+      titleLink.setAttribute("aria-disabled", "true");
+    }
     card.querySelector(".song-log-artist").textContent = song.artists || "未知艺人";
 
     const statusEl = card.querySelector(".song-log-status");
@@ -220,8 +227,6 @@ function renderSongs(songs, pag) {
     statusEl.textContent = stateInfo.text;
     if (stateInfo.className) statusEl.classList.add(stateInfo.className);
 
-    const album = card.querySelector(".song-log-album");
-    album.textContent = song.album ? `专辑 / ${song.album}` : "专辑 / —";
     card.querySelector(".song-log-model").textContent = song.model ? `模型 / ${song.model}` : "模型 / —";
     const time = card.querySelector(".song-log-time");
     time.textContent = formatTime(song.timePoint);
@@ -240,34 +245,22 @@ function renderSongs(songs, pag) {
     }
 
     const details = card.querySelector(".song-detail-grid");
-    addDetail(details, "歌曲", song.title || "未识别");
-    addDetail(details, "艺人", song.artists || "未知");
-    addDetail(details, "专辑", song.album || "未知");
-    addDetail(details, "来源 ID", song.sourceId || "—");
+    addDetail(details, "分析 ID", song.jobId || "—");
     addDetail(details, "输入类型", song.inputFormat || "—");
-    addDetail(details, "曲风模型", song.model || "—");
     addDetail(details, "音频来源", song.audioSource || "—");
     addDetail(details, "音频处理", formatDuration(song.audioElapsedSeconds));
     addDetail(details, "模型分析", formatDuration(song.essentiaElapsedSeconds));
-    addDetail(details, "候选数量", `${song.predictionCount || 0} 项`);
-    const deviceLabel = [song.device && song.device.os, song.device && song.device.browser, song.device && song.device.formFactor]
-      .filter(Boolean).join(" / ");
-    addDetail(details, "分析设备", deviceLabel || "—");
-
-    const predictionBox = card.querySelector(".song-predictions");
-    const predictionList = predictionBox.querySelector("ol");
-    for (const prediction of song.predictions || []) {
-      const item = document.createElement("li");
-      const score = prediction.score == null ? "" : ` ${Math.round(prediction.score * 100)}%`;
-      item.textContent = `${prediction.display}${score}`;
-      predictionList.appendChild(item);
-    }
-    predictionBox.hidden = !predictionList.childElementCount;
+    if (song.album) addDetail(details, "专辑", song.album);
 
     const error = card.querySelector(".song-log-error");
     if (song.error) {
       error.textContent = `错误：${song.error}`;
       error.hidden = false;
+    }
+    const resultLink = card.querySelector(".song-result-link");
+    if (song.resumable && song.jobId) {
+      resultLink.href = `/index?job=${encodeURIComponent(song.jobId)}`;
+      resultLink.hidden = false;
     }
     const sourceLink = card.querySelector(".song-source-link");
     if (song.sourceUrl) {

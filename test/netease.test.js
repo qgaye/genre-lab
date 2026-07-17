@@ -1,5 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const {
   candidateMatchScore,
@@ -8,9 +11,11 @@ const {
   extractNetEaseSongId,
   extractQQMusicSongMid,
   extractSpotifyTrackId,
+  findSongAnalysisRecord,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
+  readAnalysisLogRecords,
   selectSearchSources,
   sourceSearchQuery,
   summarizeAnalysisLogEntry
@@ -18,6 +23,8 @@ const {
 
 test("summarizes analysis logs without exposing request-private fields", () => {
   const summary = summarizeAnalysisLogEntry({
+    jobId: "summaryjob123",
+    schemaVersion: 2,
     timePoint: "2026-07-17T08:00:00.000Z",
     ip: "203.0.113.4",
     userAgent: "private-agent",
@@ -44,21 +51,133 @@ test("summarizes analysis logs without exposing request-private fields", () => {
   assert.equal("raw" in summary, false);
 });
 
-test("reads verdict data from legacy clientPayload analysis logs", () => {
+test("marks snapshot-backed song analysis logs as resumable by job id", () => {
   const summary = summarizeAnalysisLogEntry({
+    jobId: "songjob123",
+    schemaVersion: 2,
     timePoint: "2026-07-17T08:00:00.000Z",
-    parsedTrack: { title: "Legacy" },
-    essentia: {
-      predictions: [{ display: "Electronic / House", score: 0.81 }]
+    parsedTrack: {
+      title: "Snapshot Song",
+      artists: "Snapshot Artist",
+      sourceUrl: "https://music.example/song"
     },
+    audioDownload: { success: true },
+    essentia: { success: true, modelKey: "discogs400", predictionCount: 2 },
+    verdict: { genres: [{ name: "House", percent: 64 }] },
     workflow: { allSucceeded: true },
-    clientPayload: {
-      verdict: { genres: [{ name: "Electronic", percent: 81 }] }
+    renderState: {
+      version: 1,
+      track: { title: "Snapshot Song", artists: "Snapshot Artist" },
+      scoreItems: [{ name: "House", score: 64, reasons: [] }],
+      composition: [{ name: "House", percent: 64, color: "#3454e6" }]
     }
   });
 
-  assert.deepEqual(summary.genres, [{ name: "Electronic", percent: 81 }]);
-  assert.deepEqual(summary.predictions, [{ display: "Electronic / House", score: 0.81 }]);
+  assert.equal(summary.id, "songjob123");
+  assert.equal(summary.jobId, "songjob123");
+  assert.equal(summary.resumable, true);
+  assert.equal(summary.status, "done");
+});
+
+test("finds sanitized snapshot song records without private request fields", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "genre-lab-log-"));
+  const file = path.join(dir, "song-analysis-log.ndjson");
+  const entries = [
+    "{bad json",
+    JSON.stringify({
+      jobId: "privatejob123",
+      schemaVersion: 2,
+      timePoint: "2026-07-17T08:00:00.000Z",
+      ip: "203.0.113.4",
+      userAgent: "private-agent",
+      input: { format: "link", formatLabel: "链接", raw: "secret pasted text" },
+      parsedTrack: {
+        title: "Stored Song",
+        artists: "Stored Artist",
+        sourceUrl: "https://music.example/song"
+      },
+      metadata: { title: "Stored Song", artists: ["Stored Artist"] },
+      audioFeatures: { tempo: 124 },
+      audioDownload: {
+        success: true,
+        method: "yt-dlp",
+        sourcePlatform: "youtube",
+        fileName: "/private/download.m4a",
+        audioUrl: "blob:private"
+      },
+      essentia: {
+        success: true,
+        modelKey: "discogs400",
+        predictions: [{ display: "Electronic / House", score: 0.72 }]
+      },
+      verdict: { genres: [{ name: "House", percent: 72 }] },
+      workflow: { allSucceeded: true },
+      renderState: {
+        version: 1,
+        modelKey: "discogs400",
+        track: { title: "Stored Song", artists: "Stored Artist" },
+        scoreItems: [{ name: "House", score: 72, reasons: [] }],
+        composition: [{ name: "House", percent: 72, color: "#3454e6" }]
+      }
+    })
+  ];
+  fs.writeFileSync(file, `${entries.join("\n")}\n`);
+
+  const record = findSongAnalysisRecord("privatejob123", file);
+
+  assert.equal(record.jobId, "privatejob123");
+  assert.equal(record.resumable, true);
+  assert.deepEqual(record.input, { format: "link", formatLabel: "链接" });
+  assert.equal(record.audioDownload.sourcePlatform, "youtube");
+  assert.equal("ip" in record, false);
+  assert.equal("userAgent" in record, false);
+  assert.equal("raw" in record.input, false);
+  assert.equal("fileName" in record.audioDownload, false);
+  assert.equal("audioUrl" in record.audioDownload, false);
+});
+
+test("deduplicates song analysis log list by latest job id and ignores old log shapes", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "genre-lab-log-"));
+  const file = path.join(dir, "song-analysis-log.ndjson");
+  fs.writeFileSync(file, [
+    JSON.stringify({
+      jobId: "repeatjob123",
+      timePoint: "2026-07-17T09:00:00.000Z",
+      parsedTrack: { title: "Old Retry" },
+      workflow: { allSucceeded: true },
+      renderState: {
+        version: 1,
+        track: { title: "Old Retry" },
+        scoreItems: [],
+        composition: []
+      }
+    }),
+    JSON.stringify({
+      jobId: "repeatjob123",
+      timePoint: "2026-07-17T09:00:00.000Z",
+      parsedTrack: { title: "Latest Retry" },
+      workflow: { allSucceeded: true },
+      renderState: {
+        version: 1,
+        track: { title: "Latest Retry" },
+        scoreItems: [],
+        composition: []
+      }
+    }),
+    JSON.stringify({
+      timePoint: "2026-07-17T10:00:00.000Z",
+      parsedTrack: { title: "Old Shape Song" },
+      workflow: { allSucceeded: true }
+    })
+  ].join("\n"));
+
+  const { records, malformed } = readAnalysisLogRecords(file);
+  const retry = records.find(record => record.jobId === "repeatjob123");
+
+  assert.equal(records.filter(record => record.jobId === "repeatjob123").length, 1);
+  assert.equal(retry.title, "Latest Retry");
+  assert.equal(records.some(record => record.title === "Old Shape Song"), false);
+  assert.equal(malformed, 1);
 });
 
 test("extracts the short link from a NetEase share sentence", () => {

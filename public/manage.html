@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 分析管理</title>
-    <link rel="stylesheet" href="/styles.css?v=20260717-song-manage">
+    <link rel="stylesheet" href="/styles.css?v=20260717-song-compact">
   </head>
   <body>
     <main class="shell shell-manage">
@@ -95,36 +95,33 @@
 
     <template id="songCardTemplate">
       <article class="song-log-card">
-        <div class="song-log-index" aria-hidden="true"></div>
+        <div class="song-log-strip">
+          <span class="song-log-index" aria-hidden="true"></span>
+          <span class="job-status song-log-status"></span>
+        </div>
         <div class="song-log-main">
           <div class="song-log-head">
             <div class="song-log-title-wrap">
-              <p class="song-log-eyebrow"></p>
-              <h4 class="song-log-title"></h4>
+              <h4 class="song-log-title"><a class="song-log-title-link"></a></h4>
               <p class="song-log-artist"></p>
             </div>
-            <span class="job-status song-log-status"></span>
           </div>
           <div class="song-log-facts">
-            <span class="song-log-album"></span>
             <span class="song-log-model"></span>
             <time class="song-log-time"></time>
           </div>
           <div class="song-log-genres"></div>
           <details class="song-log-details">
-            <summary>查看分析信息</summary>
+            <summary>详情</summary>
             <dl class="song-detail-grid"></dl>
-            <div class="song-predictions" hidden>
-              <p>模型候选</p>
-              <ol></ol>
-            </div>
             <p class="song-log-error" hidden></p>
+            <a class="song-result-link" hidden>打开完整分析 ↗</a>
             <a class="song-source-link" target="_blank" rel="noreferrer" hidden>打开歌曲来源 ↗</a>
           </details>
         </div>
       </article>
     </template>
 
-    <script src="/manage.js?v=20260717-song-manage"></script>
+    <script src="/manage.js?v=20260717-song-compact"></script>
   </body>
 </html>

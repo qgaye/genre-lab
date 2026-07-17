@@ -132,6 +132,10 @@ const I18N = {
     "status.metadata": "查元信息",
     "status.metadataDone": "元信息完成",
     "status.analyzeDone": "分析完成",
+    "status.restoring": "加载历史分析",
+    "status.restored": "历史分析已恢复",
+    "status.restoreFailed": "历史分析不可用",
+    "status.restoreNotFound": "没有找到这条历史分析，可能已被清理或尚未保存完成",
     "status.failed": "失败",
     "status.parsePlatform": "解析{platform}",
     "status.platformDone": "{platform}完成",
@@ -173,6 +177,8 @@ const I18N = {
     "progress.score.fuseDetail": "合并 Essentia、艺人、标签与专辑证据",
     "progress.score.done": "分析完成",
     "progress.score.doneDetail": "结果已生成",
+    "progress.restored": "已恢复历史结果",
+    "progress.restoredDetail": "直接使用已保存的渲染快照，未重新分析",
     "progress.score.fail": "分析失败",
     "parsed.willParseLink": "将解析{platform}歌曲链接，再搜索对应公开音频",
     "parsed.willParseFmt": "将按“{fmt}”解析并搜索对应公开音频",
@@ -341,6 +347,10 @@ const I18N = {
     "status.metadata": "Fetching metadata",
     "status.metadataDone": "Metadata ready",
     "status.analyzeDone": "Analysis complete",
+    "status.restoring": "Loading saved analysis",
+    "status.restored": "Saved analysis restored",
+    "status.restoreFailed": "Saved analysis unavailable",
+    "status.restoreNotFound": "Saved analysis not found. It may have been cleared or not saved yet",
     "status.failed": "Failed",
     "status.parsePlatform": "Parsing {platform}",
     "status.platformDone": "{platform} ready",
@@ -382,6 +392,8 @@ const I18N = {
     "progress.score.fuseDetail": "Merging Essentia, artist, tag and album evidence",
     "progress.score.done": "Analysis complete",
     "progress.score.doneDetail": "Result generated",
+    "progress.restored": "Saved result restored",
+    "progress.restoredDetail": "Rendered from the saved snapshot without re-analysis",
     "progress.score.fail": "Analysis failed",
     "parsed.willParseLink": "Will parse the {platform} track link, then search public audio",
     "parsed.willParseFmt": "Will parse as \u201C{fmt}\u201D and search public audio",
@@ -505,6 +517,10 @@ let essentiaElapsedSeconds = null;
 let audioDownloadLog = null;
 let scoreCompleted = false;
 let analysisStartedAt = "";
+let activeAnalysisJobId = "";
+let lastRenderState = null;
+let isRestoredAnalysis = false;
+let restoredAnalysisRecord = null;
 // i18n key for the audio-diagnostics pill, so it can be re-rendered on language
 // switch. Defaults to the "not read" state.
 let audioStateKey = "audio.notRead";
@@ -756,7 +772,7 @@ async function initModelSelector() {
   });
 }
 
-initModelSelector();
+const modelSelectorReady = initModelSelector();
 
 function uniqueCandidates(candidates) {
   return uniqueBy(candidates, item => `${item.genre}---${item.style || ""}`);
@@ -951,6 +967,21 @@ function currentTrack() {
   return activeTrack || parseTrackInput(trackInput.value);
 }
 
+function createAnalysisJobId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return window.crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  }
+  const random = Math.random().toString(16).slice(2, 10);
+  return `${Date.now().toString(16)}${random}`.slice(0, 20);
+}
+
+function updateAnalysisJobUrl(jobId) {
+  const url = new URL(window.location.href);
+  if (jobId) url.searchParams.set("job", jobId);
+  else url.searchParams.delete("job");
+  window.history.replaceState(null, "", url);
+}
+
 function inputTrack() {
   return parseTrackInput(trackInput.value);
 }
@@ -1000,6 +1031,23 @@ async function postJson(url, body) {
   return data;
 }
 
+async function readJsonResponse(response, fallbackError, options = {}) {
+  const text = await response.text();
+  let data = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { error: text };
+    }
+  }
+  if (!response.ok) {
+    const preferFallback = options.preferFallbackOn404 && response.status === 404;
+    throw new Error(preferFallback ? fallbackError : data.error || fallbackError || t("err.requestFailed"));
+  }
+  return data;
+}
+
 async function uploadAudioFile(file) {
   const response = await fetch("/api/upload-audio", {
     method: "POST",
@@ -1033,6 +1081,10 @@ function verdictForLog() {
     : [];
   return {
     success: Boolean(lastVerdict),
+    track: lastVerdict && lastVerdict.track ? lastVerdict.track : null,
+    titleParts: lastVerdict && Array.isArray(lastVerdict.titleParts) ? lastVerdict.titleParts : [],
+    composition,
+    reason: lastVerdict ? lastVerdict.reason || "" : "",
     genres: composition.map((item, index) => ({
       rank: index + 1,
       name: item.name,
@@ -1060,7 +1112,13 @@ function workflowNodesForLog(workflowSucceeded, workflowError) {
 
 function buildAnalysisLogPayload(workflowSucceeded, workflowError = "") {
   const track = currentTrack();
+  const predictions = essentiaAnalysis && Array.isArray(essentiaAnalysis.predictions)
+    ? essentiaAnalysis.predictions
+    : [];
   return {
+    jobId: activeAnalysisJobId || createAnalysisJobId(),
+    modelName: activeModel,
+    language: LANG,
     timePoint: analysisStartedAt || new Date().toISOString(),
     completedAt: new Date().toISOString(),
     input: {
@@ -1075,31 +1133,35 @@ function buildAnalysisLogPayload(workflowSucceeded, workflowError = "") {
       sourceId: track.sourceId || "",
       sourceUrl: track.sourceUrl || track.url || track.raw || ""
     },
-    metadata: {
-      success: Boolean(metadata),
-      elapsedSeconds: metadataElapsedSeconds
-    },
+    metadata: metadata || null,
     audioDownload: audioDownloadLog || {
       success: false,
       elapsedSeconds: downloadElapsedSeconds,
       error: workflowError || ""
     },
+    audioFeatures: audioFeatures || null,
     essentia: {
-      success: Boolean(essentiaAnalysis && !essentiaAnalysis.error && Array.isArray(essentiaAnalysis.predictions) && essentiaAnalysis.predictions.length),
+      ...(essentiaAnalysis || {}),
+      success: Boolean(essentiaAnalysis && !essentiaAnalysis.error && predictions.length),
       elapsedSeconds: essentiaElapsedSeconds,
       model: essentiaAnalysis && essentiaAnalysis.model ? essentiaAnalysis.model : "",
       modelKey: essentiaAnalysis && essentiaAnalysis.modelKey ? essentiaAnalysis.modelKey : activeModel,
       error: essentiaAnalysis && essentiaAnalysis.error ? essentiaAnalysis.error : "",
-      predictionCount: essentiaAnalysis && Array.isArray(essentiaAnalysis.predictions) ? essentiaAnalysis.predictions.length : 0
+      predictionCount: predictions.length
     },
     verdict: verdictForLog(),
+    renderState: lastRenderState,
     workflow: workflowNodesForLog(workflowSucceeded, workflowError)
   };
 }
 
 async function sendAnalysisLog(workflowSucceeded, workflowError = "") {
   try {
-    await postJson("/api/log", buildAnalysisLogPayload(workflowSucceeded, workflowError));
+    const response = await postJson("/api/log", buildAnalysisLogPayload(workflowSucceeded, workflowError));
+    if (response.jobId) {
+      activeAnalysisJobId = response.jobId;
+      updateAnalysisJobUrl(activeAnalysisJobId);
+    }
   } catch (error) {
     console.warn("无法写入分析日志：", error.message);
   }
@@ -1491,8 +1553,9 @@ function analyzeEvidence() {
 
   const composition = buildGenreComposition(sorted);
   const titleParts = buildVerdictTitle(composition);
+  const scoreItems = composition.length ? composition : sorted.slice(0, 8);
 
-  renderScores(composition.length ? composition : sorted.slice(0, 8));
+  renderScores(scoreItems);
   renderMix(composition, sorted);
   renderEvidence(evidence, composition);
   renderFeatures(audioFeatures);
@@ -1513,7 +1576,117 @@ function analyzeEvidence() {
         reason: genreReason.textContent
       }
     : null;
+  lastRenderState = {
+    version: 1,
+    language: LANG,
+    modelKey: activeModel,
+    track: { ...track },
+    scoreItems,
+    allScores: sorted,
+    composition,
+    titleParts,
+    evidence,
+    audioFeatures: audioFeatures ? { ...audioFeatures } : null,
+    essentia: essentiaAnalysis || null,
+    audioStateKey,
+    moodStateKey,
+    instStateKey
+  };
   updateShareAvailability();
+}
+
+function sanitizePersistedEvidence(html) {
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+  for (const element of [...template.content.querySelectorAll("*")]) {
+    if (element.tagName === "STRONG") {
+      for (const attr of [...element.attributes]) element.removeAttribute(attr.name);
+    } else {
+      element.replaceWith(document.createTextNode(element.textContent || ""));
+    }
+  }
+  return template.innerHTML;
+}
+
+function renderPersistedAnalysis(record) {
+  const state = record && record.renderState;
+  if (!state || Number(state.version) < 1 || !state.track) {
+    throw new Error("Missing render snapshot");
+  }
+  activeAnalysisJobId = record.jobId;
+  isRestoredAnalysis = true;
+  restoredAnalysisRecord = record;
+  lastRenderState = state;
+  activeTrack = { ...state.track };
+  metadata = record.metadata || null;
+  audioFeatures = state.audioFeatures || record.audioFeatures || null;
+  essentiaAnalysis = state.essentia || record.essentia || null;
+  audioDownloadLog = record.audioDownload || null;
+  scoreCompleted = true;
+  analysisStartedAt = record.timePoint || "";
+  audioStateKey = state.audioStateKey || (essentiaAnalysis ? "audio.essentiaDone" : "audio.notRead");
+  moodStateKey = state.moodStateKey || "dim.done";
+  instStateKey = state.instStateKey || "dim.done";
+
+  const inputFormat = record.input && record.input.format;
+  const formatInput = formatInputs.find(input => input.value === inputFormat);
+  if (formatInput) formatInput.checked = true;
+  trackInput.value = activeTrack.sourceUrl || activeTrack.url || activeTrack.raw || "";
+  updateInputPlaceholder();
+  updateParsedLine();
+
+  const scoreItems = Array.isArray(state.scoreItems) ? state.scoreItems : [];
+  const allScores = Array.isArray(state.allScores) ? state.allScores : scoreItems;
+  const composition = Array.isArray(state.composition) ? state.composition : [];
+  const titleParts = Array.isArray(state.titleParts) ? state.titleParts : buildVerdictTitle(composition);
+  const evidence = Array.isArray(state.evidence) ? state.evidence.map(sanitizePersistedEvidence) : [];
+
+  renderScores(scoreItems);
+  renderMix(composition, allScores);
+  renderEvidence(evidence, composition);
+  renderFeatures(audioFeatures);
+  renderDimensions(essentiaAnalysis);
+  renderVerdictTrack(activeTrack);
+  renderVerdictTitle(titleParts);
+  genreReason.hidden = true;
+  genreReason.textContent = "";
+  lastVerdict = composition.length
+    ? { track: activeTrack, titleParts, composition, reason: "" }
+    : null;
+  updateShareAvailability();
+
+  resetProgress();
+  setProgress("score", t("progress.restored"), 100, t("progress.restoredDetail"));
+  for (const item of progressSteps.querySelectorAll("span")) {
+    item.classList.remove("is-active");
+    item.classList.add("is-done");
+  }
+  audioState.textContent = t(audioStateKey);
+  setStatus(t("status.restored"));
+}
+
+async function restoreAnalysisFromUrl() {
+  const jobId = String(new URLSearchParams(window.location.search).get("job") || "").trim();
+  if (!jobId) return;
+  setStatus(t("status.restoring"), true);
+  try {
+    const response = await fetch(`/api/song-analysis?jobId=${encodeURIComponent(jobId)}`);
+    const record = await readJsonResponse(response, t("status.restoreNotFound"), { preferFallbackOn404: true });
+    const savedModel = record.modelName || (record.renderState && record.renderState.modelKey) || "";
+    if (savedModel && savedModel !== activeModel) {
+      try {
+        await loadModelTaxonomy(savedModel);
+        activeModel = savedModel;
+        if (modelSelect) modelSelect.value = savedModel;
+      } catch (error) {
+        console.warn("无法切换到历史分析使用的模型 taxonomy：", error.message);
+      }
+    }
+    renderPersistedAnalysis(record);
+  } catch (error) {
+    setStatus(t("status.restoreFailed"));
+    setProgress("score", t("progress.score.fail"), 100, error.message);
+  }
 }
 
 // Toggle the share button based on whether a shareable verdict exists.
@@ -2376,6 +2549,11 @@ trackInput.addEventListener("input", () => {
   audioDownloadLog = null;
   scoreCompleted = false;
   analysisStartedAt = "";
+  activeAnalysisJobId = "";
+  lastRenderState = null;
+  isRestoredAnalysis = false;
+  restoredAnalysisRecord = null;
+  updateAnalysisJobUrl("");
   downloadEvidenceBuilder = null;
   activeTrack = null;
   parseEvidenceBuilder = null;
@@ -2395,6 +2573,11 @@ for (const input of formatInputs) {
     audioDownloadLog = null;
     scoreCompleted = false;
     analysisStartedAt = "";
+    activeAnalysisJobId = "";
+    lastRenderState = null;
+    isRestoredAnalysis = false;
+    restoredAnalysisRecord = null;
+    updateAnalysisJobUrl("");
     downloadEvidenceBuilder = null;
     activeTrack = null;
     parseEvidenceBuilder = null;
@@ -2425,6 +2608,11 @@ form.addEventListener("submit", async event => {
     } else if (!track.title) {
       throw new Error(t("err.needSongArtist"));
     }
+    activeAnalysisJobId = createAnalysisJobId();
+    updateAnalysisJobUrl(activeAnalysisJobId);
+    isRestoredAnalysis = false;
+    restoredAnalysisRecord = null;
+    lastRenderState = null;
     resetProgress();
     metadata = null;
     downloadedAudioUrl = "";
@@ -2529,7 +2717,9 @@ function applyLanguage() {
   fileName.textContent = chosenFile ? chosenFile.name : t("file.none");
   updateInputPlaceholder();
   updateParsedLine();
-  if (parseEvidenceBuilder || downloadEvidenceBuilder || metadata || essentiaAnalysis || audioFeatures) {
+  if (isRestoredAnalysis && restoredAnalysisRecord) {
+    renderPersistedAnalysis(restoredAnalysisRecord);
+  } else if (parseEvidenceBuilder || downloadEvidenceBuilder || metadata || essentiaAnalysis || audioFeatures) {
     analyzeEvidence();
   } else {
     renderScores(GENRES.slice(0, 8).map(genre => ({ name: genre.name, score: 0, reasons: [] })));
@@ -2948,5 +3138,14 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") closeSharePreview();
 });
 
-resetProgress();
-applyLanguage();
+async function initializeApp() {
+  resetProgress();
+  applyLanguage();
+  await modelSelectorReady;
+  await restoreAnalysisFromUrl();
+}
+
+initializeApp().catch(error => {
+  console.error("页面初始化失败：", error);
+  setStatus(t("status.restoreFailed"));
+});
