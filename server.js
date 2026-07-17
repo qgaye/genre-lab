@@ -2050,7 +2050,7 @@ async function analyzePlaylistTrack(track, modelName, bundle) {
 
   let essentia;
   try {
-    essentia = await analyzeWithEssentia(download.filePath, 12, modelName);
+    essentia = await analyzeWithEssentia(download.filePath, 12, modelName, true);
   } catch (error) {
     await deleteLocalAudio(download.filePath);
     return { status: "failed", stage: "essentia", error: error.message };
@@ -2071,10 +2071,12 @@ async function analyzePlaylistTrack(track, modelName, bundle) {
     track: { title: track.title, artists }
   });
 
+  const dimensions = (essentia && essentia.dimensions) || null;
+
   if (!composition.length) {
-    return { status: "failed", stage: "score", error: "没有匹配到曲风。" };
+    return { status: "failed", stage: "score", error: "没有匹配到曲风。", dimensions };
   }
-  return { status: "ok", composition };
+  return { status: "ok", composition, dimensions };
 }
 
 // Background driver: walks the job's tracks serially and records each result,
