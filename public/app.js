@@ -45,6 +45,7 @@ const instPanel = document.querySelector("#instPanel");
 const instState = document.querySelector("#instState");
 const moodRadar = document.querySelector("#moodRadar");
 const instrumentList = document.querySelector("#instrumentList");
+const moodThemeList = document.querySelector("#moodThemeList");
 
 // ---------------------------------------------------------------------------
 // i18n: full bilingual UI. LANG is "zh" (default) or "en", persisted in
@@ -112,6 +113,7 @@ const I18N = {
     "dim.done": "已完成",
     "dim.moodProfile": "情绪画像",
     "dim.instrument": "乐器识别",
+    "dim.moodTheme": "情绪/主题",
     "audio.notRead": "未读取",
     "panel.evidence": "证据链",
     "dialog.kicker": "Discogs Style",
@@ -320,6 +322,7 @@ const I18N = {
     "dim.done": "Done",
     "dim.moodProfile": "Mood profile",
     "dim.instrument": "Instruments",
+    "dim.moodTheme": "Mood / Theme",
     "audio.notRead": "Not read",
     "panel.evidence": "Evidence chain",
     "dialog.kicker": "Discogs Style",
@@ -1490,9 +1493,8 @@ function analyzeEvidence() {
 
   renderVerdictTrack(track);
   renderVerdictTitle(titleParts);
-  genreReason.textContent = composition.length
-    ? buildVerdictReason(composition)
-    : t("verdict.notEnough");
+  genreReason.hidden = true;
+  genreReason.textContent = "";
   setStatus(t("status.analyzeDone"));
 
   // Snapshot the verdict so the share card can be rendered on demand.
@@ -1681,12 +1683,15 @@ function renderDimensions(essentia) {
   const dims = essentia && essentia.dimensions;
   const hasMood = dims && dims.mood_radar;
   const hasInst = dims && dims.mtg_jamendo_instrument;
+  const hasMoodTheme = dims && dims.mtg_jamendo_moodtheme;
 
-  if (hasMood) {
+  if (hasMood || hasMoodTheme) {
     moodPanel.hidden = false;
     moodStateKey = "dim.done";
     moodState.textContent = t(moodStateKey);
-    renderMoodRadar(dims.mood_radar);
+    if (hasMood) renderMoodRadar(dims.mood_radar);
+    if (hasMoodTheme) renderMoodThemes(dims.mtg_jamendo_moodtheme);
+    else renderMoodThemes(null);
   } else {
     moodPanel.hidden = true;
   }
@@ -1818,6 +1823,77 @@ const INSTRUMENT_LABELS = {
   voice: { zh: "人声", en: "Voice", icon: "🎤" }
 };
 
+const MOOD_THEME_LABELS = {
+  action: { zh: "动感", en: "Action", icon: "💥" },
+  adventure: { zh: "冒险", en: "Adventure", icon: "🗺️" },
+  advertising: { zh: "广告感", en: "Advertising", icon: "📢" },
+  background: { zh: "背景音乐", en: "Background", icon: "🎵" },
+  ballad: { zh: "抒情", en: "Ballad", icon: "🎶" },
+  calm: { zh: "平静", en: "Calm", icon: "😌" },
+  children: { zh: "儿童", en: "Children", icon: "🧸" },
+  christmas: { zh: "圣诞", en: "Christmas", icon: "🎄" },
+  commercial: { zh: "商业感", en: "Commercial", icon: "🏪" },
+  cool: { zh: "酷炫", en: "Cool", icon: "😎" },
+  corporate: { zh: "企业感", en: "Corporate", icon: "🏢" },
+  dark: { zh: "黑暗", en: "Dark", icon: "🌑" },
+  deep: { zh: "深沉", en: "Deep", icon: "🌊" },
+  documentary: { zh: "纪录感", en: "Documentary", icon: "🎬" },
+  drama: { zh: "戏剧", en: "Drama", icon: "🎭" },
+  dramatic: { zh: "戏剧性", en: "Dramatic", icon: "🎭" },
+  dream: { zh: "梦幻", en: "Dream", icon: "💭" },
+  emotional: { zh: "感性", en: "Emotional", icon: "💫" },
+  energetic: { zh: "充满活力", en: "Energetic", icon: "⚡" },
+  epic: { zh: "史诗", en: "Epic", icon: "🏛️" },
+  fast: { zh: "快速", en: "Fast", icon: "💨" },
+  film: { zh: "电影感", en: "Film", icon: "🎞️" },
+  fun: { zh: "有趣", en: "Fun", icon: "🎉" },
+  funny: { zh: "滑稽", en: "Funny", icon: "😄" },
+  game: { zh: "游戏", en: "Game", icon: "🎮" },
+  groovy: { zh: "律动", en: "Groovy", icon: "🕺" },
+  happy: { zh: "快乐", en: "Happy", icon: "😊" },
+  heavy: { zh: "沉重", en: "Heavy", icon: "🪨" },
+  holiday: { zh: "假日", en: "Holiday", icon: "🏖️" },
+  hopeful: { zh: "充满希望", en: "Hopeful", icon: "🌅" },
+  inspiring: { zh: "鼓舞人心", en: "Inspiring", icon: "✨" },
+  love: { zh: "爱情", en: "Love", icon: "❤️" },
+  meditative: { zh: "冥想", en: "Meditative", icon: "🧘" },
+  melancholic: { zh: "忧郁", en: "Melancholic", icon: "🌧️" },
+  melodic: { zh: "旋律优美", en: "Melodic", icon: "🎶" },
+  motivational: { zh: "激励", en: "Motivational", icon: "💪" },
+  movie: { zh: "电影", en: "Movie", icon: "🎥" },
+  nature: { zh: "自然", en: "Nature", icon: "🌿" },
+  party: { zh: "派对", en: "Party", icon: "🎊" },
+  positive: { zh: "积极", en: "Positive", icon: "☀️" },
+  powerful: { zh: "有力量", en: "Powerful", icon: "💪" },
+  relaxing: { zh: "放松", en: "Relaxing", icon: "😴" },
+  retro: { zh: "复古", en: "Retro", icon: "📻" },
+  romantic: { zh: "浪漫", en: "Romantic", icon: "💕" },
+  sad: { zh: "悲伤", en: "Sad", icon: "😢" },
+  sexy: { zh: "性感", en: "Sexy", icon: "💋" },
+  slow: { zh: "缓慢", en: "Slow", icon: "🐢" },
+  soft: { zh: "柔和", en: "Soft", icon: "☁️" },
+  soundscape: { zh: "音景", en: "Soundscape", icon: "🌌" },
+  space: { zh: "太空", en: "Space", icon: "🚀" },
+  sport: { zh: "运动", en: "Sport", icon: "🏃" },
+  summer: { zh: "夏日", en: "Summer", icon: "☀️" },
+  trailer: { zh: "预告片感", en: "Trailer", icon: "📺" },
+  travel: { zh: "旅行", en: "Travel", icon: "✈️" },
+  upbeat: { zh: "欢快", en: "Upbeat", icon: "🎶" },
+  uplifting: { zh: "振奋", en: "Uplifting", icon: "🌈" }
+};
+
+const MOOD_THEME_DENYLIST = new Set([
+  "advertising", "commercial", "corporate",
+  "documentary", "film", "movie", "trailer",
+  "children", "christmas", "holiday",
+  "sport", "game",
+  "nature", "space", "travel", "summer",
+  "soundscape", "background", "ballad"
+]);
+
+const MOOD_THEME_MIN_SCORE = 0.05;
+const MOOD_THEME_RELATIVE_RATIO = 0.3;
+
 function renderInstruments(data) {
   instrumentList.innerHTML = "";
   if (!data || !Array.isArray(data.predictions) || !data.predictions.length) {
@@ -1842,6 +1918,41 @@ function renderInstruments(data) {
     `;
     instrumentList.appendChild(row);
   }
+}
+
+function renderMoodThemes(data) {
+  moodThemeList.innerHTML = "";
+  if (!data || !Array.isArray(data.predictions) || !data.predictions.length) {
+    return;
+  }
+  const candidates = data.predictions
+    .filter(p => !MOOD_THEME_DENYLIST.has(p.label))
+    .map(p => ({ ...p, _score: Math.max(0, Math.min(1, Number(p.score) || 0)) }));
+  const globalMax = candidates.reduce((m, p) => Math.max(m, p._score), 0);
+  const relThreshold = Math.max(MOOD_THEME_MIN_SCORE, globalMax * MOOD_THEME_RELATIVE_RATIO);
+  const items = candidates
+    .filter(p => p._score >= relThreshold)
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 5);
+  if (!items.length) return;
+  const maxScore = Math.max(...items.map(i => i._score), 0.001);
+  const frag = document.createDocumentFragment();
+  for (const item of items) {
+    const pct = Math.round(item._score / maxScore * 100);
+    const rawPct = Math.round(item._score * 100);
+    const labelMap = MOOD_THEME_LABELS[item.label];
+    const displayName = labelMap ? (LANG === "zh" ? labelMap.zh : labelMap.en) : item.label;
+    const icon = labelMap ? labelMap.icon : "🎵";
+    const row = document.createElement("div");
+    row.className = "mood-tag-row";
+    row.innerHTML = `
+      <span class="mood-tag-name"><span class="mood-tag-icon">${icon}</span>${escapeHtml(displayName)}</span>
+      <span class="mood-tag-bar"><i style="width:${pct}%"></i></span>
+      <span class="mood-tag-score">${rawPct}%</span>
+    `;
+    frag.appendChild(row);
+  }
+  moodThemeList.appendChild(frag);
 }
 
 function pickPeaks(energies) {
@@ -2396,6 +2507,17 @@ function applyLanguage() {
   audioState.textContent = t(audioStateKey);
   moodState.textContent = t(moodStateKey);
   instState.textContent = t(instStateKey);
+  if (essentiaAnalysis && essentiaAnalysis.dimensions) {
+    if (essentiaAnalysis.dimensions.mtg_jamendo_instrument) {
+      renderInstruments(essentiaAnalysis.dimensions.mtg_jamendo_instrument);
+    }
+    if (essentiaAnalysis.dimensions.mood_radar) {
+      renderMoodRadar(essentiaAnalysis.dimensions.mood_radar);
+    }
+    if (essentiaAnalysis.dimensions.mtg_jamendo_moodtheme) {
+      renderMoodThemes(essentiaAnalysis.dimensions.mtg_jamendo_moodtheme);
+    }
+  }
   const chosenFile = fileInput.files[0];
   fileName.textContent = chosenFile ? chosenFile.name : t("file.none");
   updateInputPlaceholder();
@@ -2589,53 +2711,126 @@ function renderShareCard(verdict) {
   }
 
   // Headline: mono genre eyebrow + large condensed style word, blue ink with a
-  // pink misregistered ghost, "+" between parts.
+  // pink misregistered ghost, "+" between parts. Layout mirrors the on-screen
+  // flex-wrap behavior: items flow left-to-right and wrap to the next line when
+  // they don't fit, left-aligned. No font shrinking — long names wrap.
   const parts = verdict.titleParts.length ? verdict.titleParts : verdict.composition.slice(0, 1);
   const lead = parts[0].percent || parts[0].score || 1;
   const baseSize = 92;
-  let hx = x;
-  const headlineTop = y;
-  let maxBottom = y;
+  const hGap = 22;
+  const vGap = 14;
+
+  // Build a flat list of layout items (plus signs and genre-style blocks),
+  // measuring each one's size.
+  const items = [];
   parts.forEach((part, index) => {
     if (index > 0) {
-      ctx.fillStyle = "#ff3d7f";
-      ctx.font = `700 ${Math.round(baseSize * 0.42)}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
-      ctx.textBaseline = "alphabetic";
-      const plusY = headlineTop + baseSize * 0.62;
-      ctx.fillText("+", hx + 8, plusY);
-      hx += ctx.measureText("+").width + 28;
+      const plusSize = Math.round(baseSize * 0.42);
+      const plusFont = `700 ${plusSize}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
+      ctx.font = plusFont;
+      const plusW = ctx.measureText("+").width;
+      items.push({
+        type: "plus",
+        width: plusW,
+        height: plusSize,
+        size: plusSize
+      });
     }
-    const ratio = Math.max(0.55, Math.min(1, (part.percent || part.score || 0) / lead));
-    const size = Math.round(baseSize * ratio);
+    const rawRatio = (part.percent || part.score || 0) / lead;
+    const ratio = Math.max(0, Math.min(1, rawRatio));
+    const fontScale = 0.5 + 0.5 * ratio;
+    const size = Math.round(baseSize * fontScale);
     const { genre, style } = splitGenreStyle(part.name);
-    let colY = headlineTop;
-    if (genre) {
-      ctx.fillStyle = "#55585f";
-      ctx.font = `700 ${Math.round(size * 0.18)}px 'Space Mono', ui-monospace, Menlo, monospace`;
-      ctx.textBaseline = "top";
-      ctx.fillText(genre.toUpperCase(), hx, colY);
-      colY += Math.round(size * 0.18) + 12;
-    }
+    const genreSize = Math.round(size * 0.18);
+    const genreGap = 12;
+    const styleFont = `800 ${size}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
+    ctx.font = styleFont;
     const styleUpper = style.toUpperCase();
-    ctx.font = `800 ${size}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
-    ctx.textBaseline = "top";
-    // Pink ghost offset behind, then blue ink on top (misregistration).
-    ctx.fillStyle = "#ff3d7f";
-    ctx.fillText(styleUpper, hx + 3, colY + 3);
-    ctx.fillStyle = "#1f3fe0";
-    ctx.fillText(styleUpper, hx, colY);
     const styleW = ctx.measureText(styleUpper).width;
-    hx += styleW + 24;
-    maxBottom = Math.max(maxBottom, colY + size);
+    let genreText = "";
+    let genreW = 0;
+    let partH = size;
+    if (genre) {
+      genreText = genre.toUpperCase();
+      const genreFont = `700 ${genreSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
+      ctx.font = genreFont;
+      genreW = ctx.measureText(genreText).width;
+      partH += genreSize + genreGap;
+    }
+    items.push({
+      type: "part",
+      width: Math.max(genreW, styleW),
+      height: partH,
+      size,
+      genreSize,
+      genreGap,
+      genreText,
+      styleUpper,
+      styleH: size
+    });
   });
-  y = maxBottom + 34;
 
-  // Reason (wrapped)
-  ctx.fillStyle = "#55585f";
-  ctx.font = "400 22px 'Space Mono', ui-monospace, Menlo, monospace";
-  ctx.textBaseline = "top";
-  y = drawWrappedText(ctx, verdict.reason || "", x, y, contentW, 32);
-  y += 30;
+  // Flow items into rows (flex-wrap: wrap, left-aligned).
+  const rows = [];
+  let currentRow = [];
+  let currentRowW = 0;
+  for (const item of items) {
+    const gap = currentRow.length > 0 ? hGap : 0;
+    if (currentRow.length > 0 && currentRowW + gap + item.width > contentW) {
+      rows.push({ items: currentRow, width: currentRowW, height: Math.max(...currentRow.map(i => i.height)) });
+      currentRow = [];
+      currentRowW = 0;
+    }
+    if (currentRow.length > 0) currentRowW += hGap;
+    currentRow.push(item);
+    currentRowW += item.width;
+  }
+  if (currentRow.length > 0) {
+    rows.push({ items: currentRow, width: currentRowW, height: Math.max(...currentRow.map(i => i.height)) });
+  }
+
+  // Draw each row. Use flex-end alignment: all parts' bottom edges (style
+  // baselines) line up along the row bottom; plus signs are vertically centered
+  // within the style x-height area like the on-screen layout.
+  const headlineTop = y;
+  let cursorY = headlineTop;
+  for (const row of rows) {
+    const rowBottom = cursorY + row.height;
+    let cursorX = x;
+    for (const item of row.items) {
+      if (item.type === "plus") {
+        ctx.fillStyle = "#ff3d7f";
+        ctx.font = `700 ${item.size}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
+        ctx.textBaseline = "middle";
+        const styleParts = row.items.filter(i => i.type === "part");
+        const styleTops = styleParts.map(p => rowBottom - p.size);
+        const highestStyleTop = Math.min(...styleTops);
+        const largestStyleSize = Math.max(...styleParts.map(p => p.size));
+        const styleCenterY = highestStyleTop + largestStyleSize * 0.56;
+        ctx.fillText("+", cursorX, styleCenterY);
+      } else {
+        const styleBottom = rowBottom;
+        const styleTop = styleBottom - item.size;
+        let genreTop = styleTop - item.genreGap;
+        if (item.genreText) {
+          genreTop -= item.genreSize;
+          ctx.fillStyle = "#55585f";
+          ctx.font = `700 ${item.genreSize}px 'Space Mono', ui-monospace, Menlo, monospace`;
+          ctx.textBaseline = "top";
+          ctx.fillText(item.genreText, cursorX, genreTop);
+        }
+        ctx.font = `800 ${item.size}px 'Archivo Narrow', 'Arial Narrow', sans-serif`;
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "#ff3d7f";
+        ctx.fillText(item.styleUpper, cursorX + 3, styleTop + 3);
+        ctx.fillStyle = "#1f3fe0";
+        ctx.fillText(item.styleUpper, cursorX, styleTop);
+      }
+      cursorX += item.width + hGap;
+    }
+    cursorY += row.height + vGap;
+  }
+  y = cursorY - vGap + 20;
 
   // Mix bar + legend
   y = drawShareMix(ctx, verdict.composition, x, y, contentW);

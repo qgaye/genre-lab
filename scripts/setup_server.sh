@@ -575,6 +575,16 @@ download_models() {
   download_file \
     "$ROOT/models/mtg_jamendo_instrument-discogs-effnet-1.json" \
     "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_instrument/mtg_jamendo_instrument-discogs-effnet-1.json" \
+    500 &&
+
+  download_file \
+    "$ROOT/models/mtg_jamendo_moodtheme-discogs-effnet-1.pb" \
+    "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_moodtheme/mtg_jamendo_moodtheme-discogs-effnet-1.pb" \
+    100000 &&
+
+  download_file \
+    "$ROOT/models/mtg_jamendo_moodtheme-discogs-effnet-1.json" \
+    "https://essentia.upf.edu/models/classification-heads/mtg_jamendo_moodtheme/mtg_jamendo_moodtheme-discogs-effnet-1.json" \
     500 || return 1
 
   local target

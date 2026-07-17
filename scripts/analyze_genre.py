@@ -85,6 +85,12 @@ AUDIO_DIM_HEADS = {
         "metadata": "mtg_jamendo_instrument-discogs-effnet-1.json",
         "label": "MTG Jamendo Instruments",
     },
+    "mtg_jamendo_moodtheme": {
+        "type": "multilabel",
+        "graph": "mtg_jamendo_moodtheme-discogs-effnet-1.pb",
+        "metadata": "mtg_jamendo_moodtheme-discogs-effnet-1.json",
+        "label": "MTG Jamendo Mood/Theme",
+    },
 }
 
 
