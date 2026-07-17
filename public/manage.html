@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Genre Lab · 歌单管理</title>
-    <link rel="stylesheet" href="/styles.css?v=20260717-manage-page">
+    <title>Genre Lab · 分析管理</title>
+    <link rel="stylesheet" href="/styles.css?v=20260717-song-compact">
   </head>
   <body>
     <main class="shell shell-manage">
-      <section class="console console-manage" aria-label="歌单管理">
+      <section class="console console-manage" aria-label="分析管理">
         <header class="mast">
           <div>
             <p class="kicker">Genre Lab</p>
-            <h1>歌单管理</h1>
+            <h1>分析管理</h1>
           </div>
           <div class="mast-actions">
             <div class="mast-buttons">
@@ -23,12 +23,26 @@
           </div>
         </header>
 
+        <div class="manage-tabs" role="tablist" aria-label="管理内容">
+          <button type="button" class="manage-tab is-active" id="playlistTab" role="tab" aria-selected="true" data-view="playlists">
+            <span>歌单任务</span><small id="playlistTabCount">—</small>
+          </button>
+          <button type="button" class="manage-tab" id="songTab" role="tab" aria-selected="false" data-view="songs">
+            <span>单曲记录</span><small id="songTabCount">—</small>
+          </button>
+        </div>
+
         <div class="manage-intro" id="manageIntro">
           查看所有历史歌单分析任务，点击可跳转至对应的歌单分析页面。
         </div>
 
         <div class="refresh-bar">
           <button type="button" class="lang-toggle" id="refreshBtn">刷新列表</button>
+          <form class="manage-search" id="searchForm" hidden>
+            <label for="searchInput">搜索歌曲</label>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="歌曲、艺人、专辑或 ID">
+            <button type="submit" class="page-btn">搜索</button>
+          </form>
           <span class="job-count" id="jobCount"></span>
         </div>
       </section>
@@ -36,13 +50,13 @@
       <section class="result-board result-board-manage" id="resultBoard">
         <article class="panel jobs-panel">
           <div class="panel-head">
-            <h3>分析任务列表</h3>
+            <h3 id="listTitle">分析任务列表</h3>
             <span id="jobCountHead">0 个任务</span>
           </div>
           <div class="job-list" id="jobList">
             <div class="empty-state" id="emptyState">
-              <p>暂无歌单分析任务</p>
-              <a href="/playlist" class="primary new-job-btn">去分析歌单</a>
+              <p id="emptyMessage">暂无歌单分析任务</p>
+              <a href="/playlist" class="primary new-job-btn" id="emptyAction">去分析歌单</a>
             </div>
           </div>
           <div class="pagination" id="pagination" style="display:none;">
@@ -79,6 +93,35 @@
       </a>
     </template>
 
-    <script src="/manage.js?v=20260717-manage-page"></script>
+    <template id="songCardTemplate">
+      <article class="song-log-card">
+        <div class="song-log-strip">
+          <span class="song-log-index" aria-hidden="true"></span>
+          <span class="job-status song-log-status"></span>
+        </div>
+        <div class="song-log-main">
+          <div class="song-log-head">
+            <div class="song-log-title-wrap">
+              <h4 class="song-log-title"><a class="song-log-title-link"></a></h4>
+              <p class="song-log-artist"></p>
+            </div>
+          </div>
+          <div class="song-log-facts">
+            <span class="song-log-model"></span>
+            <time class="song-log-time"></time>
+          </div>
+          <div class="song-log-genres"></div>
+          <details class="song-log-details">
+            <summary>详情</summary>
+            <dl class="song-detail-grid"></dl>
+            <p class="song-log-error" hidden></p>
+            <a class="song-result-link" hidden>打开完整分析 ↗</a>
+            <a class="song-source-link" target="_blank" rel="noreferrer" hidden>打开歌曲来源 ↗</a>
+          </details>
+        </div>
+      </article>
+    </template>
+
+    <script src="/manage.js?v=20260717-song-compact"></script>
   </body>
 </html>

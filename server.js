@@ -16,7 +16,9 @@ const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DOWNLOAD_DIR = path.join(ROOT, "downloads");
 const RUNTIME_DIR = path.join(ROOT, ".runtime");
-const ANALYSIS_LOG_FILE = path.join(RUNTIME_DIR, "analysis-log.ndjson");
+const SONG_ANALYSIS_LOG_FILE = process.env.SONG_ANALYSIS_LOG_FILE
+  ? path.resolve(process.env.SONG_ANALYSIS_LOG_FILE)
+  : path.join(RUNTIME_DIR, "song-analysis-log.ndjson");
 // Playlist aggregate jobs are persisted here (one JSON file per jobId) so an
 // in-flight or finished analysis survives a server restart.
 const PLAYLIST_JOBS_DIR = path.join(RUNTIME_DIR, "playlist-jobs");
@@ -318,16 +320,16 @@ function requestDevice(req) {
 }
 
 function appendAnalysisLog(entry) {
-  fs.mkdirSync(RUNTIME_DIR, { recursive: true });
-  fs.appendFileSync(ANALYSIS_LOG_FILE, `${JSON.stringify(entry)}\n`);
+  fs.mkdirSync(path.dirname(SONG_ANALYSIS_LOG_FILE), { recursive: true });
+  fs.appendFileSync(SONG_ANALYSIS_LOG_FILE, `${JSON.stringify(entry)}\n`);
 }
 
-function readBody(req) {
+function readBody(req, maxLength = 2_000_000) {
   return new Promise((resolve, reject) => {
     let raw = "";
     req.on("data", chunk => {
       raw += chunk;
-      if (raw.length > 2_000_000) {
+      if (raw.length > maxLength) {
         reject(new Error("Request body is too large."));
         req.destroy();
       }
@@ -1908,8 +1910,14 @@ async function handleEssentia(req, res) {
 
 async function handleLog(req, res) {
   try {
-    const body = await readBody(req);
+    const body = await readBody(req, 10_000_000);
+    const requestedJobId = String(body.jobId || "").trim();
+    const jobId = /^[a-zA-Z0-9_-]{8,64}$/.test(requestedJobId)
+      ? requestedJobId
+      : crypto.randomBytes(8).toString("hex");
     const entry = {
+      jobId,
+      schemaVersion: 2,
       timePoint: new Date().toISOString(),
       ip: clientIp(req),
       device: requestDevice(req),
@@ -1917,14 +1925,21 @@ async function handleLog(req, res) {
       clientCompletedAt: body.completedAt || "",
       input: body.input || {},
       parsedTrack: body.parsedTrack || {},
+      metadata: body.metadata || {},
       audioDownload: body.audioDownload || {},
+      audioFeatures: body.audioFeatures || null,
       essentia: body.essentia || {},
+      verdict: body.verdict || {},
+      renderState: body.renderState || null,
+      modelName: body.modelName || "",
+      language: body.language || "",
       workflow: body.workflow || {}
     };
     appendAnalysisLog(entry);
     sendJson(res, 200, {
       ok: true,
-      logFile: path.relative(ROOT, ANALYSIS_LOG_FILE)
+      jobId,
+      logFile: path.relative(ROOT, SONG_ANALYSIS_LOG_FILE)
     });
   } catch (error) {
     sendJson(res, 500, { error: error.message });
@@ -2287,6 +2302,221 @@ function handleListPlaylistJobs(req, res) {
   }
 }
 
+// New single-song analysis logs are append-only NDJSON in their own file. Keep
+// the management API narrower than the on-disk record: it exposes useful track
+// / analysis facts, but never returns IP addresses, user agents, raw inputs or
+// local audio paths.
+function summarizeAnalysisLogEntry(entry) {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+  const track = entry.parsedTrack && typeof entry.parsedTrack === "object" ? entry.parsedTrack : {};
+  const input = entry.input && typeof entry.input === "object" ? entry.input : {};
+  const audio = entry.audioDownload && typeof entry.audioDownload === "object" ? entry.audioDownload : {};
+  const essentia = entry.essentia && typeof entry.essentia === "object" ? entry.essentia : {};
+  const verdict = entry.verdict && typeof entry.verdict === "object" ? entry.verdict : {};
+  const workflow = entry.workflow && typeof entry.workflow === "object" ? entry.workflow : {};
+  const device = entry.device && typeof entry.device === "object" ? entry.device : {};
+  const renderState = entry.renderState && typeof entry.renderState === "object" ? entry.renderState : null;
+  const sourceUrl = /^https?:\/\//i.test(String(track.sourceUrl || "")) ? String(track.sourceUrl) : "";
+  const optionalNumber = value => value !== "" && value != null && Number.isFinite(Number(value))
+    ? Number(value)
+    : null;
+  const genres = Array.isArray(verdict.genres)
+    ? verdict.genres.slice(0, 5).map(item => ({
+      name: String(item && item.name || ""),
+      percent: optionalNumber(item && item.percent)
+    })).filter(item => item.name)
+    : [];
+  const predictions = Array.isArray(essentia.predictions)
+    ? essentia.predictions.slice(0, 5).map(item => ({
+      display: String(item && (item.display || item.label) || ""),
+      score: optionalNumber(item && item.score)
+    })).filter(item => item.display)
+    : [];
+  const timePoint = String(entry.timePoint || entry.clientTimePoint || "");
+  const completedAt = String(entry.clientCompletedAt || "");
+  const allSucceeded = workflow.allSucceeded === true;
+  const hasFailure = workflow.allSucceeded === false || Boolean(workflow.error)
+    || audio.success === false || essentia.success === false;
+  const requestedJobId = String(entry.jobId || "").trim();
+  if (!/^[a-zA-Z0-9_-]{8,64}$/.test(requestedJobId)) return null;
+  const jobId = requestedJobId;
+  const resumable = Boolean(
+    renderState
+    && Number(renderState.version) >= 1
+    && renderState.track
+    && Array.isArray(renderState.scoreItems)
+    && Array.isArray(renderState.composition)
+  );
+
+  return {
+    id: jobId,
+    jobId,
+    resumable,
+    timePoint,
+    completedAt,
+    title: String(track.title || ""),
+    artists: String(track.artists || ""),
+    album: String(track.album || ""),
+    sourceId: String(track.sourceId || ""),
+    sourceUrl,
+    inputFormat: String(input.formatLabel || input.format || ""),
+    status: allSucceeded ? "done" : hasFailure ? "error" : "unknown",
+    error: String(workflow.error || audio.error || essentia.error || ""),
+    model: String(essentia.model || essentia.modelKey || ""),
+    predictionCount: Math.max(0, Number(essentia.predictionCount) || predictions.length),
+    essentiaElapsedSeconds: optionalNumber(essentia.elapsedSeconds),
+    audioElapsedSeconds: optionalNumber(audio.elapsedSeconds),
+    audioSource: String(audio.sourcePlatform || audio.source || ""),
+    genres,
+    predictions,
+    device: {
+      os: String(device.os || ""),
+      browser: String(device.browser || ""),
+      formFactor: String(device.formFactor || "")
+    }
+  };
+}
+
+function readAnalysisLogRecords(filePath = SONG_ANALYSIS_LOG_FILE) {
+  if (!fs.existsSync(filePath)) return { records: [], malformed: 0 };
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  const records = [];
+  let malformed = 0;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    try {
+      const summary = summarizeAnalysisLogEntry(JSON.parse(line), index);
+      if (summary) records.push({ ...summary, _logIndex: index });
+      else malformed += 1;
+    } catch {
+      malformed += 1;
+    }
+  }
+  records.sort((a, b) => {
+    const aTime = Date.parse(a.timePoint) || 0;
+    const bTime = Date.parse(b.timePoint) || 0;
+    return (bTime - aTime) || ((b._logIndex || 0) - (a._logIndex || 0));
+  });
+  const seen = new Set();
+  const uniqueRecords = records.filter(record => {
+    if (seen.has(record.jobId)) return false;
+    seen.add(record.jobId);
+    return true;
+  }).map(({ _logIndex, ...record }) => record);
+  return { records: uniqueRecords, malformed };
+}
+
+function sanitizeSongAnalysisEntry(entry, fallbackIndex = 0) {
+  const summary = summarizeAnalysisLogEntry(entry);
+  if (!summary) return null;
+  const renderState = entry.renderState && typeof entry.renderState === "object" ? entry.renderState : null;
+  if (!summary.resumable || !renderState) return { ...summary, renderState: null };
+  const input = entry.input && typeof entry.input === "object" ? entry.input : {};
+  const audio = entry.audioDownload && typeof entry.audioDownload === "object" ? entry.audioDownload : {};
+  return {
+    ...summary,
+    schemaVersion: Number(entry.schemaVersion) || 2,
+    language: String(entry.language || renderState.language || ""),
+    modelName: String(entry.modelName || renderState.modelKey || ""),
+    input: {
+      format: String(input.format || ""),
+      formatLabel: String(input.formatLabel || "")
+    },
+    parsedTrack: entry.parsedTrack || {},
+    metadata: entry.metadata || null,
+    audioFeatures: entry.audioFeatures || renderState.audioFeatures || null,
+    audioDownload: {
+      sourceType: String(audio.sourceType || ""),
+      success: audio.success === true,
+      method: String(audio.method || ""),
+      source: String(audio.source || ""),
+      sourcePlatform: String(audio.sourcePlatform || ""),
+      matchScore: audio.matchScore == null ? null : Number(audio.matchScore),
+      fallbackReason: String(audio.fallbackReason || ""),
+      elapsedSeconds: audio.elapsedSeconds == null ? null : Number(audio.elapsedSeconds),
+      error: String(audio.error || "")
+    },
+    essentia: entry.essentia || null,
+    verdict: entry.verdict || null,
+    workflow: entry.workflow || {},
+    renderState
+  };
+}
+
+function findSongAnalysisRecord(jobId, filePath = SONG_ANALYSIS_LOG_FILE) {
+  const wanted = String(jobId || "").trim();
+  if (!wanted || !fs.existsSync(filePath)) return null;
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index].trim();
+    if (!line) continue;
+    try {
+      const entry = JSON.parse(line);
+      const summary = summarizeAnalysisLogEntry(entry);
+      if (summary && summary.jobId === wanted) return sanitizeSongAnalysisEntry(entry, index);
+    } catch {
+      // A malformed log line must not make every other saved analysis unreadable.
+    }
+  }
+  return null;
+}
+
+function handleGetSongAnalysis(req, res, url) {
+  try {
+    const jobId = String(url.searchParams.get("jobId") || "").trim();
+    if (!jobId) {
+      sendJson(res, 400, { error: "Missing song analysis jobId." });
+      return;
+    }
+    const record = findSongAnalysisRecord(jobId);
+    if (!record) {
+      sendJson(res, 404, { error: "Song analysis not found." });
+      return;
+    }
+    if (!record.resumable || !record.renderState) {
+      sendJson(res, 409, { error: "This analysis has no render snapshot.", record });
+      return;
+    }
+    sendJson(res, 200, record);
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
+function handleListAnalysisLogs(req, res, url) {
+  try {
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get("pageSize")) || 20));
+    const query = String(url.searchParams.get("q") || "").trim().toLocaleLowerCase();
+    const { records, malformed } = readAnalysisLogRecords();
+    const filtered = query
+      ? records.filter(record => [record.title, record.artists, record.album, record.sourceId, record.model]
+        .some(value => String(value).toLocaleLowerCase().includes(query)))
+      : records;
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const start = (currentPage - 1) * pageSize;
+    sendJson(res, 200, {
+      songs: filtered.slice(start, start + pageSize),
+      allTotal: records.length,
+      malformed,
+      query,
+      pagination: {
+        page: currentPage,
+        pageSize,
+        total,
+        totalPages,
+        hasPrev: currentPage > 1,
+        hasNext: currentPage < totalPages
+      }
+    });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
 async function handleCoverImage(req, res, url) {
   try {
     const raw = url.searchParams.get("url") || "";
@@ -2489,8 +2719,20 @@ const server = http.createServer((req, res) => {
       handleListPlaylistJobs(req, res);
       return;
     }
+    if (url.pathname === "/api/analysis-logs") {
+      handleListAnalysisLogs(req, res, url);
+      return;
+    }
+    if (url.pathname === "/api/song-analysis") {
+      handleGetSongAnalysis(req, res, url);
+      return;
+    }
     if (url.pathname === "/api/cover-image") {
       handleCoverImage(req, res, url);
+      return;
+    }
+    if (url.pathname.startsWith("/api/")) {
+      sendJson(res, 404, { error: "API endpoint not found." });
       return;
     }
     serveStatic(req, res);
@@ -2548,14 +2790,18 @@ module.exports = {
   extractNetEasePlaylistId,
   extractQQMusicSongMid,
   extractSpotifyTrackId,
+  findSongAnalysisRecord,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
+  readAnalysisLogRecords,
   resolveNetEaseSongId,
   resolveNetEasePlaylistId,
   resolveQQMusicSongMid,
   resolveSpotifyTrackId,
   selectSearchSources,
+  sanitizeSongAnalysisEntry,
+  summarizeAnalysisLogEntry,
   sourceSearchQuery,
   server
 };
