@@ -843,7 +843,14 @@ function openStyleDialog(profile, trigger) {
   styleDialogTrackNote.textContent = entry.note || "";
   styleDialog.classList.add("is-open");
   styleDialog.setAttribute("aria-hidden", "false");
-  styleDialog.querySelector(".style-dialog__close")?.focus();
+  const panel = styleDialog.querySelector(".style-dialog__panel");
+  styleDialog.scrollTop = 0;
+  if (panel) panel.scrollTop = 0;
+  styleDialog.querySelector(".style-dialog__close")?.focus({ preventScroll: true });
+  requestAnimationFrame(() => {
+    styleDialog.scrollTop = 0;
+    if (panel) panel.scrollTop = 0;
+  });
 }
 
 function closeStyleDialog() {

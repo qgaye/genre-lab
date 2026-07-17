@@ -669,7 +669,9 @@ function getStyleAssociation(genreName, styleName) {
 function setStyleInfoOpen(open) {
   if (!styleDialogInfoPanel || !styleDialogInfoToggle) return;
   styleDialogInfoPanel.hidden = !open;
-  styleDialog.querySelector(".style-dialog__panel")?.classList.toggle("is-info-open", open);
+  const panel = styleDialog.querySelector(".style-dialog__panel");
+  panel?.classList.toggle("is-info-open", open);
+  if (styleDialog.classList.contains("is-open")) panel?.scrollTo({ top: 0 });
   styleDialogInfoToggle.setAttribute("aria-expanded", open ? "true" : "false");
   const key = open ? "dialog.info.hide" : "dialog.info.toggle";
   styleDialogInfoToggle.setAttribute("aria-label", t(key));
@@ -794,7 +796,14 @@ function openStyleDialog(styleData, trigger, isMood = false) {
   renderStyleProfile(profile);
   styleDialog.classList.add("is-open");
   styleDialog.setAttribute("aria-hidden", "false");
-  styleDialogInfoToggle?.focus();
+  const panel = styleDialog.querySelector(".style-dialog__panel");
+  styleDialog.scrollTop = 0;
+  if (panel) panel.scrollTop = 0;
+  styleDialogInfoToggle?.focus({ preventScroll: true });
+  requestAnimationFrame(() => {
+    styleDialog.scrollTop = 0;
+    if (panel) panel.scrollTop = 0;
+  });
 }
 
 function closeStyleDialog() {

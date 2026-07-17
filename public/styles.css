@@ -1955,13 +1955,19 @@ a.lang-toggle {
   }
 
   .style-dialog {
-    align-items: flex-end;
-    padding: 10px;
+    align-items: flex-start;
+    padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .style-dialog__panel {
-    max-height: calc(var(--app-height) - 20px);
+    max-height: calc(var(--app-height) - max(10px, env(safe-area-inset-top)) - max(10px, env(safe-area-inset-bottom)));
+    max-height: calc(100dvh - max(10px, env(safe-area-inset-top)) - max(10px, env(safe-area-inset-bottom)));
     padding: 18px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .style-dialog__panel.is-info-open {
@@ -2765,4 +2771,3 @@ a.lang-toggle {
     height: min(45vh, 360px);
   }
 }
-
