@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 歌单分享</title>
-    <link rel="stylesheet" href="/styles.css?v=20260717-share-btns2">
+    <link rel="stylesheet" href="/styles.css?v=20260717-share-compact">
   </head>
   <body>
     <main class="shell shell-playlist shell-share">
@@ -62,6 +62,39 @@
         </div>
       </section>
     </main>
+
+    <div class="style-dialog" id="styleDialog" aria-hidden="true">
+      <div class="style-dialog__backdrop" data-style-dialog-close></div>
+      <section class="style-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="styleDialogTitle">
+        <button class="style-dialog__close" type="button" data-style-dialog-close aria-label="关闭曲风详情" data-i18n-aria="dialog.close">×</button>
+        <p class="style-dialog__kicker" id="styleDialogKicker" data-i18n="dialog.kicker">Discogs Style</p>
+        <h2 id="styleDialogTitle"></h2>
+        <div class="style-dialog__toolbar">
+          <span id="styleDialogTrackCount"></span>
+          <button class="style-dialog__info-toggle" id="styleDialogInfoToggle" type="button" aria-expanded="false" aria-controls="styleDialogInfoPanel" aria-label="展开曲风介绍" data-i18n-aria="dialog.info.toggle" title="展开曲风介绍" data-i18n-title="dialog.info.toggle">i</button>
+        </div>
+        <div class="style-dialog__content">
+          <div class="style-dialog__tracks" id="styleDialogTrackList" aria-label="关联歌曲" data-i18n-aria="dialog.associated"></div>
+          <div class="style-dialog__info" id="styleDialogInfoPanel" hidden>
+            <button class="style-dialog__back" id="styleDialogInfoBack" type="button" data-i18n="dialog.info.back">返回歌曲</button>
+            <p class="style-dialog__overview" id="styleDialogOverview"></p>
+            <div class="style-dialog__section">
+              <h3 data-i18n="dialog.focus">风格重点</h3>
+              <ul id="styleDialogFocus"></ul>
+            </div>
+            <div class="style-dialog__section">
+              <h3 data-i18n="dialog.history">发展脉络</h3>
+              <p id="styleDialogHistory"></p>
+            </div>
+            <div class="style-dialog__entry">
+              <span data-i18n="dialog.entry">主流入门音乐</span>
+              <strong id="styleDialogTrack"></strong>
+              <small id="styleDialogTrackNote"></small>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
