@@ -2318,7 +2318,8 @@ function serveStatic(req, res) {
   const PAGE_ALIASES = {
     "/index": "/index.html",
     "/playlist": "/playlist.html",
-    "/manage": "/manage.html"
+    "/manage": "/manage.html",
+    "/share": "/share.html"
   };
   if (PAGE_ALIASES[pathname]) {
     pathname = PAGE_ALIASES[pathname];

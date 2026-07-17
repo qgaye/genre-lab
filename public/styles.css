@@ -502,6 +502,20 @@ button:disabled {
   box-shadow: 6px 6px 0 var(--pink);
 }
 
+.mosaic-share-group {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.mosaic-share-group .verdict-share {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.mosaic-share-group .verdict-share--link {
+  background: var(--blue);
+}
+
 .secondary {
   background: var(--paper-3);
 }
@@ -2574,6 +2588,47 @@ a.lang-toggle {
   .page-btn {
     padding: 8px 14px;
     font-size: 11px;
+  }
+}
+
+/* Share page: minimal shell — no input form / progress / track list, so the
+   console column collapses to just a thin mast and the verdict fills the
+   full width on larger screens. */
+.shell-share {
+  grid-template-columns: 1fr;
+  max-width: 880px;
+}
+
+.shell-share .console {
+  border-right: none;
+  padding: 28px 0 0;
+  min-height: 0;
+}
+
+.shell-share .mast {
+  margin-bottom: 18px;
+}
+
+.shell-share .result-board {
+  padding-top: 0;
+}
+
+.shell-share .mast-buttons .lang-toggle {
+  text-decoration: none;
+}
+
+.share-empty {
+  margin-top: 24px;
+  text-align: center;
+  color: var(--dim);
+  font-family: var(--serif);
+  font-size: 15px;
+  padding: 32px 20px;
+}
+
+@media (max-width: 820px) {
+  .shell-share .console {
+    padding: 20px 0 0;
   }
 }
 

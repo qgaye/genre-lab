@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Genre Lab · 歌单曲风分析</title>
-    <link rel="stylesheet" href="/styles.css?v=20260717-other-threshold">
+    <link rel="stylesheet" href="/styles.css?v=20260717-share-btns2">
   </head>
   <body>
     <main class="shell shell-playlist">
@@ -61,10 +61,16 @@
             <figure class="genre-mosaic" id="genreMosaic">
               <figcaption class="mosaic-caption">
                 <span id="mosaicCaption">占比矩阵 · 面积即占比 / 同色同流派</span>
-                <button type="button" id="shareMosaic" class="verdict-share" title="生成占比矩阵图片并预览" data-i18n-title="pl.share.title" disabled>
-                  <span class="verdict-share-icon" aria-hidden="true">↗</span>
-                  <span class="verdict-share-label" data-i18n="pl.share.button">分享</span>
-                </button>
+                <div class="mosaic-share-group" id="mosaicShareGroup">
+                  <button type="button" id="shareMosaic" class="verdict-share" title="生成占比矩阵图片并预览" data-i18n-title="pl.share.titleImage" disabled>
+                    <span class="verdict-share-icon" aria-hidden="true">🖼</span>
+                    <span class="verdict-share-label" data-i18n="pl.share.image">分享为图片</span>
+                  </button>
+                  <button type="button" id="shareLinkBtn" class="verdict-share verdict-share--link" title="复制分享链接" data-i18n-title="pl.share.titleLink" disabled>
+                    <span class="verdict-share-icon" aria-hidden="true">🔗</span>
+                    <span class="verdict-share-label" data-i18n="pl.share.link">分享链接</span>
+                  </button>
+                </div>
               </figcaption>
               <div class="mosaic-stage" id="mosaicStage"></div>
             </figure>
@@ -165,6 +171,6 @@
     <script src="/discogs-taxonomy.js"></script>
     <script src="/discogs-style-profiles.js"></script>
     <script src="/genre-core.js"></script>
-    <script src="/playlist.js?v=20260717-other-threshold"></script>
+    <script src="/playlist.js?v=20260717-share-btns"></script>
   </body>
 </html>

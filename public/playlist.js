@@ -29,6 +29,7 @@ const moodBreakdownPanel = document.querySelector("#moodBreakdownPanel");
 const moodBreakdownList = document.querySelector("#moodBreakdownList");
 const trackCardTemplate = document.querySelector("#trackCardTemplate");
 const shareMosaicBtn = document.querySelector("#shareMosaic");
+const shareLinkBtn = document.querySelector("#shareLinkBtn");
 const sharePreview = document.querySelector("#sharePreview");
 const sharePreviewImage = document.querySelector("#sharePreviewImage");
 const langToggle = document.querySelector("#langToggle");
@@ -231,9 +232,13 @@ const I18N = {
     "pl.view.mood": "情绪",
     "pl.mosaic.captionGenre": "曲风矩阵 · 面积即占比 / 同色同流派",
     "pl.mosaic.captionMood": "情绪矩阵 · 面积即权重 / 同色同情绪维度",
-    "pl.share.title": "生成占比矩阵图片并预览",
-    "pl.share.button": "分享",
+    "pl.share.titleImage": "生成占比矩阵图片并预览",
+    "pl.share.titleLink": "复制分享链接到剪贴板",
+    "pl.share.image": "分享为图片",
+    "pl.share.link": "分享链接",
     "pl.share.busy": "生成中…",
+    "pl.share.copied": "链接已复制",
+    "pl.share.copyFailed": "复制失败",
     "pl.share.error": "分享生成失败",
     "pl.tracks.title": "逐曲曲风占比",
     "pl.breakdown.genre": "曲风构成",
@@ -306,7 +311,13 @@ const I18N = {
     "dialog.noAlbum": "未知专辑",
     "dialog.noCover": "无封面",
     "dialog.noTracks": "当前分析结果里没有命中这类曲风的歌曲。",
-    "dialog.noEntry": "暂无稳定入门曲"
+    "dialog.noEntry": "暂无稳定入门曲",
+    "share.title": "歌单分享",
+    "share.nav.analyze": "去分析",
+    "share.loading": "加载中…",
+    "share.notFound": "该歌单分析任务不存在或已过期",
+    "share.failed": "歌单分析失败",
+    "share.incomplete": "歌单正在分析中，仅展示已完成部分"
   },
   en: {
     "lang.toggle": "中",
@@ -327,9 +338,13 @@ const I18N = {
     "pl.view.mood": "Mood",
     "pl.mosaic.captionGenre": "Genre mosaic · area = share / same color = same genre",
     "pl.mosaic.captionMood": "Mood mosaic · area = weight / same color = same mood axis",
-    "pl.share.title": "Generate a mosaic image and preview it",
-    "pl.share.button": "Share",
+    "pl.share.titleImage": "Generate a mosaic image and preview it",
+    "pl.share.titleLink": "Copy share link to clipboard",
+    "pl.share.image": "Share as image",
+    "pl.share.link": "Copy link",
     "pl.share.busy": "Generating…",
+    "pl.share.copied": "Link copied",
+    "pl.share.copyFailed": "Copy failed",
     "pl.share.error": "Failed to generate image",
     "pl.tracks.title": "Per-track genre share",
     "pl.breakdown.genre": "Genre breakdown",
@@ -402,7 +417,13 @@ const I18N = {
     "dialog.noAlbum": "Unknown album",
     "dialog.noCover": "No cover",
     "dialog.noTracks": "No analyzed tracks matched this style.",
-    "dialog.noEntry": "No stable entry track"
+    "dialog.noEntry": "No stable entry track",
+    "share.title": "Shared playlist",
+    "share.nav.analyze": "Analyze",
+    "share.loading": "Loading…",
+    "share.notFound": "This analysis job does not exist or has expired",
+    "share.failed": "Playlist analysis failed",
+    "share.incomplete": "Analysis is still in progress — showing completed tracks only"
   }
 };
 
@@ -433,18 +454,19 @@ async function postJson(url, body) {
 }
 
 function setStatus(text, busy = false) {
-  statusPill.textContent = text;
-  analyzeBtn.disabled = busy;
+  if (statusPill) statusPill.textContent = text;
+  if (analyzeBtn) analyzeBtn.disabled = busy;
 }
 
 function setProgress(label, percent, detail) {
-  progressLabel.textContent = label;
-  progressPercent.textContent = `${Math.round(percent)}%`;
-  progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  if (progressLabel) progressLabel.textContent = label;
+  if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+  if (progressFill) progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
   if (detail) logLine(detail);
 }
 
 function logLine(text) {
+  if (!progressLog) return;
   const li = document.createElement("li");
   li.textContent = text;
   progressLog.appendChild(li);
@@ -452,7 +474,7 @@ function logLine(text) {
 }
 
 function resetProgress() {
-  progressLog.innerHTML = "";
+  if (progressLog) progressLog.innerHTML = "";
   setProgress(t("pl.progress.ready"), 0);
 }
 
@@ -507,9 +529,11 @@ async function loadModelTaxonomy(model) {
   });
 }
 
-modelSelect.addEventListener("change", () => {
-  activeModel = modelSelect.value;
-});
+if (modelSelect) {
+  modelSelect.addEventListener("change", () => {
+    activeModel = modelSelect.value;
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Per-track rendering
@@ -1092,6 +1116,7 @@ function renderAggregate(compositions, dimensionsList) {
   const hasAny = lastGenreTwoLevel.length > 0 || lastMoodTwoLevel.length > 0;
   genreTwoLevel.hidden = !hasAny;
   if (shareMosaicBtn) shareMosaicBtn.disabled = !hasAny;
+  if (shareLinkBtn) shareLinkBtn.disabled = !hasAny;
   if (hasAny && !twoLevelShown) {
     twoLevelShown = true;
     switchView("mosaic-genre");
@@ -1121,10 +1146,12 @@ function switchView(view) {
   showMosaic(view);
 }
 
-viewToggle.addEventListener("click", event => {
-  const btn = event.target.closest(".view-toggle-btn");
-  if (btn) switchView(btn.dataset.view);
-});
+if (viewToggle) {
+  viewToggle.addEventListener("click", event => {
+    const btn = event.target.closest(".view-toggle-btn");
+    if (btn) switchView(btn.dataset.view);
+  });
+}
 
 // Mosaic (treemap): every tile's AREA is proportional to its share, so a 4%
 // style is genuinely small in both dimensions. Genres are nested regions (not
@@ -1413,6 +1440,7 @@ function resetPlaylistView() {
   lastSummary = null;
   shareMeta = { title: "", subtitle: "" };
   if (shareMosaicBtn) shareMosaicBtn.disabled = true;
+  if (shareLinkBtn) shareLinkBtn.disabled = true;
   trackCount.textContent = t("pl.count.tracks", { n: 0 });
   playlistMeta.textContent = t("pl.overview.parsing");
   for (const btn of viewToggle.querySelectorAll(".view-toggle-btn")) {
@@ -1650,6 +1678,7 @@ async function resumeJobFromUrl() {
 // ---------------------------------------------------------------------------
 // Workflow
 // ---------------------------------------------------------------------------
+if (form) {
 form.addEventListener("submit", async event => {
   event.preventDefault();
   if (running) return;
@@ -1683,6 +1712,7 @@ form.addEventListener("submit", async event => {
     failJob(error.message);
   }
 });
+}
 
 // ---------------------------------------------------------------------------
 // Share card: render the current mosaic (占比矩阵) into a standalone PNG on a
@@ -2041,6 +2071,7 @@ async function handleShareMosaic() {
   const originalLabel = label ? label.textContent : "";
   shareMosaicBtn.classList.add("is-busy");
   shareMosaicBtn.disabled = true;
+  if (shareLinkBtn) shareLinkBtn.disabled = true;
   if (label) label.textContent = t("pl.share.busy");
   try {
     const canvas = renderShareCard(mosaicData);
@@ -2053,7 +2084,8 @@ async function handleShareMosaic() {
   } finally {
     shareMosaicBtn.classList.remove("is-busy");
     shareMosaicBtn.disabled = mosaicData.length === 0;
-    if (label) label.textContent = originalLabel || t("pl.share.button");
+    if (shareLinkBtn) shareLinkBtn.disabled = mosaicData.length === 0;
+    if (label) label.textContent = originalLabel || t("pl.share.image");
   }
 }
 
@@ -2064,6 +2096,38 @@ if (shareMosaicBtn) {
 if (sharePreview) {
   sharePreview.addEventListener("click", event => {
     if (event.target.matches("[data-share-preview-close]")) closeSharePreview();
+  });
+}
+
+if (shareLinkBtn) {
+  shareLinkBtn.addEventListener("click", async () => {
+    if (!jobState || !jobState.jobId) return;
+    const label = shareLinkBtn.querySelector(".verdict-share-label");
+    const originalLabel = label ? label.textContent : "";
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/share?job=${encodeURIComponent(jobState.jobId)}`;
+    let copied = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        copied = true;
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = shareUrl;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        copied = document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+    } catch (error) {
+      copied = false;
+    }
+    if (label) label.textContent = copied ? t("pl.share.copied") : t("pl.share.copyFailed");
+    setTimeout(() => {
+      if (label) label.textContent = originalLabel || t("pl.share.link");
+    }, 1800);
   });
 }
 
@@ -2111,13 +2175,15 @@ function applyLanguage() {
   // above reset these back to their idle defaults).
   if (lastSummary) {
     const { name, total, ok, sampled, originalCount } = lastSummary;
-    trackCount.textContent = t("pl.count.tracks", { n: total });
-    parsedLine.textContent = sampled
-      ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
-      : t("pl.parsed.start", { name, n: total });
-    statusPill.textContent = t("pl.status.complete", { ok, n: total });
-    progressLabel.textContent = t("pl.progress.complete");
-    playlistMeta.textContent = name;
+    if (trackCount) trackCount.textContent = t("pl.count.tracks", { n: total });
+    if (parsedLine) {
+      parsedLine.textContent = sampled
+        ? t("pl.parsed.start.sampled", { name, n: total, total: originalCount })
+        : t("pl.parsed.start", { name, n: total });
+    }
+    if (statusPill) statusPill.textContent = t("pl.status.complete", { ok, n: total });
+    if (progressLabel) progressLabel.textContent = t("pl.progress.complete");
+    if (playlistMeta) playlistMeta.textContent = name;
     shareMeta = {
       title: name,
       subtitle: ""
@@ -2142,7 +2208,43 @@ if (langToggle) {
 }
 
 applyLanguage();
-initModelSelector();
-// Resume an in-flight / finished job whose id is in the page URL (mobile
-// app-switch or refresh). Runs after the model selector so activeModel is set.
-resumeJobFromUrl();
+// The form/progress/track-list elements only exist on the full playlist page.
+// The share page reuses this file for rendering but ships a minimal DOM, so we
+// skip the model selector, URL-resume and form wiring there.
+if (form) {
+  initModelSelector();
+  // Resume an in-flight / finished job whose id is in the page URL (mobile
+  // app-switch or refresh). Runs after the model selector so activeModel is set.
+  resumeJobFromUrl();
+}
+
+// Expose a small bootstrap hook for share.js / other lightweight pages that
+// reuse this file as a rendering library but want to drive the data flow
+// themselves (e.g. /share?job=xxx fetches job data and calls setSharedState).
+window.playlistRender = {
+  renderAggregate,
+  showMosaic,
+  switchView,
+  resetPlaylistView,
+  setJobState(state) { jobState = state; },
+  setLastSummary(summary) { lastSummary = summary; },
+  setShareMeta(meta) { shareMeta = meta; },
+  populatePlaylistMeta(name, total, ok, sampled, originalCount, sourceUrl) {
+    if (!playlistMeta) return;
+    playlistMeta.textContent = name || "";
+    if (typeof total === "number" && trackCount) {
+      trackCount.textContent = t("pl.count.tracks", { n: total });
+    }
+    if (parsedLine && typeof total === "number") {
+      parsedLine.textContent = sampled
+        ? t("pl.parsed.start.sampled", { name: name || "", n: total, total: originalCount || total })
+        : t("pl.parsed.start", { name: name || "", n: total });
+    }
+    if (statusPill && typeof ok === "number" && typeof total === "number") {
+      statusPill.textContent = t("pl.status.complete", { ok, n: total });
+    }
+    if (progressLabel) progressLabel.textContent = t("pl.progress.complete");
+  },
+  t,
+  setLang
+};

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Genre Lab · 歌单分享</title>
+    <link rel="stylesheet" href="/styles.css?v=20260717-share-btns2">
+  </head>
+  <body>
+    <main class="shell shell-playlist shell-share">
+      <section class="console" aria-label="歌单分享页">
+        <header class="mast">
+          <div>
+            <p class="kicker">Genre Lab</p>
+            <h1 id="shareTitle" data-i18n="share.title">歌单分享</h1>
+          </div>
+          <div class="mast-actions">
+            <div class="mast-buttons">
+              <a class="lang-toggle" href="/playlist" data-i18n="share.nav.analyze">去分析</a>
+            </div>
+          </div>
+        </header>
+      </section>
+
+      <section class="result-board result-board-playlist" id="resultBoard" aria-live="polite">
+        <article class="verdict">
+          <div class="verdict-top">
+            <p data-i18n="pl.overview">歌单概览</p>
+          </div>
+          <p id="playlistMeta" class="playlist-meta" data-i18n="share.loading">加载中…</p>
+          <div class="genre-2l" id="genreTwoLevel" hidden>
+            <div class="view-toggle" id="viewToggle" role="tablist" aria-label="视图切换" data-i18n-aria="pl.view.aria">
+              <button type="button" class="view-toggle-btn is-active" data-view="mosaic-genre" role="tab" aria-selected="true" data-i18n="pl.view.genre">曲风</button>
+              <button type="button" class="view-toggle-btn" data-view="mosaic-mood" role="tab" aria-selected="false" data-i18n="pl.view.mood">情绪</button>
+            </div>
+            <figure class="genre-mosaic" id="genreMosaic">
+              <figcaption class="mosaic-caption">
+                <span id="mosaicCaption">占比矩阵 · 面积即占比 / 同色同流派</span>
+              </figcaption>
+              <div class="mosaic-stage" id="mosaicStage"></div>
+            </figure>
+          </div>
+        </article>
+
+        <div class="breakdown-row" id="breakdownRow" hidden>
+          <article class="panel breakdown-panel" id="genreBreakdownPanel">
+            <div class="panel-head">
+              <h3 data-i18n="pl.breakdown.genre">曲风构成</h3>
+            </div>
+            <div class="breakdown-list" id="genreBreakdownList"></div>
+          </article>
+          <article class="panel breakdown-panel" id="moodBreakdownPanel">
+            <div class="panel-head">
+              <h3 data-i18n="pl.breakdown.mood">情绪构成</h3>
+            </div>
+            <div class="breakdown-list" id="moodBreakdownList"></div>
+          </article>
+        </div>
+
+        <div class="panel share-empty" id="shareError" hidden>
+          <p id="shareErrorText"></p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/discogs-taxonomy.js"></script>
+    <script src="/discogs-style-profiles.js"></script>
+    <script src="/genre-core.js?v=20260717-share-btns"></script>
+    <script src="/playlist.js?v=20260717-share-btns"></script>
+    <script src="/share.js?v=20260717-share-btns"></script>
+  </body>
+</html>
