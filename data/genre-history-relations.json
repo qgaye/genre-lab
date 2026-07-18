@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-18",
+  "edges": [
+    {
+      "from": "Blues",
+      "to": "Funk / Soul",
+      "period": "1940s–1960s",
+      "reason": "Blues 与 Jazz、Gospel 一起塑造了战后 R&B，Soul 随后从 R&B 体系中发展出来。",
+      "sourceTitle": "Library of Congress · Rhythm and Blues",
+      "sourceUrl": "https://www.loc.gov/collections/songs-of-america/articles-and-essays/musical-styles/popular-songs-of-the-day/rhythm-and-blues/"
+    },
+    {
+      "from": "Jazz",
+      "to": "Funk / Soul",
+      "period": "1940s–1960s",
+      "reason": "早期 R&B 汇合了 Jazz、Blues 与 Gospel；这条谱系继续进入 Soul 与 Funk。",
+      "sourceTitle": "Library of Congress · Rhythm and Blues",
+      "sourceUrl": "https://www.loc.gov/collections/songs-of-america/articles-and-essays/musical-styles/popular-songs-of-the-day/rhythm-and-blues/"
+    },
+    {
+      "from": "Blues",
+      "to": "Rock",
+      "period": "1940s–1950s",
+      "reason": "R&B 与 Blues 的节奏、演唱和乐队语言是早期 Rock & Roll 的直接基础。",
+      "sourceTitle": "Library of Congress · Rhythm and Blues",
+      "sourceUrl": "https://www.loc.gov/collections/songs-of-america/articles-and-essays/musical-styles/popular-songs-of-the-day/rhythm-and-blues/"
+    },
+    {
+      "from": "Funk / Soul",
+      "to": "Rock",
+      "period": "1950s",
+      "reason": "战后 R&B 对 Rock & Roll 的形成具有决定性影响，许多早期 Rock 作品直接承接其曲目与表演方式。",
+      "sourceTitle": "Library of Congress · Rhythm and Blues",
+      "sourceUrl": "https://www.loc.gov/collections/songs-of-america/articles-and-essays/musical-styles/popular-songs-of-the-day/rhythm-and-blues/"
+    },
+    {
+      "from": "Funk / Soul",
+      "to": "Hip Hop",
+      "period": "1970s",
+      "reason": "早期 Bronx DJ 从 James Brown 等 Funk 唱片中寻找并延长鼓点 break，形成 Hip Hop 的节拍核心。",
+      "sourceTitle": "Smithsonian National Postal Museum · Hip Hop",
+      "sourceUrl": "https://postalmuseum.si.edu/stamp-stories-hip-hop"
+    },
+    {
+      "from": "Reggae",
+      "to": "Hip Hop",
+      "period": "1960s–1970s",
+      "reason": "Jamaican sound-system、toasting 与 dub 的现场实践，经 Kool Herc 等人带入 Bronx 派对文化。",
+      "sourceTitle": "Smithsonian National Postal Museum · Hip Hop",
+      "sourceUrl": "https://postalmuseum.si.edu/stamp-stories-hip-hop"
+    },
+    {
+      "from": "Latin",
+      "to": "Hip Hop",
+      "period": "1970s",
+      "reason": "Bronx 的 Latino 与 Caribbean 社群把 Salsa 等音乐的打击乐和 break 感融入早期 Hip Hop。",
+      "sourceTitle": "National Museum of American History · The sazón in hip-hop",
+      "sourceUrl": "https://americanhistory.si.edu/explore/stories/sazon-hip-hop"
+    },
+    {
+      "from": "Rock",
+      "to": "Hip Hop",
+      "period": "1970s",
+      "reason": "早期 Bronx DJ 从周围的 Salsa、Disco、Funk 与 Rock 唱片中截取以打击乐为中心的 break。",
+      "sourceTitle": "National Museum of American History · The sazón in hip-hop",
+      "sourceUrl": "https://americanhistory.si.edu/explore/stories/sazon-hip-hop"
+    },
+    {
+      "from": "Funk / Soul",
+      "to": "Electronic",
+      "period": "late 1970s–1980s",
+      "reason": "Chicago Warehouse 的 Gospel、Soul 与 Disco DJ 混合实践，成为 House 及后续电子舞曲谱系的重要起点。",
+      "sourceTitle": "Smithsonian Center for Folklife · Dancing into Epiphanies with House Music",
+      "sourceUrl": "https://www.si.edu/object/dancing-epiphanies-house-music-dj-duane-powells-sunday-service%3Aposts_4cb23fdb9a66ebab9028424e46d832f2"
+    },
+    {
+      "from": "Funk / Soul",
+      "to": "Reggae",
+      "period": "1950s–1960s",
+      "reason": "Jamaican 乐手吸收北美 R&B、Jazz 与本地节奏形成 Ska，随后沿 Ska 与 Rocksteady 谱系发展出 Reggae。",
+      "sourceTitle": "Smithsonian Folklife · Black History in Roots Reggae Music",
+      "sourceUrl": "https://folklife.si.edu/magazine/black-history-in-roots-reggae-music"
+    }
+  ]
+}

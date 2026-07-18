@@ -19,6 +19,7 @@ pnpm-debug.log*
 # Generated runtime data
 downloads/
 results/
+output/
 .setup-logs/
 # Local analysis request logs
 .runtime/

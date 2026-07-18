@@ -26,6 +26,7 @@ const trackCount = document.querySelector("#trackCount");
 const breakdownRow = document.querySelector("#breakdownRow");
 const genreBreakdownPanel = document.querySelector("#genreBreakdownPanel");
 const genreBreakdownList = document.querySelector("#genreBreakdownList");
+const playlistAtlasLink = document.querySelector("#playlistAtlasLink");
 const moodBreakdownPanel = document.querySelector("#moodBreakdownPanel");
 const moodBreakdownList = document.querySelector("#moodBreakdownList");
 const trackCardTemplate = document.querySelector("#trackCardTemplate");
@@ -248,6 +249,7 @@ const I18N = {
     "pl.share.error": "分享生成失败",
     "pl.tracks.title": "逐曲曲风占比",
     "pl.breakdown.genre": "曲风构成",
+    "pl.breakdown.atlas": "曲风图谱",
     "pl.breakdown.mood": "情绪构成",
     "pl.preview.title": "占比矩阵已生成",
     "pl.preview.close": "关闭占比矩阵预览",
@@ -359,6 +361,7 @@ const I18N = {
     "pl.share.error": "Failed to generate image",
     "pl.tracks.title": "Per-track genre share",
     "pl.breakdown.genre": "Genre breakdown",
+    "pl.breakdown.atlas": "Genre atlas",
     "pl.breakdown.mood": "Mood breakdown",
     "pl.preview.title": "Mosaic ready",
     "pl.preview.close": "Close mosaic preview",
@@ -1150,6 +1153,11 @@ function renderBreakdownPanel(listEl, twoLevel) {
 function renderBreakdowns() {
   const hasGenre = renderBreakdownPanel(genreBreakdownList, lastGenreTwoLevel);
   const hasMood = renderBreakdownPanel(moodBreakdownList, lastMoodTwoLevel);
+  if (playlistAtlasLink) {
+    const jobId = jobState && jobState.jobId;
+    playlistAtlasLink.hidden = !(hasGenre && jobId);
+    playlistAtlasLink.href = jobId ? `/atlas?playlist=${encodeURIComponent(jobId)}` : "/atlas";
+  }
   breakdownRow.hidden = !(hasGenre || hasMood);
 }
 
@@ -1488,6 +1496,10 @@ function resetPlaylistView() {
   shareMeta = { title: "", subtitle: "" };
   if (shareMosaicBtn) shareMosaicBtn.disabled = true;
   if (shareLinkBtn) shareLinkBtn.disabled = true;
+  if (playlistAtlasLink) {
+    playlistAtlasLink.hidden = true;
+    playlistAtlasLink.href = "/atlas";
+  }
   trackCount.textContent = t("pl.count.tracks", { n: 0 });
   playlistMeta.textContent = t("pl.overview.parsing");
   for (const btn of viewToggle.querySelectorAll(".view-toggle-btn")) {
