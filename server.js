@@ -289,6 +289,21 @@ function clientIp(req) {
   return forwarded || realIp || req.socket.remoteAddress || "";
 }
 
+// There is no account/session layer in Genre Lab. The browser supplies a stable
+// anonymous id when available; non-browser API clients fall back to their IP +
+// user-agent. Persist only the digest, never those raw identity inputs.
+function playlistRequesterKey(req, clientId) {
+  const normalizedClientId = String(clientId || "").trim();
+  const hasValidClientId = /^[a-zA-Z0-9_-]{16,128}$/.test(normalizedClientId);
+  const userAgent = String(req.headers["user-agent"] || "");
+  const identity = hasValidClientId
+    ? `client:${normalizedClientId}`
+    : `request:${clientIp(req)}\n${userAgent}`;
+  return crypto.createHash("sha256")
+    .update(identity)
+    .digest("hex");
+}
+
 function requestDevice(req) {
   const ua = String(req.headers["user-agent"] || "");
   const lower = ua.toLowerCase();
@@ -2132,6 +2147,72 @@ async function handleLog(req, res) {
 // In-memory map holds only jobs that are still running; a job is dropped from
 // memory the moment it finishes (its persisted file remains on disk forever).
 const PLAYLIST_JOBS = new Map();
+const PERSISTED_RUNNING_PLAYLIST_JOBS = new Map();
+let persistedRunningPlaylistJobsIndexed = false;
+
+function playlistIdentityKey(platform, playlistId) {
+  const normalizedPlatform = normalizePlaylistPlatform(platform);
+  const normalizedId = String(playlistId || "").trim();
+  return normalizedPlatform && normalizedId ? `${normalizedPlatform}:${normalizedId}` : "";
+}
+
+function matchingRunningPlaylistJob(jobs, requesterKey, playlistKey) {
+  if (!requesterKey || !playlistKey) return null;
+  for (const job of jobs) {
+    if (job
+      && job.state === "running"
+      && job.requesterKey === requesterKey
+      && job.playlistKey === playlistKey) {
+      return job;
+    }
+  }
+  return null;
+}
+
+function runningPlaylistLookupKey(requesterKey, playlistKey) {
+  return `${requesterKey}\n${playlistKey}`;
+}
+
+// Historical job files contain the full track results and can be large. Build
+// the restart-recovery index at most once per process instead of re-reading all
+// completed jobs on every new submission.
+function indexPersistedRunningPlaylistJobs() {
+  if (persistedRunningPlaylistJobsIndexed) return;
+  persistedRunningPlaylistJobsIndexed = true;
+  for (const file of getPlaylistJobFiles()) {
+    let job;
+    try {
+      job = JSON.parse(fs.readFileSync(file.filePath, "utf8"));
+    } catch {
+      continue;
+    }
+    if (job.state !== "running" || !job.requesterKey || !job.playlistKey) continue;
+    const key = runningPlaylistLookupKey(job.requesterKey, job.playlistKey);
+    // Files are newest-first, so retain the most recently updated duplicate.
+    if (!PERSISTED_RUNNING_PLAYLIST_JOBS.has(key)) {
+      PERSISTED_RUNNING_PLAYLIST_JOBS.set(key, job.jobId || file.jobId);
+    }
+  }
+}
+
+// Find an in-flight analysis for this requester and playlist. Check memory
+// first, then persisted jobs so a duplicate submit after a server restart also
+// reuses and resumes the interrupted job. The matching and registration steps
+// are synchronous, preventing two requests that finish playlist loading in the
+// same event-loop turn from both creating jobs.
+function findRunningPlaylistJob(requesterKey, playlistKey) {
+  const inMemory = matchingRunningPlaylistJob(PLAYLIST_JOBS.values(), requesterKey, playlistKey);
+  if (inMemory) return inMemory;
+
+  indexPersistedRunningPlaylistJobs();
+  const key = runningPlaylistLookupKey(requesterKey, playlistKey);
+  const persistedJobId = PERSISTED_RUNNING_PLAYLIST_JOBS.get(key);
+  if (!persistedJobId) return null;
+  const persisted = getJob(persistedJobId);
+  if (matchingRunningPlaylistJob([persisted], requesterKey, playlistKey)) return persisted;
+  PERSISTED_RUNNING_PLAYLIST_JOBS.delete(key);
+  return null;
+}
 
 // Persist a job to disk as a single JSON file holding everything the frontend
 // needs to render (track list + per-track compositions + progress/state). The
@@ -2293,16 +2374,43 @@ async function runPlaylistJob(job) {
   PLAYLIST_JOBS.delete(job.jobId);
 }
 
+function playlistJobResponse(job, reused) {
+  return {
+    jobId: job.jobId,
+    reused,
+    state: job.state,
+    name: job.name,
+    coverImgUrl: job.coverImgUrl,
+    creator: job.creator,
+    sourceUrl: job.sourceUrl,
+    platform: job.platform || "netease",
+    total: job.total,
+    originalCount: job.originalCount || job.total,
+    sampled: Boolean(job.sampled),
+    modelKey: job.modelName,
+    tracks: job.tracks
+  };
+}
+
 async function handleAnalyzePlaylist(req, res) {
   try {
     const body = await readBody(req);
     const raw = body.url || body.id || "";
     const modelName = resolveRequestModelName(body.model);
+    const requesterKey = playlistRequesterKey(req, body.clientId);
 
     const playlist = await loadMusicPlaylist(raw, body.platform);
     const tracks = playlist.tracks || [];
     if (!tracks.length) {
       sendJson(res, 404, { error: "歌单里没有可分析的曲目。" });
+      return;
+    }
+
+    const platform = playlist.platform || normalizePlaylistPlatform(body.platform) || "netease";
+    const playlistKey = playlistIdentityKey(platform, playlist.id);
+    const existingJob = findRunningPlaylistJob(requesterKey, playlistKey);
+    if (existingJob) {
+      sendJson(res, 200, playlistJobResponse(existingJob, true));
       return;
     }
 
@@ -2312,9 +2420,12 @@ async function handleAnalyzePlaylist(req, res) {
       jobId,
       state: "running",
       modelName,
+      requesterKey,
+      playlistKey,
+      playlistId: String(playlist.id || ""),
       // Original user input, kept so a resumed page can refill the link box.
       inputUrl: raw,
-      platform: playlist.platform || normalizePlaylistPlatform(body.platform) || "netease",
+      platform,
       name: playlist.name,
       coverImgUrl: playlist.coverImgUrl,
       creator: playlist.creator,
@@ -2345,19 +2456,7 @@ async function handleAnalyzePlaylist(req, res) {
       PLAYLIST_JOBS.delete(job.jobId);
     });
 
-    sendJson(res, 200, {
-      jobId,
-      name: playlist.name,
-      coverImgUrl: playlist.coverImgUrl,
-      creator: playlist.creator,
-      sourceUrl: playlist.sourceUrl,
-      platform: playlist.platform || normalizePlaylistPlatform(body.platform) || "netease",
-      total: tracks.length,
-      originalCount: playlist.originalCount || tracks.length,
-      sampled: Boolean(playlist.sampled),
-      modelKey: modelName,
-      tracks
-    });
+    sendJson(res, 200, playlistJobResponse(job, false));
   } catch (error) {
     sendJson(res, error.statusCode || 500, { error: error.message });
   }
@@ -3002,7 +3101,9 @@ module.exports = {
   extractSpotifyTrackId,
   findSongAnalysisRecord,
   musicPlatformDownloadSource,
+  matchingRunningPlaylistJob,
   parseSearchCandidatesPayload,
+  playlistIdentityKey,
   rankSearchCandidates,
   readAnalysisLogRecords,
   detectPlaylistPlatform,

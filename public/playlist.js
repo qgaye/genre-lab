@@ -494,6 +494,24 @@ async function postJson(url, body) {
   return data;
 }
 
+const PLAYLIST_CLIENT_ID_KEY = "genre-lab-playlist-client-id";
+
+// A stable anonymous browser id gives the server a user boundary for in-flight
+// playlist deduplication without storing an IP address or requiring login.
+function playlistClientId() {
+  try {
+    const saved = localStorage.getItem(PLAYLIST_CLIENT_ID_KEY) || "";
+    if (/^[a-zA-Z0-9_-]{16,128}$/.test(saved)) return saved;
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const created = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    localStorage.setItem(PLAYLIST_CLIENT_ID_KEY, created);
+    return created;
+  } catch {
+    return "";
+  }
+}
+
 function setStatus(text, busy = false) {
   if (statusPill) statusPill.textContent = text;
   if (analyzeBtn) analyzeBtn.disabled = busy;
@@ -1766,7 +1784,8 @@ form.addEventListener("submit", async event => {
     const info = await postJson("/api/analyze-playlist", {
       url: raw,
       platform: selectedPlaylistPlatform(),
-      model: activeModel
+      model: activeModel,
+      clientId: playlistClientId()
     });
     if (!info.tracks || !info.tracks.length) {
       setStatus(t("pl.status.empty"));

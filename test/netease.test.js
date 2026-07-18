@@ -15,14 +15,36 @@ const {
   findSongAnalysisRecord,
   detectPlaylistPlatform,
   musicPlatformDownloadSource,
+  matchingRunningPlaylistJob,
   normalizeQQMusicPlaylist,
   parseSearchCandidatesPayload,
+  playlistIdentityKey,
   rankSearchCandidates,
   readAnalysisLogRecords,
   selectSearchSources,
   sourceSearchQuery,
   summarizeAnalysisLogEntry
 } = require("../server");
+
+test("matches only a running playlist job for the same requester and playlist", () => {
+  const jobs = [
+    { jobId: "done", state: "done", requesterKey: "user-a", playlistKey: "netease:123" },
+    { jobId: "other-user", state: "running", requesterKey: "user-b", playlistKey: "netease:123" },
+    { jobId: "other-playlist", state: "running", requesterKey: "user-a", playlistKey: "netease:456" },
+    { jobId: "existing", state: "running", requesterKey: "user-a", playlistKey: "netease:123" }
+  ];
+
+  assert.equal(matchingRunningPlaylistJob(jobs, "user-a", "netease:123").jobId, "existing");
+  assert.equal(matchingRunningPlaylistJob(jobs, "user-c", "netease:123"), null);
+  assert.equal(matchingRunningPlaylistJob(jobs, "user-a", "netease:999"), null);
+});
+
+test("builds playlist identity from normalized platform and playlist id", () => {
+  assert.equal(playlistIdentityKey("qq", " 1150140793 "), "qqmusic:1150140793");
+  assert.equal(playlistIdentityKey("netease", 13856318070), "netease:13856318070");
+  assert.equal(playlistIdentityKey("", "123"), "");
+  assert.equal(playlistIdentityKey("netease", ""), "");
+});
 
 test("summarizes analysis logs without exposing request-private fields", () => {
   const summary = summarizeAnalysisLogEntry({
