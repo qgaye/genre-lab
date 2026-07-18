@@ -22,6 +22,7 @@ const SONG_ANALYSIS_LOG_FILE = process.env.SONG_ANALYSIS_LOG_FILE
 // Playlist aggregate jobs are persisted here (one JSON file per jobId) so an
 // in-flight or finished analysis survives a server restart.
 const PLAYLIST_JOBS_DIR = path.join(RUNTIME_DIR, "playlist-jobs");
+const GENRE_HISTORY_RELATIONS_FILE = path.join(ROOT, "data", "genre-history-relations.json");
 const DEFAULT_CONFIG_FILE = path.join(ROOT, "config", "defaults.json");
 const ESSENTIA_PYTHON = path.join(ROOT, ".venv-essentia", "bin", "python");
 const ESSENTIA_SCRIPT = path.join(ROOT, "scripts", "analyze_genre.py");
@@ -2425,6 +2426,26 @@ function getPlaylistJobFiles() {
   return jobFiles;
 }
 
+function loadHistoryRelations(taxonomy) {
+  if (!fs.existsSync(GENRE_HISTORY_RELATIONS_FILE)) return [];
+  const validGenres = new Set(((taxonomy && taxonomy.genres) || []).map(genre => genre.name));
+  const payload = JSON.parse(fs.readFileSync(GENRE_HISTORY_RELATIONS_FILE, "utf8"));
+  return (payload.edges || []).filter(edge => validGenres.has(edge.from) && validGenres.has(edge.to));
+}
+
+function handleGenreRelations(req, res, url) {
+  try {
+    const modelName = resolveRequestModelName(url.searchParams.get("model"));
+    const taxonomy = loadDiscogsTaxonomy(modelName);
+    sendJson(res, 200, {
+      modelKey: modelName,
+      history: { edges: loadHistoryRelations(taxonomy) }
+    });
+  } catch (error) {
+    sendJson(res, 500, { error: error.message });
+  }
+}
+
 function readPlaylistJobMeta(filePath, fallbackJobId) {
   try {
     const job = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -2909,6 +2930,10 @@ const server = http.createServer((req, res) => {
     }
     if (url.pathname === "/api/song-analysis") {
       handleGetSongAnalysis(req, res, url);
+      return;
+    }
+    if (url.pathname === "/api/genre-relations") {
+      handleGenreRelations(req, res, url);
       return;
     }
     if (url.pathname === "/api/cover-image") {
