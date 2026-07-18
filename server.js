@@ -2549,7 +2549,8 @@ function serveStatic(req, res) {
     "/index": "/index.html",
     "/playlist": "/playlist.html",
     "/manage": "/manage.html",
-    "/share": "/share.html"
+    "/share": "/share.html",
+    "/atlas": "/atlas.html"
   };
   if (PAGE_ALIASES[pathname]) {
     pathname = PAGE_ALIASES[pathname];

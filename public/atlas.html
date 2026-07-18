@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Genre Lab · 曲风星图</title>
+    <link rel="stylesheet" href="/styles.css?v=20260718-genre-atlas">
+  </head>
+  <body>
+    <main class="atlas-shell">
+      <header class="atlas-mast">
+        <div class="atlas-title-block">
+          <p class="kicker">Genre Lab / Atlas 001</p>
+          <h1>曲风星图</h1>
+          <p class="atlas-deck">从大类到 Style，沿共享风格看见音乐类型之间的暗线。</p>
+        </div>
+        <nav class="atlas-nav" aria-label="主导航">
+          <a class="lang-toggle" href="/index">单曲</a>
+          <a class="lang-toggle" href="/playlist">歌单</a>
+          <a class="lang-toggle" href="/manage">管理</a>
+        </nav>
+      </header>
+
+      <section class="atlas-toolbar" aria-label="图谱控制">
+        <label class="atlas-control atlas-model-control">
+          <span>曲风模型</span>
+          <select id="atlasModelSelect" aria-label="曲风模型"></select>
+        </label>
+        <label class="atlas-control atlas-search-control">
+          <span>定位曲风</span>
+          <input id="atlasSearch" type="search" list="atlasSearchOptions" autocomplete="off" placeholder="输入 Genre 或共享 Style">
+          <datalist id="atlasSearchOptions"></datalist>
+        </label>
+        <button type="button" class="atlas-reset" id="atlasReset">复位视野</button>
+      </section>
+
+      <section class="atlas-workbench">
+        <figure class="atlas-figure" aria-labelledby="atlasCaption">
+          <figcaption id="atlasCaption">
+            <span id="atlasCaptionTitle">关系星云</span>
+            <small id="atlasCaptionNote">连线表示两个 Genre 在当前模型中拥有同名 Style</small>
+          </figcaption>
+          <div class="atlas-stage" id="atlasStage">
+            <svg id="atlasSvg" viewBox="0 0 1200 760" role="img" aria-labelledby="atlasSvgTitle atlasSvgDesc">
+              <title id="atlasSvgTitle">曲风关系星云</title>
+              <desc id="atlasSvgDesc">展示 Discogs 主曲风、共享 Style 及它们之间关系的交互式图谱。</desc>
+              <defs>
+                <filter id="atlasRough" x="-20%" y="-20%" width="140%" height="140%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="9" result="noise"></feTurbulence>
+                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6"></feDisplacementMap>
+                </filter>
+                <pattern id="atlasDots" width="8" height="8" patternUnits="userSpaceOnUse">
+                  <circle cx="1.2" cy="1.2" r="0.8" fill="currentColor" opacity="0.18"></circle>
+                </pattern>
+              </defs>
+              <g id="atlasViewport"></g>
+            </svg>
+            <div class="atlas-empty" id="atlasEmpty" hidden>当前模型没有可显示的曲风数据。</div>
+            <div class="atlas-zoom-readout" id="atlasZoomReadout">100%</div>
+          </div>
+          <div class="atlas-legend" aria-label="图例">
+            <span><i class="legend-mark legend-genre"></i>Genre 主曲风</span>
+            <span><i class="legend-mark legend-bridge"></i>共享 Style</span>
+            <span><i class="legend-line"></i>归属 / 关系</span>
+            <span><b>拖动</b>平移 · <b>滚轮</b>缩放 · <b>点击</b>聚焦</span>
+          </div>
+        </figure>
+
+        <aside class="atlas-inspector" aria-live="polite">
+          <p class="atlas-inspector-kicker" id="atlasInspectorKicker">Atlas index</p>
+          <h2 id="atlasInspectorTitle">选择一颗星</h2>
+          <p class="atlas-inspector-copy" id="atlasInspectorCopy">点击主曲风或共享 Style，查看它在分类体系里的位置与连接。</p>
+          <dl class="atlas-facts" id="atlasFacts">
+            <div><dt>Genres</dt><dd id="atlasGenreCount">—</dd></div>
+            <div><dt>Styles</dt><dd id="atlasStyleCount">—</dd></div>
+            <div><dt>Bridges</dt><dd id="atlasBridgeCount">—</dd></div>
+          </dl>
+          <div class="atlas-relations" id="atlasRelations"></div>
+        </aside>
+      </section>
+
+      <footer class="atlas-footer">
+        <span>RELATION RULE / 共享同名 STYLE</span>
+        <span id="atlasSource">Discogs taxonomy</span>
+      </footer>
+    </main>
+
+    <script src="/discogs-taxonomy.js"></script>
+    <script src="/discogs-style-profiles.js"></script>
+    <script src="/atlas.js?v=20260718-genre-atlas"></script>
+  </body>
+</html>
