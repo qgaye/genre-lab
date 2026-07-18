@@ -1,11 +1,12 @@
-// Playlist genre analysis page. It submits a NetEase playlist to the server's
-// aggregate job endpoint, which downloads a public audio match, runs Essentia
+// Playlist genre analysis page. It submits a NetEase or QQ Music playlist to
+// the server's aggregate job endpoint, which downloads a public audio match, runs Essentia
 // genre analysis, queries iTunes / Discogs / Last.fm metadata and scores each
 // track server-side. The page receives a jobId (kept in the URL so a mobile
 // tab can background/resume), polls for per-track results, and renders both the
 // per-track composition and the aggregate composition across all tracks.
 const form = document.querySelector("#playlistForm");
 const playlistInput = document.querySelector("#playlistInput");
+const playlistPlatformInputs = [...document.querySelectorAll("input[name='playlistPlatform']")];
 const modelSelect = document.querySelector("#modelSelect");
 const analyzeBtn = document.querySelector("#analyzeBtn");
 const statusPill = document.querySelector("#statusPill");
@@ -220,13 +221,18 @@ const I18N = {
     "pl.title": "我的音乐品味",
     "pl.nav.single": "单曲",
     "pl.status.waiting": "等待输入",
-    "pl.field.link": "网易云歌单链接",
-    "pl.field.linkPlaceholder": "例如：https://music.163.com/playlist?id=13856318070",
-    "pl.parsed.default": "粘贴网易云歌单链接，将遍历每首歌进行 Essentia 音频分析并查询 iTunes / Discogs / Last.fm 曲风",
+    "pl.field.platform": "歌单平台",
+    "pl.platform.netease": "网易云",
+    "pl.platform.qqmusic": "QQ音乐",
+    "pl.field.link": "歌单链接",
+    "pl.field.linkPlaceholder.netease": "例如：https://music.163.com/playlist?id=13856318070",
+    "pl.field.linkPlaceholder.qqmusic": "例如：https://i2.y.qq.com/n3/other/pages/details/playlist.html?id=1150140793",
+    "pl.parsed.netease": "粘贴网易云歌单链接，将遍历每首歌进行 Essentia 音频分析并查询 iTunes / Discogs / Last.fm 曲风",
+    "pl.parsed.qqmusic": "粘贴 QQ 音乐歌单链接，将解析歌单曲目并逐首进行 Essentia 音频分析与曲风查询",
     "pl.action.analyze": "分析歌单",
     "pl.progress.ready": "准备就绪",
     "pl.overview": "歌单概览",
-    "pl.overview.empty": "粘贴一个网易云歌单链接开始逐曲分析。",
+    "pl.overview.empty": "粘贴网易云或 QQ 音乐歌单链接开始逐曲分析。",
     "pl.view.aria": "视图切换",
     "pl.view.genre": "曲风",
     "pl.view.mood": "情绪",
@@ -270,11 +276,11 @@ const I18N = {
     "pl.card.status.done": "完成",
     "pl.card.status.queued": "排队中",
     "pl.status.needLink": "请输入歌单链接",
-    "pl.overview.parsing": "正在解析网易云歌单…",
+    "pl.overview.parsing": "正在解析歌单…",
     "pl.status.parsing": "解析歌单…",
     "pl.progress.parse": "解析歌单",
-    "pl.progress.requesting": "请求网易云歌单信息…",
-    "pl.playlist.fallbackName": "网易云歌单",
+    "pl.progress.requesting": "请求歌单信息…",
+    "pl.playlist.fallbackName": "音乐歌单",
     "pl.overview.analyzing": "{name} · 共 {n} 首歌曲，逐曲分析中…",
     "pl.parsed.start": "歌单「{name}」共 {n} 首，开始逐曲分析",
     "pl.parsed.start.sampled": "歌单「{name}」{total} 首中随机 {n} 首，开始逐曲分析",
@@ -326,13 +332,18 @@ const I18N = {
     "pl.title": "Playlist Genre Analysis",
     "pl.nav.single": "Single",
     "pl.status.waiting": "Awaiting input",
-    "pl.field.link": "NetEase playlist link",
-    "pl.field.linkPlaceholder": "e.g. https://music.163.com/playlist?id=13856318070",
-    "pl.parsed.default": "Paste a NetEase playlist link; each track is analyzed with Essentia audio and iTunes / Discogs / Last.fm genre tags",
+    "pl.field.platform": "Playlist platform",
+    "pl.platform.netease": "NetEase",
+    "pl.platform.qqmusic": "QQ Music",
+    "pl.field.link": "Playlist link",
+    "pl.field.linkPlaceholder.netease": "e.g. https://music.163.com/playlist?id=13856318070",
+    "pl.field.linkPlaceholder.qqmusic": "e.g. https://i2.y.qq.com/n3/other/pages/details/playlist.html?id=1150140793",
+    "pl.parsed.netease": "Paste a NetEase playlist link; each track is analyzed with Essentia audio and iTunes / Discogs / Last.fm genre tags",
+    "pl.parsed.qqmusic": "Paste a QQ Music playlist link to parse its tracks and analyze each one with Essentia and genre metadata",
     "pl.action.analyze": "Analyze playlist",
     "pl.progress.ready": "Ready",
     "pl.overview": "Playlist overview",
-    "pl.overview.empty": "Paste a NetEase playlist link to start track-by-track analysis.",
+    "pl.overview.empty": "Paste a NetEase or QQ Music playlist link to start track-by-track analysis.",
     "pl.view.aria": "View toggle",
     "pl.view.genre": "Genre",
     "pl.view.mood": "Mood",
@@ -376,11 +387,11 @@ const I18N = {
     "pl.card.status.done": "Done",
     "pl.card.status.queued": "Queued",
     "pl.status.needLink": "Please enter a playlist link",
-    "pl.overview.parsing": "Parsing the NetEase playlist…",
+    "pl.overview.parsing": "Parsing playlist…",
     "pl.status.parsing": "Parsing playlist…",
     "pl.progress.parse": "Parsing playlist",
-    "pl.progress.requesting": "Requesting NetEase playlist info…",
-    "pl.playlist.fallbackName": "NetEase playlist",
+    "pl.progress.requesting": "Requesting playlist info…",
+    "pl.playlist.fallbackName": "Music playlist",
     "pl.overview.analyzing": "{name} · {n} tracks, analyzing…",
     "pl.parsed.start": "Playlist \u201c{name}\u201d has {n} tracks; starting analysis",
     "pl.parsed.start.sampled": "Playlist \u201c{name}\u201d: {n} of {total} tracks picked at random; starting analysis",
@@ -433,6 +444,33 @@ function t(key, params) {
   if (str == null) str = I18N.zh[key] != null ? I18N.zh[key] : key;
   if (params) str = str.replace(/\{(\w+)\}/g, (match, name) => (params[name] != null ? params[name] : ""));
   return str;
+}
+
+function selectedPlaylistPlatform() {
+  return playlistPlatformInputs.find(input => input.checked)?.value || "netease";
+}
+
+function setSelectedPlaylistPlatform(platform) {
+  const input = playlistPlatformInputs.find(item => item.value === platform);
+  if (input) input.checked = true;
+}
+
+function platformFromPlaylistInput(value) {
+  const match = String(value || "").match(/https?:\/\/[^\s<>"']+/i);
+  if (!match) return "";
+  try {
+    const host = new URL(match[0]).hostname.toLowerCase();
+    if (host === "y.qq.com" || host.endsWith(".y.qq.com")) return "qqmusic";
+    if (host === "music.163.com" || host.endsWith(".music.163.com") || host === "163cn.tv") return "netease";
+  } catch {}
+  return "";
+}
+
+function updatePlaylistPlatformCopy() {
+  if (!form || !playlistInput || !parsedLine) return;
+  const platform = selectedPlaylistPlatform();
+  playlistInput.placeholder = t(`pl.field.linkPlaceholder.${platform}`);
+  if (!running) parsedLine.textContent = t(`pl.parsed.${platform}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -1490,10 +1528,15 @@ function renderPlaylistMeta(info) {
 // Build the job's client state (cards + composition slots) from a submit or a
 // resumed status payload.
 function installJob(info) {
+  if (info.platform) {
+    setSelectedPlaylistPlatform(info.platform);
+    updatePlaylistPlatformCopy();
+  }
   const name = renderPlaylistMeta(info);
   const tracks = info.tracks || [];
   jobState = {
     jobId: info.jobId,
+    platform: info.platform || selectedPlaylistPlatform(),
     name,
     total: info.total,
     sampled: Boolean(info.sampled),
@@ -1652,6 +1695,7 @@ async function resumeJobFromUrl() {
     if (data.inputUrl) playlistInput.value = data.inputUrl;
     installJob({
       jobId,
+      platform: data.platform,
       name: data.name,
       tracks: data.tracks,
       total: data.total,
@@ -1707,7 +1751,11 @@ form.addEventListener("submit", async event => {
 
     // Submit the playlist; the server returns a jobId immediately and analyzes
     // the tracks in the background. Scoring now happens server-side.
-    const info = await postJson("/api/analyze-playlist", { url: raw, model: activeModel });
+    const info = await postJson("/api/analyze-playlist", {
+      url: raw,
+      platform: selectedPlaylistPlatform(),
+      model: activeModel
+    });
     if (!info.tracks || !info.tracks.length) {
       setStatus(t("pl.status.empty"));
       playlistMeta.textContent = t("pl.overview.emptyTracks");
@@ -1721,6 +1769,19 @@ form.addEventListener("submit", async event => {
     failJob(error.message);
   }
 });
+}
+
+for (const input of playlistPlatformInputs) {
+  input.addEventListener("change", updatePlaylistPlatformCopy);
+}
+
+if (playlistInput) {
+  playlistInput.addEventListener("input", () => {
+    const detected = platformFromPlaylistInput(playlistInput.value);
+    if (!detected || detected === selectedPlaylistPlatform()) return;
+    setSelectedPlaylistPlatform(detected);
+    updatePlaylistPlatformCopy();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -2170,6 +2231,7 @@ function applyLanguage() {
   for (const el of document.querySelectorAll("[data-i18n-alt]")) {
     el.alt = t(el.dataset.i18nAlt);
   }
+  updatePlaylistPlatformCopy();
   // Re-render the aggregate charts so genre/style labels re-localize.
   if (lastCompositions) renderAggregate(lastCompositions, lastDimensions);
   if (currentStyleDialogData && styleDialog.classList.contains("is-open")) {

@@ -9,10 +9,13 @@ const {
   containsChineseText,
   extractHttpUrl,
   extractNetEaseSongId,
+  extractQQMusicPlaylistId,
   extractQQMusicSongMid,
   extractSpotifyTrackId,
   findSongAnalysisRecord,
+  detectPlaylistPlatform,
   musicPlatformDownloadSource,
+  normalizeQQMusicPlaylist,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
   readAnalysisLogRecords,
@@ -199,6 +202,55 @@ test("extracts QQ Music share links and song mids", () => {
     "001Bbywq2gicae"
   );
   assert.equal(extractQQMusicSongMid("https://y.qq.com/n/ryqq/songDetail/001Bbywq2gicae"), "001Bbywq2gicae");
+});
+
+test("extracts QQ Music playlist ids from share and desktop URLs", () => {
+  assert.equal(
+    extractQQMusicPlaylistId("https://i2.y.qq.com/n3/other/pages/details/playlist.html?hosteuin=abc&id=1150140793&appshare=iphone_wx"),
+    "1150140793"
+  );
+  assert.equal(extractQQMusicPlaylistId("https://y.qq.com/n/ryqq/playlist/1150140793"), "1150140793");
+  assert.equal(extractQQMusicPlaylistId("https://y.qq.com/n/ryqq/songDetail/001Bbywq2gicae"), "");
+});
+
+test("detects playlist platform from supported share-link hosts", () => {
+  assert.equal(detectPlaylistPlatform("https://i2.y.qq.com/n3/other/pages/details/playlist.html?id=1150140793"), "qqmusic");
+  assert.equal(detectPlaylistPlatform("https://music.163.com/playlist?id=13856318070"), "netease");
+  assert.equal(detectPlaylistPlatform("https://example.com/playlist?id=1"), "");
+});
+
+test("normalizes QQ Music playlist metadata and tracks", () => {
+  const playlist = normalizeQQMusicPlaylist("1150140793", {
+    code: 0,
+    cdlist: [{
+      disstid: "1150140793",
+      dissname: "&#127472;&#127479; &amp; chill",
+      logo: "http://y.gtimg.cn/cover.jpg",
+      nickname: "测试用户",
+      total_song_num: 1,
+      songlist: [{
+        songid: 107702344,
+        songmid: "001iQZi24I0JSY",
+        songname: "Moon, Moon",
+        albumname: "Moon &amp; Moon",
+        albummid: "003z3v583A26n3",
+        singer: [{ name: "MoonMoon (문문)" }]
+      }]
+    }]
+  });
+
+  assert.equal(playlist.platform, "qqmusic");
+  assert.equal(playlist.name, "🇰🇷 & chill");
+  assert.equal(playlist.coverImgUrl, "https://y.gtimg.cn/cover.jpg");
+  assert.equal(playlist.originalCount, 1);
+  assert.deepEqual(playlist.tracks[0], {
+    id: "001iQZi24I0JSY",
+    title: "Moon, Moon",
+    artists: ["MoonMoon (문문)"],
+    album: "Moon & Moon",
+    albumImage: "https://y.gtimg.cn/music/photo_new/T002R300x300M000003z3v583A26n3.jpg",
+    sourceUrl: "https://y.qq.com/n/ryqq/songDetail/001iQZi24I0JSY"
+  });
 });
 
 test("extracts Spotify track ids from common URL shapes", () => {
