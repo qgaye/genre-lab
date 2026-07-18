@@ -396,6 +396,10 @@ input:focus,
   gap: 8px;
 }
 
+.playlist-platform-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .format-options label {
   min-width: 0;
 }
