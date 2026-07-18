@@ -514,48 +514,12 @@ button:disabled {
 }
 
 .mosaic-share-group .verdict-share {
-  --share-bg: rgba(255, 61, 127, 0.09);
-  --share-bg-hover: rgba(255, 61, 127, 0.16);
-  --share-border: rgba(171, 43, 88, 0.34);
-  --share-border-hover: rgba(142, 46, 80, 0.58);
-  --share-text: #87354f;
   padding: 6px 10px;
-  border-color: var(--share-border);
-  background: var(--share-bg);
-  color: var(--share-text);
   font-size: 11px;
-  box-shadow: none;
-  transition:
-    transform 140ms ease,
-    background-color 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease,
-    opacity 140ms ease;
 }
 
 .mosaic-share-group .verdict-share--link {
-  --share-bg: rgba(31, 63, 224, 0.08);
-  --share-bg-hover: rgba(31, 63, 224, 0.15);
-  --share-border: rgba(31, 63, 180, 0.3);
-  --share-border-hover: rgba(31, 63, 180, 0.54);
-  --share-text: #3f5191;
-}
-
-.mosaic-share-group .verdict-share-icon {
-  opacity: 0.76;
-  filter: saturate(0.38);
-}
-
-.mosaic-share-group .verdict-share:hover:not(:disabled) {
-  border-color: var(--share-border-hover);
-  background: var(--share-bg-hover);
-  color: var(--share-text);
-  box-shadow: 1px 1px 0 rgba(23, 24, 29, 0.12);
-}
-
-.mosaic-share-group .verdict-share:focus-visible {
-  outline: 2px solid var(--share-border-hover);
-  outline-offset: 2px;
+  background: var(--blue);
 }
 
 .secondary {
