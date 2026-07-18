@@ -1025,6 +1025,17 @@ function extractNetEasePlaylistId(value) {
   return idMatch ? (idMatch[1] || idMatch[0]) : "";
 }
 
+function extractQQMusicPlaylistId(value) {
+  const text = cleanTerm(value);
+  // QQ Music song and playlist share pages can both contain a generic `id`
+  // parameter. Reject known song routes before considering that parameter.
+  if (/\/songDetail[/?#]/i.test(text) || /\/playsong\.html[?#]/i.test(text)) return "";
+  const idMatch = text.match(/[?&#](?:id|disstid)=(\d+)/i)
+    || text.match(/\/playlist(?:Detail)?\/(\d+)/i)
+    || text.match(/^\d+$/);
+  return idMatch ? (idMatch[1] || idMatch[0]) : "";
+}
+
 async function resolveNetEasePlaylistId(value) {
   const directId = extractNetEasePlaylistId(value);
   if (directId) return directId;
@@ -1048,6 +1059,27 @@ async function resolveNetEasePlaylistId(value) {
   return "";
 }
 
+async function resolveQQMusicPlaylistId(value) {
+  const text = cleanTerm(value);
+  const inputUrl = extractHttpUrl(text);
+  if (!inputUrl && /^\d+$/.test(text)) return text;
+  if (!inputUrl || !isAllowedQQMusicLink(inputUrl)) return "";
+
+  let url = inputUrl;
+  for (let redirectCount = 0; redirectCount < 6; redirectCount += 1) {
+    const id = extractQQMusicPlaylistId(url);
+    if (id) return id;
+
+    const result = await fetchRedirectLocation(url);
+    if (result.statusCode < 300 || result.statusCode >= 400 || !result.location) {
+      return "";
+    }
+    if (!isAllowedQQMusicLink(result.location)) return "";
+    url = result.location;
+  }
+  return "";
+}
+
 // Return a random subset of `size` items from `arr` using a partial
 // Fisher-Yates shuffle. Does not mutate the input. If `size` >= length the
 // whole array (shuffled copy) is returned.
@@ -1059,6 +1091,71 @@ function sampleArray(arr, size) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy.slice(0, n);
+}
+
+function decodeHtmlEntities(value) {
+  return String(value || "")
+    .replace(/&#(\d+);/g, (match, code) => {
+      const point = Number(code);
+      return Number.isInteger(point) && point >= 0 && point <= 0x10ffff
+        ? String.fromCodePoint(point)
+        : match;
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (match, code) => {
+      const point = Number.parseInt(code, 16);
+      return Number.isInteger(point) && point >= 0 && point <= 0x10ffff
+        ? String.fromCodePoint(point)
+        : match;
+    })
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+}
+
+function qqMusicAlbumImage(albumMid) {
+  const mid = String(albumMid || "").trim();
+  return mid ? `https://y.gtimg.cn/music/photo_new/T002R300x300M000${mid}.jpg` : "";
+}
+
+function normalizeQQMusicPlaylist(id, data) {
+  const playlist = data && Array.isArray(data.cdlist) ? data.cdlist[0] : null;
+  if (!playlist || !Array.isArray(playlist.songlist)) return null;
+
+  const tracks = playlist.songlist.map(song => {
+    const songMid = String(song.songmid || song.mid || "").trim();
+    return {
+      id: songMid || String(song.songid || song.id || ""),
+      title: decodeHtmlEntities(song.songname || song.name || ""),
+      artists: (song.singer || []).map(artist => decodeHtmlEntities(artist.name)).filter(Boolean),
+      album: decodeHtmlEntities(song.albumname || (song.album && song.album.name) || ""),
+      albumImage: qqMusicAlbumImage(song.albummid || (song.album && song.album.mid)),
+      sourceUrl: songMid ? `https://y.qq.com/n/ryqq/songDetail/${songMid}` : ""
+    };
+  }).filter(track => track.title);
+
+  const originalCount = Math.max(
+    Number(playlist.total_song_num) || 0,
+    Number(playlist.songnum) || 0,
+    tracks.length
+  );
+  const sampled = PLAYLIST_MAX_TRACKS > 0 && tracks.length > PLAYLIST_MAX_TRACKS;
+  const finalTracks = sampled ? sampleArray(tracks, PLAYLIST_MAX_TRACKS) : tracks;
+
+  return {
+    id: String(playlist.disstid || id),
+    platform: "qqmusic",
+    name: decodeHtmlEntities(playlist.dissname || ""),
+    coverImgUrl: String(playlist.logo || "").replace(/^http:\/\//i, "https://"),
+    trackCount: originalCount,
+    originalCount,
+    sampled,
+    sampledCount: finalTracks.length,
+    creator: decodeHtmlEntities(playlist.nickname || playlist.nick || ""),
+    sourceUrl: `https://y.qq.com/n/ryqq/playlist/${id}`,
+    tracks: finalTracks
+  };
 }
 
 // Resolve a NetEase playlist link into its metadata and full track list. Shared
@@ -1131,6 +1228,7 @@ async function loadNetEasePlaylist(raw) {
   }
   return {
     id: String(playlist.id || id),
+    platform: "netease",
     name: playlist.name || "",
     coverImgUrl: playlist.coverImgUrl || "",
     trackCount: playlist.trackCount || originalCount,
@@ -1145,11 +1243,83 @@ async function loadNetEasePlaylist(raw) {
   };
 }
 
+async function loadQQMusicPlaylist(raw) {
+  const id = await resolveQQMusicPlaylistId(raw);
+  if (!id) {
+    const isSongLink = /\/songDetail[/?#]/i.test(cleanTerm(raw)) || /\/playsong\.html[?#]/i.test(cleanTerm(raw));
+    const error = new Error(isSongLink
+      ? "这是一个单曲链接，不是歌单链接。请粘贴 QQ 音乐歌单链接。"
+      : "没有在 QQ 音乐链接中找到歌单 id。");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const params = new URLSearchParams({
+    type: "1",
+    json: "1",
+    utf8: "1",
+    onlysong: "0",
+    disstid: id,
+    format: "json",
+    g_tk: "5381",
+    loginUin: "0",
+    hostUin: "0",
+    inCharset: "utf8",
+    outCharset: "utf-8",
+    notice: "0",
+    platform: "yqq.json",
+    needNewCode: "0"
+  });
+  const data = await fetchJson(`https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg?${params.toString()}`, {
+    "referer": "https://y.qq.com/",
+    "user-agent": "Mozilla/5.0 GenreLab/1.0"
+  });
+  const playlist = normalizeQQMusicPlaylist(id, data);
+  if (!playlist) {
+    const error = new Error(`QQ 音乐没有返回歌单 id ${id} 的曲目信息。`);
+    error.statusCode = 404;
+    throw error;
+  }
+  return playlist;
+}
+
+function normalizePlaylistPlatform(value) {
+  const platform = String(value || "").trim().toLowerCase();
+  if (["qq", "qqmusic", "qq-music"].includes(platform)) return "qqmusic";
+  if (["netease", "netease-music", "163"].includes(platform)) return "netease";
+  return "";
+}
+
+function detectPlaylistPlatform(value) {
+  const url = extractHttpUrl(value);
+  if (url && isAllowedQQMusicLink(url)) return "qqmusic";
+  if (url && isAllowedNetEaseLink(url)) return "netease";
+  return "";
+}
+
+async function loadMusicPlaylist(raw, requestedPlatform) {
+  // A recognized URL host is more trustworthy than a stale radio selection;
+  // numeric-id-only submissions still use the explicit selected platform.
+  const platform = detectPlaylistPlatform(raw) || normalizePlaylistPlatform(requestedPlatform) || "netease";
+  return platform === "qqmusic" ? loadQQMusicPlaylist(raw) : loadNetEasePlaylist(raw);
+}
+
 async function handleNetEasePlaylist(req, res) {
   try {
     const body = await readBody(req);
     const raw = body.url || body.id || "";
     const playlist = await loadNetEasePlaylist(raw);
+    sendJson(res, 200, playlist);
+  } catch (error) {
+    sendJson(res, error.statusCode || 500, { error: error.message });
+  }
+}
+
+async function handleQQMusicPlaylist(req, res) {
+  try {
+    const body = await readBody(req);
+    const raw = body.url || body.id || body.disstid || "";
+    const playlist = await loadQQMusicPlaylist(raw);
     sendJson(res, 200, playlist);
   } catch (error) {
     sendJson(res, error.statusCode || 500, { error: error.message });
@@ -2003,6 +2173,10 @@ function getJob(jobId) {
 
 async function hydratePlaylistAlbumImages(job) {
   const tracks = job && Array.isArray(job.tracks) ? job.tracks : [];
+  // QQ Music playlist payloads already carry album mids, which are converted
+  // to cover URLs during parsing. The NetEase detail endpoint below only
+  // understands numeric NetEase song ids, so never feed QQ song mids into it.
+  if (job && job.platform === "qqmusic") return;
   const missing = tracks
     .filter(track => track && track.id && !track.albumImage)
     .map(track => String(track.id));
@@ -2047,14 +2221,14 @@ function getGenreCoreBundle(modelName) {
 
 // Analyze a single playlist track: download → Essentia → metadata → score.
 // Returns a per-track result record; never throws (failures are captured).
-async function analyzePlaylistTrack(track, modelName, bundle) {
+async function analyzePlaylistTrack(track, modelName, bundle, playlistPlatform = "netease") {
   const artists = (track.artists || []).join(" / ");
   let download;
   try {
     download = await runDownload({
       url: "",
       platformUrl: track.sourceUrl || "",
-      platform: "netease-url",
+      platform: `${playlistPlatform}-url`,
       title: track.title,
       artists,
       query: [`"${track.title}"`, artists ? `"${artists}"` : ""].filter(Boolean).join(" ")
@@ -2105,7 +2279,7 @@ async function runPlaylistJob(job) {
   persistJob(job);
   for (let i = 0; i < job.tracks.length; i += 1) {
     if (job.results[i]) continue;
-    const result = await analyzePlaylistTrack(job.tracks[i], job.modelName, bundle);
+    const result = await analyzePlaylistTrack(job.tracks[i], job.modelName, bundle, job.platform || "netease");
     job.results[i] = { index: i, ...result };
     job.completed = job.results.filter(Boolean).length;
     job.updatedAt = Date.now();
@@ -2124,7 +2298,7 @@ async function handleAnalyzePlaylist(req, res) {
     const raw = body.url || body.id || "";
     const modelName = resolveRequestModelName(body.model);
 
-    const playlist = await loadNetEasePlaylist(raw);
+    const playlist = await loadMusicPlaylist(raw, body.platform);
     const tracks = playlist.tracks || [];
     if (!tracks.length) {
       sendJson(res, 404, { error: "歌单里没有可分析的曲目。" });
@@ -2139,6 +2313,7 @@ async function handleAnalyzePlaylist(req, res) {
       modelName,
       // Original user input, kept so a resumed page can refill the link box.
       inputUrl: raw,
+      platform: playlist.platform || normalizePlaylistPlatform(body.platform) || "netease",
       name: playlist.name,
       coverImgUrl: playlist.coverImgUrl,
       creator: playlist.creator,
@@ -2175,6 +2350,7 @@ async function handleAnalyzePlaylist(req, res) {
       coverImgUrl: playlist.coverImgUrl,
       creator: playlist.creator,
       sourceUrl: playlist.sourceUrl,
+      platform: playlist.platform || normalizePlaylistPlatform(body.platform) || "netease",
       total: tracks.length,
       originalCount: playlist.originalCount || tracks.length,
       sampled: Boolean(playlist.sampled),
@@ -2210,6 +2386,7 @@ async function handlePlaylistStatus(req, res, url) {
     state: job.state,
     error: job.error || "",
     inputUrl: job.inputUrl || "",
+    platform: job.platform || "netease",
     name: job.name,
     total: job.total,
     originalCount: job.originalCount || job.total,
@@ -2522,12 +2699,14 @@ async function handleCoverImage(req, res, url) {
     const raw = url.searchParams.get("url") || "";
     const imageUrl = normalizeAlbumImageUrl(raw);
     const parsed = new URL(imageUrl);
-    if (parsed.protocol !== "https:" || !/\.music\.126\.net$/i.test(parsed.hostname)) {
+    const isNetEaseCover = /\.music\.126\.net$/i.test(parsed.hostname);
+    const isQQMusicCover = parsed.hostname.toLowerCase() === "y.gtimg.cn";
+    if (parsed.protocol !== "https:" || (!isNetEaseCover && !isQQMusicCover)) {
       sendJson(res, 400, { error: "Unsupported image host." });
       return;
     }
     const image = await fetchBinary(imageUrl, {
-      referer: "https://music.163.com/"
+      referer: isQQMusicCover ? "https://y.qq.com/" : "https://music.163.com/"
     });
     res.writeHead(200, {
       "content-type": image.contentType,
@@ -2682,6 +2861,10 @@ const server = http.createServer((req, res) => {
     handleNetEasePlaylist(req, res);
     return;
   }
+  if (req.method === "POST" && req.url === "/api/qq-playlist") {
+    handleQQMusicPlaylist(req, res);
+    return;
+  }
   if (req.method === "POST" && req.url === "/api/analyze-playlist") {
     handleAnalyzePlaylist(req, res);
     return;
@@ -2790,15 +2973,19 @@ module.exports = {
   extractNetEaseSongId,
   extractNetEasePlaylistId,
   extractQQMusicSongMid,
+  extractQQMusicPlaylistId,
   extractSpotifyTrackId,
   findSongAnalysisRecord,
   musicPlatformDownloadSource,
   parseSearchCandidatesPayload,
   rankSearchCandidates,
   readAnalysisLogRecords,
+  detectPlaylistPlatform,
+  normalizeQQMusicPlaylist,
   resolveNetEaseSongId,
   resolveNetEasePlaylistId,
   resolveQQMusicSongMid,
+  resolveQQMusicPlaylistId,
   resolveSpotifyTrackId,
   selectSearchSources,
   sanitizeSongAnalysisEntry,
